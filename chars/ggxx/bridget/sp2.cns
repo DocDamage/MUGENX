@@ -1,0 +1,2582 @@
+;---ぶりじっと　ヨーヨー熊関連 root,v20でロジャー性格変更（モードチェンジ)0,normal 1,ex
+;helper(0) fv20x,21y に速度代入 v34=タイムカウント v35=ヒットカウント v36=最大ヒット数(モードによる) 
+;1700じゃっく　１８００ハグ　１９００らっしゅ
+
+;-----------ジャックロジャー
+;ノーマル　3回まで、無敵　これまたvar(34,35)
+;ＥＸ	　　5回まで、食らいあり
+[statedef 1700];----
+type    = A
+movetype= A
+physics = N
+poweradd= 0
+ctrl = 0
+;velset = 0,0
+sprpriority = 2
+hitcountpersist = 1
+anim = 1700
+
+[state 8000,]
+type = velmul
+trigger1 = time = 0
+x = 0.65
+persistent = 0
+ignorehitpause = 1
+
+[state 8000,];ハグ経由の時機械エフェクトけし　1830
+type = RemoveExplod
+trigger1 = time = 0
+ID=1830
+ignorehitpause = 1
+
+[state 8000,];なんで消えない！？
+type = RemoveExplod
+trigger1 = time = 0
+ID=1575
+ignorehitpause = 1
+
+[state 1700,var];タイムリセット　
+type = varset
+trigger1 =time = 0
+var(34) = 0
+
+[state 1700,var];リセット　
+type = varset
+trigger1 =time = 0
+var(35) = 0
+
+[state 1700,fvarset];ヨーヨー，本体からの命令リセット
+type = parentvarset
+trigger1 = time = 0
+var(10) = 0
+
+[state 1700,fvarset];ヨーヨーフラグ1900
+type = parentvarset
+trigger1 = time = 0
+var(30) = 1700
+
+[state 1700,fvarset];クマさん性格により速度違う vel x
+type = varset
+trigger1 = time = 0
+fvar(20) = ifelse(root,var(20) = 0,0.5,2.0)
+
+[state 1700,fvarset];クマさん性格により速度違う vel y
+type = varset
+trigger1 = time = 0
+fvar(21) = ifelse(root,var(20) = 0,1,2.5)
+
+[state 1700,fvarset];クマさん性格により攻撃回数違う　V36 = var(35)
+type = varset
+trigger1 = time = 0
+var(36) = ifelse(root,var(20) = 0,3,5) ;+ 1
+
+[state 1700,fvarset];攻撃力
+type = varset
+trigger1 = time = 0
+fvar(0) = root,fvar(0)
+
+[State 1700, g voice];N:命を無駄にする E:引き際
+type = PlaySnd
+triggerall = root,var(59)
+trigger1 = animelem = 1
+value = s1700, ifelse(root,var(20), 0,1)
+channel = 5
+persistent = 0
+
+[State 1430, sound];振り回し!
+type = PlaySnd
+trigger1 = time = 2
+value = s1400,0
+persistent = 0
+channel = 2
+
+;fvar(18),root,pos x: fvar(19),rooto,pos y: fvar(22),縦横比
+;-------------------------移動新式：本体がある程度ずれたらVEL再設定へ、
+[state 8150,1];本体現在地X
+type = varset
+trigger1 = time = 0
+fvar(18) = root,pos x
+ignorehitpause = 1
+
+[state 8150,2];本体現在地Y
+type = varset
+trigger1 = time = 0
+fvar(19) = root,pos y
+ignorehitpause = 1
+
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+trigger1 = time = 0
+fvar(22) = ifelse(ABS(rootdist x) > ABS(rootdist y),rootdist x / fvar(21),rootdist y / fvar(21))
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+triggerall = time = 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+trigger3 = rootdist x = rootdist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝7
+[state 8150,5];-217,90 
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = time = 0
+;trigger1 = ABS(rootdist x) > ABS(rootdist y - 50) 
+x = ABS(rootdist x / fvar(22)) * ifelse(rootdist x < 0,-1,1)
+y = ABS(rootdist y / fvar(22)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time = 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+x = ifelse(rootdist x = 0,0,fvar(21)) * ifelse(rootdist x < 0,-1,1)
+y = ifelse(rootdist y = 0,0,fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time = 0
+trigger1 = rootdist x = rootdist y
+trigger1 = rootdist x != 0 && rootdist y != 0
+x = ABS(rootdist x / fvar(21)) * ifelse(rootdist x < 0,-1,1);
+y = ABS(rootdist y / fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time = 0
+trigger1 = rootdist y = 0
+trigger1 = vel x = 0
+x = fvar(21)
+ignorehitpause = 1
+
+[state 1900,];アニメ始まったら動いてたが,判定でるのは1、2、3・・・、4から？
+type = changestate
+trigger1 = animelem = 4
+value = 1710
+
+;--------------------------------------------------
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "posx=%f,posy=%f,Edistx=%f,Edisty=%f,fac=%d\n"
+params =pos x,pos y,p2bodydist x,p2bodydist y,facing
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+trigger1 = command != "holds"
+text = "velX=%f,velY=%f,RdiX= %f,RdiY=%f,rv30=%d"
+params =vel x,vel y,rootdist x,rootdist y,root,var(30)
+
+;-------------------------動き始め
+[statedef 1710];----3回か5回きると戻りへ　これまたvar(34,35)
+type    = A
+movetype= A
+physics = N
+poweradd= 0
+ctrl = 0
+sprpriority = 2
+hitcountpersist = 1
+
+;----------------------モードによる無敵などの設定
+;通常モード無敵　EX,食らうと戻る
+[state 8000x,]
+type = nothitby
+trigger1 = root,var(20) = 0
+value = sca,na,nt,np,sa,sp,st,ha,hp,ht
+time = 1
+ignorehitpause = 1
+
+[State 8000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1;root,var(20) = 1 
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =1790
+time = 1
+ignorehitpause = 1
+
+[state 8000x,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+;-------------------------近い時はYYに戻らず消える
+[state 8110,varset];手ぶらフラグ reset
+type = parentvarset
+trigger1 = rootdist y = [-30,30]  
+trigger1 = rootdist x = [-12,12]
+var(30) = 0
+ignorehitpause = 0
+
+[state 8110,vel]
+type = destroyself
+trigger1 = rootdist y = [-30,30]  
+trigger1 = rootdist x = [-12,12]
+ignorehitpause = 0
+
+[state 1700,next2];消える条件はvar(36)の回数まで接触(v35)、本体近づきすぎ
+type = changestate
+trigger1 = var(35) >= var(36)
+trigger2 = var(34) >= 122
+;trigger3 = abs(rootdist y) = [35,55]  
+;trigger3 = rootdist x = [-30,30]
+;trigger3 = rootdist x = [-15,15]
+trigger3  =root,var(20) = 1 ;ex時は逆になる（本体くらいでも戻る
+trigger3 = root,movetype = h;
+trigger3 = root,stateno !=[120,155] 
+value =1790
+ignorehitpause = 1
+
+;-------------------------------------------
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+trigger1 = time != 0
+fvar(22) = ifelse(ABS(rootdist x) > ABS(rootdist y),rootdist x / fvar(21),rootdist y / fvar(21))
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+trigger3 = rootdist x = rootdist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝7
+[state 8150,5];-217,90 
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = time != 0
+;trigger1 = ABS(rootdist x) > ABS(rootdist y - 50) 
+x = ABS(rootdist x / fvar(22)) * ifelse(rootdist x < 0,-1,1)
+y = ABS(rootdist y / fvar(22)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+x = ifelse(rootdist x = 0,0,fvar(21)) * ifelse(rootdist x < 0,-1,1)
+y = ifelse(rootdist y = 0,0,fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist x = rootdist y
+trigger1 = rootdist x != 0 && rootdist y != 0
+x = ABS(rootdist x / fvar(21)) * ifelse(rootdist x < 0,-1,1);
+y = ABS(rootdist y / fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger1 = vel x = 0
+x = fvar(21)
+ignorehitpause = 1
+
+;-------------------------------
+;------------------------
+[State 1700, 1];通常、プロジェと相殺？attrがＰのと相殺？lv3　　一度のみ、チェンステしてくれないたすけて～常時にしないとシールドとかで消される
+type = HitDef
+triggerall = root,var(20) = 0
+trigger1 = 1;time = 0
+attr = A, SA                   
+damage = floor(20 * fvar(0)) ,1               
+animtype = back              
+guardflag = MA                  
+hitflag = MAFDP                  
+priority = 5,hit            
+pausetime =0 , 4;ifelse(root,var(25) = 0,14,18)                    
+sparkno = -1;2000;s6300   
+guard.sparkno = -1;752;S6150
+sparkxy = -5, -20              
+hitsound   = s205, 7
+guardsound = s150, 1
+ground.type = High              
+ground.slidetime = 15            
+ground.hittime  = 15             
+ground.velocity = -8.0           
+air.type = High                
+air.velocity = root,fvar(5),root,fvar(2) / 4 + root,fvar(6)
+air.fall = 1
+fall.recover = 1
+air.hittime = 30 
+getpower = 20,10
+ID = 1700
+ignorehitpause = 0
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff    = 0
+guard.cornerpush.veloff  = 0
+airguard.cornerpush.veloff= 0
+
+[State 1700, 1];EXは相殺無し（というかあたると戻っちゃう->攻撃くらうって意味　常時にしないとシールドで消されると以後判定なしになってしまう？
+type = HitDef
+triggerall = root,var(20) 
+trigger1 = 1;time = 0
+attr = a, SA                   
+damage = floor(20 * fvar(0)) ,1               
+animtype = back              
+guardflag = MA                  
+hitflag = MAFD                  
+priority = 5,hit            
+pausetime =0 , 4;ifelse(root,var(25) = 0,14,18)                    
+sparkno = -1;2000;s6300   
+guard.sparkno = -1;752;S6150
+sparkxy = -5, -20              
+hitsound   = s205, 7
+guardsound = s150, 1
+ground.type = High              
+ground.slidetime = 15            
+ground.hittime  = 15             
+ground.velocity = -8.0           
+air.type = High                
+air.velocity = root,fvar(5),root,fvar(2) / 4 + root,fvar(6)
+air.fall = 1
+fall.recover = 1
+air.hittime = 30 
+getpower = 20,10
+ID = 1700
+ignorehitpause = 1
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff    = 0
+guard.cornerpush.veloff  = 0
+airguard.cornerpush.veloff= 0
+
+[state 1910,var];タイムカウント　
+type = varadd
+trigger1 =root,stateno != 3400
+trigger1 = root,stateno != [1600,1690] 
+var(34) = 1
+ignorehitpause = 0
+
+;------------------------------------ダストもーど
+[State 2500x, ];きりもみのアレは、29フレム以内の判断はvar(22) > 0
+type = TargetState
+triggerall = Numtarget(1700)
+trigger1 = movehit
+trigger1 = root,var(22) > 0 && root,var(46) = 10
+value = 275
+ID = 1700
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+[state 1910,next2]
+type = changestate
+trigger1 = movecontact
+ctrl = 0
+value = 1715
+ignorehitpause = 1
+
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "px=%f,py=%f,rdx=%f,rdy=%f,\n"
+params =pos x,pos y,rootdist x,rootdist y
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+text = "rpx20=%f,rpy=%f,ratio=%f,vx=%f,vy=%f"
+params =fvar(20),fvar(21),fvar(22),vel x, vel y
+
+
+[statedef 1715];----これまたvar(34,35)
+type    = A
+movetype= A
+physics = N
+poweradd= 0
+sprpriority = 2
+hitcountpersist = 1
+
+;----------------------モードによる無敵などの設定
+;通常モード無敵　EX,食らうと戻る
+[state 8000x,]
+type = nothitby
+trigger1 = root,var(20) = 0
+value = sca,na,nt,np,sa,sp,st,ha,hp,ht
+time = 1
+ignorehitpause = 1
+
+[State 8000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1;root,var(20) = 1 
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =1790
+time = 1
+ignorehitpause = 1
+
+[state 8000x,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = parentvaradd
+triggerall = numtarget(1700)
+triggerall = target(1700),stateno  != [120,155]
+trigger1 = time = 0
+persistent = 0
+fvar(2) = 1
+ignorehitpause = 1
+
+[state 1715,]
+type = posfreeze
+trigger1 = 1
+value = 1
+ignorehitpause = 1
+
+[state 8000x,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+;----------------汎用大ヒットS部
+[state 200x,atc efe];hit guardエフェクト  大（必殺以上）絵揃ったらヘルパーに?がーどとひっと分ける
+type = Explod
+triggerall = numtarget
+trigger1 = target,gethitvar(guarded)
+trigger1 = time=0;;guarded
+;anim =ifelse(target,gethitvar(guarded) = 0,6300+ random % 4,6152)
+anim = 6152
+ID=200
+pos = -5,-50
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 200x,atc efe];hit guardエフェクト  大（必殺以上）絵揃ったらヘルパーに?がーどとひっと分ける
+type = Explod
+triggerall = numtarget
+trigger1 = target,gethitvar(guarded) = 0
+trigger1 = time=0;;guarded
+anim =6300+ random % 4
+ID=205
+pos = -5,-50
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.3,0.3
+persistent = 0
+ignorehitpause = 1
+
+[State 3200, ]
+type = ModifyExplod
+trigger1 = Time = [1,3] 
+ID = 205
+scale = time * 0.1 + 0.3,time * 0.1 + 0.3
+ignorehitpause = 1
+
+[state 1510,helper partner];----やっぱ重いよ、どする？
+type = Helper
+trigger1 =0;movehit
+trigger1 = time = 0
+helpertype = normal
+sprpriority  = 0
+name = "hit efe test"
+ID=8500
+pos = 0,-10
+postype = p2
+stateno = 8500 + random % 5 
+keyctrl =0
+ownpal = 1
+persistent = 0
+;----------------------------------ここまで
+
+[state 1910,var];ヒットカウント
+type = varadd
+trigger1 = time = 0
+var(35) = 1
+persietent = 0
+ignorehitpause = 1
+
+;-------------------------------------------
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+trigger1 = time != 0
+fvar(22) = ifelse(ABS(rootdist x) > ABS(rootdist y),rootdist x / fvar(21),rootdist y / fvar(21))
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+trigger3 = rootdist x = rootdist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝7
+[state 8150,5];-217,90 
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = time != 0
+;trigger1 = ABS(rootdist x) > ABS(rootdist y - 50) 
+x = ABS(rootdist x / fvar(22)) * ifelse(rootdist x < 0,-1,1)
+y = ABS(rootdist y / fvar(22)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+x = ifelse(rootdist x = 0,0,fvar(21)) * ifelse(rootdist x < 0,-1,1)
+y = ifelse(rootdist y = 0,0,fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist x = rootdist y
+trigger1 = rootdist x != 0 && rootdist y != 0
+x = ABS(rootdist x / fvar(21)) * ifelse(rootdist x < 0,-1,1);
+y = ABS(rootdist y / fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger1 = vel x = 0
+x = fvar(21)
+ignorehitpause = 1
+
+[state 3500,next2];攻撃ループ
+type = changestate
+trigger1 = time >= 5
+ctrl = 0
+value = 1710
+ignorehitpause = 1
+
+;-------------------ジャック終了　ヨーヨーに戻るまで停止、汎用8200へ
+[statedef 1790]
+type    = A
+movetype = I
+physics = N
+velset = 0,0
+anim = 1720
+hitcountpersist = 1
+sprpriority = 2
+
+[State 1790, ];
+type = nothitby
+trigger1 = 1
+value = sca,na,sa,ha,np,sp,hp,nt,st,ht
+time = 1
+ignorehitpause = 1
+
+[state 8000x,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+;-------------------------
+
+[state 1790,varset];ヨーヨーフラグセット
+type = parentvarset
+trigger1 = time = 0
+var(30) = 1790
+ignorehitpause = 1
+
+[state 1790,]
+type = changestate
+trigger1 = animtime = 0
+value = 8200
+ignorehitpause = 1
+
+;---------------はぐ　rojya- 
+;---1800start 1810サーチ42F
+[statedef 1800];----相手はりつき、これまたvar(34,35)42秒サーチ、あたらなかったら消えるあたったら600補足へ
+type    = A
+movetype= A
+physics = N
+poweradd= 0
+ctrl = 0
+;velset = 0,0
+sprpriority = -1
+hitcountpersist = 1
+
+[state 1800,fvarset];ヨーヨー，本体からの命令リセット
+type = parentvarset
+trigger1 = time = 0
+var(10) = 0
+
+[state 1800,fvarset];ヨーヨーフラグ1900
+type = parentvarset
+trigger1 = time = 0
+var(30) = 1800
+
+[state 1800,fvarset];攻撃力
+type = varset
+trigger1 = time = 0
+fvar(0) = root,fvar(0)
+
+[state 1800,fvarset];張り付く時間、通常600、EX１２００！
+type = varset
+trigger1 = time = 0
+var(37) = ifelse(root,var(20) = 0,600,1200)
+
+[State 1430, sound];振り回し!
+type = PlaySnd
+trigger1 = time = 16
+value = s1400,0
+persistent = 0
+channel = 2
+
+[state 1800,];32になったら行動開始
+type = changestate
+trigger1 = time >= 16
+value = 1810
+
+;--------------------------------------------------
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "posx=%f,posy=%f,Edistx=%f,Edisty=%f,fac=%d\n"
+params =pos x,pos y,p2bodydist x,p2bodydist y,facing
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+trigger1 = command != "holds"
+text = "velX=%f,velY=%f,RdiX= %f,RdiY=%f,rv30=%d"
+params =vel x,vel y,rootdist x,rootdist y,root,var(30)
+
+;----------------p2dist x,敵の向きから見て後ろにいるなら負、前にいるなら正
+[statedef 1810];----42秒サーチ、当たったら補足へこれまたvar(34,35)
+type    = A
+movetype= A
+physics = N
+poweradd= 0
+ctrl = 0
+;velset = 0,0
+anim = 1800
+sprpriority = 2
+hitcountpersist = 1
+
+[State 10000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1 
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =1890
+time = 1
+ignorehitpause = 1
+
+[state 3500,next2];消える条件taimu42(v34)、
+type = changestate
+trigger1 = time >= 42
+trigger2 = var(34) >= 42
+value =1890
+ignorehitpause = 1
+
+[State 1810, 1];一
+type = HitDef
+trigger1 = time = 0
+attr = A, ST                   
+damage =floor(12 * root,fvar(0)) ,1               
+animtype = back              
+guardflag = MA                  
+hitflag = MAFD                  
+priority = 3,miss            
+pausetime =10 , ifelse(root,var(25) = 0,14,18)               
+sparkno = -1;2000;s6300   
+guard.sparkno = -1;752;S6150
+sparkxy = -5, -20             
+hitsound   = s205, 7
+guardsound = s150, 1
+ground.type = High              
+ground.slidetime = 20            
+ground.hittime  = 15             
+ground.velocity = -4           
+air.type = High    
+air.hittime = 30 
+air.fall = 1                 
+fall = 0
+fall.recover = 1
+air.velocity =root,fvar(5),root,fvar(6)
+ignorehitpause = 1
+ID=1820
+
+[state 1810,]
+type  =varset
+triggerall = numtarget(1820)
+trigger1 =movecontact
+var(4) = target(1820),ID
+ignorehitpause = 1
+
+[state 1820,helper partner];----孫ヘルパー、root→0→1850　の流れ
+type = Helper
+triggerall = NumHelper(1850) = 0
+triggerall = numtarget(1820)
+trigger1 = movecontact
+helpertype = normal
+sprpriority  = 0
+name = "hug enemydist"
+ID = 1850
+pos = 0,0
+postype =playerID(var(4))
+stateno = 1850
+keyctrl =0
+ownpal = 1
+persistent = 0
+ignorehitpause = 1
+
+;------------------------------------ダストもーど
+[State 2500x, ];きりもみのアレは、29フレム以内の判断はvar(22) > 0
+type = TargetState
+triggerall = Numtarget(1820)
+trigger1 = movehit
+trigger1 = root,var(22) > 0 && root,var(46) = 10
+value = 275
+ID = 1820
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+[state 1810,next2];ガードにヒットか否かで未定
+type = changestate
+trigger1 = movecontact
+ctrl = 0
+value = 1820
+ignorehitpause = 1
+
+[state 1810,var];ヒットカウント
+type = varadd
+trigger1 = time = 0
+var(35) = 1
+persietent = 0
+ignorehitpause = 1
+
+[state 1810,var];タイムカウント　
+type = varadd
+trigger1 =1
+var(34) = 1
+ignorehitpause = 1
+
+;---------------以下移動、　敵に p2 あたれば→target(1820)
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = ABS(p2dist y) != 0
+triggerall = ABS(p2dist x) != 0
+trigger1 = time != 0
+fvar(22) = ifelse(ABS(p2dist x) > ABS(p2dist y),p2dist x / 3,p2dist y / 3)
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+triggerall = time != 0
+trigger1 = p2dist y = 0
+trigger2 = p2dist x = 0
+trigger3 = p2dist x = p2dist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝7
+[state 8150,5];-217,90 
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = time != 0
+;trigger1 = ABS(p2dist x) > ABS(p2dist y - 50) 
+x = ABS(p2dist x / fvar(22)) * ifelse(p2dist x < 0,-1,1)
+y = ABS(p2dist y / fvar(22)) * ifelse(p2dist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = p2dist y = 0
+trigger2 = p2dist x = 0
+x = ifelse(p2dist x = 0,0,3) * ifelse(p2dist x < 0,-1,1)
+y = ifelse(p2dist y = 0,0,3) * ifelse(p2dist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = p2dist x = p2dist y
+trigger1 = p2dist x != 0 && p2dist y != 0
+x = ABS(p2dist x / 3) * ifelse(p2dist x < 0,-1,1);
+y = ABS(p2dist y / 3) * ifelse(p2dist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = p2dist x = p2dist y
+trigger1 = p2dist x = 0 && p2dist y = 0
+x = 0
+y = 0
+ignorehitpause = 1
+
+;--------------------------------------------------
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "posx=%f,posy=%f,Edistx=%f,Edisty=%f,4id=%d\n"
+params =pos x,pos y,p2bodydist x,p2bodydist y,var(4)
+ignorehitpause = 1
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+trigger1 = command != "holds"
+text = "velX=%f,velY=%f,RdiX= %f,RdiY=%f,rv30=%d"
+params =vel x,vel y,rootdist x,rootdist y,root,var(30)
+ignorehitpause = 1
+
+;----接触した場合、しばらく待って（psusetimeっぽく）から透明貼りつきヘルパーを出す
+;でもって孫ヘルパーとのparentdistを使って移動させると。
+;この時LOVELY（１８１０）は回転してます・・
+[statedef 1820]
+type    = A
+movetype= A
+physics = N
+poweradd= 0
+ctrl = 0
+velset = 0,0
+anim = 1810
+sprpriority = 3
+hitcountpersist = 1
+
+[state 200x,atc efe];機械エフェクト 600F
+type = Explod
+triggerall = 1
+trigger1 = time=0
+anim = 1830
+ID=1830
+pos =0,0
+postype = p1
+sprpriority = 3
+bindtime = -1
+removetime =var(37) - 5
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+;facing = 1
+
+;----------------汎用大ヒットS部
+[state 200x,atc efe];hit guardエフェクト  大（必殺以上）絵揃ったらヘルパーに?がーどとひっと分ける
+type = Explod
+triggerall = numtarget
+trigger1 = target,gethitvar(guarded)
+trigger1 = time=0;;guarded
+;anim =ifelse(target,gethitvar(guarded) = 0,6300+ random % 4,6152)
+anim = 6152
+ID=200
+pos = -5,-50
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 200x,atc efe];hit guardエフェクト  大（必殺以上）絵揃ったらヘルパーに?がーどとひっと分ける
+type = Explod
+triggerall = numtarget
+trigger1 = target,gethitvar(guarded) = 0
+trigger1 = time=0;;guarded
+anim =6300+ random % 4
+ID=205
+pos = -5,-50
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.4,0.4
+persistent = 0
+ignorehitpause = 1
+
+[State 3200, ]
+type = ModifyExplod
+trigger1 = 0;Time > 1 
+ID = 205
+scale = time * 0.1 + 0.3,time * 0.1 + 0.3
+
+[state 1510,helper partner];----やっぱ重いよ、どする？
+type = Helper
+trigger1 =0;movehit
+trigger1 = time = 0
+helpertype = normal
+sprpriority  = 0
+name = "hit efe test"
+ID=8500
+pos = 0,-10
+postype = p2
+stateno = 8500 + random % 5 
+keyctrl =0
+ownpal = 1
+persistent = 0
+;----------------------------------ここまで
+
+[state 1820,]
+type  =varset
+trigger1 = 0;time = 0
+var(4) = target,ID
+
+[state 1820,]
+type  =posfreeze
+trigger1 = time <= 10
+time = 1
+value = 1
+ignorehitpause = 1
+
+[state 1820,];YYフラグ
+type = parentvarset
+trigger1 = time = 0
+var(30) = 1820
+ignorehitpause = 1
+
+[state 1820,];タイマーリセット
+type = parentvarset
+trigger1 = time >= 10
+var(34) = 0
+ignorehitpause = 1
+
+[state 1820,];ヘルパー（琥珀とか（笑　にあたったらどうするか？
+type = changestate
+triggerall = numtarget
+trigger1 = target,ishelper
+trigger2 = target,ID <= 0
+value = 1890
+ignorehitpause = 1
+
+[state 1820,]
+type = changestate
+trigger1 = time >= 10
+value = 1830
+ignorehitpause = 1
+
+;-------------------------ハグ600補足
+[statedef 1830];----孫のdistで
+type    = A
+movetype= i
+physics = N
+poweradd= 0
+ctrl = 0
+velset = 0,0
+anim = 1810
+sprpriority = 3
+hitcountpersist = 1
+
+;----------真ん中くま回転タイプで回転やめてみる（いみなし
+[State 1000, 7]
+type = AngleDraw
+trigger1 = root,var(20) = 0
+ignorehitpause = 1
+
+[State 1000, 7]
+type = Angleadd
+trigger1 = 1
+value = 2
+ignorehitpause = 1
+
+[state 200x,atc efe];機械エフェクト
+type = Explod
+triggerall = !numexplod(1830)
+trigger1 = time=0
+anim = 1830
+ID=1830
+pos =0,0
+postype = p1
+sprpriority = 2
+bindtime = -1
+removetime = 1200
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+;facing = 1
+
+[state 1830,var];ヨーヨーフラグ補足へ1830
+type = parentvarset
+trigger1 =time = 0
+var(30) = 1830
+ignorehitpause = 1
+
+[State 10000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1 
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =1890
+time = 1
+ignorehitpause = 1
+
+[State 8010, 1];行動分岐　
+type = Changestate
+trigger1 = root,var(10) ;=3499
+value = root,var(10)
+ignorehitpause = 1
+
+[state 1830,next2];消える条件はタイマー
+type = changestate
+trigger1 =root,stateno != 3400
+trigger1 = root,stateno != [1600,1690] 
+trigger1 = var(34) >= var(37);600,1200
+trigger2 = !numhelper(1850)
+value =1890
+ignorehitpause = 1
+
+[state 1830,var];タイムカウント　
+type = varadd
+trigger1 = root,stateno != 3400
+trigger1 = root,stateno != [1600,1690]
+var(34) = 1
+ignorehitpause = 0
+
+[state 1830,]
+type  =turn
+trigger1 = parent,facing != facing
+ignorehitpause = 0
+
+;---------------以下可視くまマーカー移動、敵にいってるようで実は張り付きへるぱを目標→IDでやると変になる、P２だとチームでおかしくなる
+;---rootdistは本体、parentdistです
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = numhelper(1850)
+triggerall = ABS(helper(1850),parentdist y) != 0
+triggerall = ABS(helper(1850),parentdist x) != 0
+trigger1 = time != 0
+fvar(22) = ifelse(ABS(helper(1850),parentdist x) > ABS(helper(1850),parentdist y),helper(1850),parentdist x / 3,helper(1850),parentdist y / 3)
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+triggerall = numhelper(1850)
+triggerall = time != 0
+trigger1 = helper(1850),parentdist y = 0
+trigger2 = helper(1850),parentdist x = 0
+trigger3 = helper(1850),parentdist x = helper(1850),parentdist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝
+[state 8150,5];-217,90 
+type = velset
+triggerall = numhelper(1850)
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = time != 0
+;trigger1 = ABS(helper(1850),parentdist x) > ABS(helper(1850),parentdist y - 50) 
+x = ABS(helper(1850),parentdist x / fvar(22)) * ifelse(helper(1850),parentdist x > 0,-1,1)
+y = ABS(helper(1850),parentdist y / fvar(22)) * ifelse(helper(1850),parentdist y > 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = numhelper(1850)
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = helper(1850),parentdist y = 0
+trigger2 = helper(1850),parentdist x = 0
+x = ifelse(helper(1850),parentdist x = 0,0,3) * ifelse(helper(1850),parentdist x > 0,-1,1)
+y = ifelse(helper(1850),parentdist y = 0,0,3) * ifelse(helper(1850),parentdist y > 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = numhelper(1850)
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = helper(1850),parentdist x = helper(1850),parentdist y
+trigger1 = helper(1850),parentdist x != 0 && helper(1850),parentdist y != 0
+x = ABS(helper(1850),parentdist x / 3) * ifelse(helper(1850),parentdist x > 0,-1,1);
+y = ABS(helper(1850),parentdist y / 3) * ifelse(helper(1850),parentdist y > 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = numhelper(1850)
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = helper(1850),parentdist x = helper(1850),parentdist y
+trigger1 = helper(1850),parentdist x = 0 && helper(1850),parentdist y = 0
+x = 0
+y = 0
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = numhelper(1850)
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = helper(1850),parentdist x = 0
+x = 0
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = numhelper(1850)
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = helper(1850),parentdist y = 0
+y = 0
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = numhelper(1850)
+trigger1 = helper(1850),parentdist y =  [-10,10]
+y = 0
+ignorehitpause = 1
+
+;--------------------------------------------------
+[state -2, displayb]
+type = displaytoclipboard
+triggerall = numhelper(0)
+triggerall = numhelper(1850)
+trigger1 = 1
+text = "rdisx=%f,0disx=%f,pdistx=%f,ID=%d\n"
+params =rootdist x,helper(0),rootdist x,parentdist x,var(4)
+
+[state -2, displayb]
+type = appendtoclipboard
+triggerall = numhelper(0)
+triggerall = numhelper(1850)
+trigger1 = 1
+text = "rdisy=%f,0disy=%f,pdisty=%f,"
+params =rootdist y,helper(0),rootdist y,parentdist y
+
+;------------------------1850 相手に貼りつく透明ヘルパー  孫です　ハグ中ｒ移動で
+[statedef 1850];----
+type    = A
+movetype= i
+physics = N
+poweradd= 0
+ctrl = 0
+velset = 0,0
+anim = 1
+
+[state 1850,]
+type = nothitby
+trigger1 = 1
+time = 1
+value = sca,na,np,nt,sa,sp,st,ha,hp,ht
+ignorehitpause = 1
+
+[state 1850,]
+type = varset
+trigger1 = time = 0
+var(4)= parent,var(4)
+ignorehitpause = 1
+
+[state 1850,]
+type = posset
+trigger1 = 1
+x= playerID(var(4)),pos x
+y = playerID(var(4)),pos y
+ignorehitpause = 1
+
+[state 1850,]
+type  =turn
+trigger1 = root,facing != facing
+ignorehitpause = 1
+
+[state 1850,22]
+type = varset
+trigger1 = time = 0
+var(34) = parent,var(34)
+
+[state 1850,]
+type = varadd
+trigger1 = root,stateno != 3400
+trigger1 = root,stateno != [1600,1690]
+var(34) =1
+
+[state 1850,]
+type = destroyself
+trigger1 = numhelper(0)
+trigger1 = helper(0),stateno != [1800,1850]
+trigger2 = !numhelper(0);こｒがうまくいかない
+trigger3  = var(34) = parent,var(37);600
+ignorehitpause = 1
+
+[state -2, displayb]
+type = displaytoclipboard
+triggerall = numhelper(0)
+triggerall = numhelper(1850)
+trigger1 = 1
+text = "rdisx=%f,0disx=%f,pdistx=%f,ID=%d\n"
+params =rootdist x,helper(0),rootdist x,parentdist x,var(4)
+
+[state -2, displayb]
+type = appendtoclipboard
+triggerall = numhelper(0)
+triggerall = numhelper(1850)
+trigger1 = 1
+text = "rdisy=%f,0disy=%f,pdisty=%f,"
+params =rootdist y,helper(0),rootdist y,parentdist y
+
+;--------------------------終了
+[statedef 1890]
+type    = A
+movetype = I
+physics = N
+velset = 0,0
+anim = 1820
+hitcountpersist = 1
+
+[state 1890,]
+type = RemoveExplod
+trigger1 = time = 0
+ID=1830
+ignorehitpause = 1
+
+[State 1890, ];
+type = nothitby
+trigger1 = 1
+value = sca,na,sa,ha,np,sp,hp,nt,st,ht
+time = 1
+
+[state 1890,varset];ヨーヨーフラグセット
+type = parentvarset
+trigger1 = time = 0
+var(30) = 1890
+
+[state 1790,]
+type = changestate
+trigger1 = animtime = 0
+value = 8200
+
+;------------------------------------------------------------ロジャーラッシュ
+;通常　5回殴るか叩かれると戻りへ　これまたvar(34,35)
+;EX    3回まで、無敵　本体攻撃で戻る
+[statedef 1900];----
+type    = A
+movetype= A
+physics = N
+poweradd= 0
+ctrl = 0
+;velset = 0,0
+sprpriority = 2
+hitcountpersist = 1
+anim = 1900
+
+[state 8000,];ハグ経由の時機械エフェクトけし　1830
+type = RemoveExplod
+trigger1 = time = 0
+ID=1830
+ignorehitpause = 1
+
+[state 1700,var];タイムリセット　
+type = varset
+trigger1 =time = 0
+var(34) = 0
+
+[state 1700,var];リセット　
+type = varset
+trigger1 =time = 0
+var(35) = 0
+
+[state 1900,fvarset];ヨーヨー，本体からの命令リセット
+type = parentvarset
+trigger1 = time = 0
+var(10) = 0
+
+[state 1900,fvarset];ヨーヨーフラグ1900
+type = parentvarset
+trigger1 = time = 0
+var(30) = 1900
+
+[state 1900,fvarset];クマさん性格により速度違う vel x
+type = varset
+trigger1 = time = 0
+fvar(20) = ifelse(root,var(20) = 0,2.0,0.8)
+
+[state 1900,fvarset];クマさん性格により速度違う vel y
+type = varset
+trigger1 = time = 0
+fvar(21) = ifelse(root,var(20) = 0,2.0,0.8);1.5;8
+
+[state 1900,fvarset];クマさん性格により攻撃回数違う　V36 = var(35)
+type = varset
+trigger1 = time = 0
+var(36) = ifelse(root,var(20) = 0,5,3) ;+ 1
+
+[state 1900,fvarset];攻撃力
+type = varset
+trigger1 = time = 0
+fvar(0) = root,fvar(0)
+
+[State 1900, g voice];N:命を無駄にする E:罪を憎んで
+type = PlaySnd
+triggerall = root,var(59)
+trigger1 = time = 3
+value = s1700, ifelse(root,var(20), 2,1)
+channel = 5
+persistent = 0
+
+[State 1430, sound];振り回し!
+type = PlaySnd
+trigger1 = time = 0
+value = s1400,0
+persistent = 0
+channel = 2
+
+;-------------------------------------------
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+trigger1 = time != 0
+fvar(22) = ifelse(ABS(rootdist x) > ABS(rootdist y),rootdist x / fvar(21),rootdist y / fvar(21))
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+trigger3 = rootdist x = rootdist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝7
+[state 8150,5];-217,90 
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = time != 0
+;trigger1 = ABS(rootdist x) > ABS(rootdist y - 50) 
+x = ABS(rootdist x / fvar(22)) * ifelse(rootdist x < 0,-1,1)
+y = ABS(rootdist y / fvar(22)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+x = ifelse(rootdist x = 0,0,fvar(21)) * ifelse(rootdist x < 0,-1,1)
+y = ifelse(rootdist y = 0,0,fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist x = rootdist y
+trigger1 = rootdist x != 0 && rootdist y != 0
+x = ABS(rootdist x / fvar(21)) * ifelse(rootdist x < 0,-1,1);
+y = ABS(rootdist y / fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger1 = vel x = 0
+x = fvar(21)
+ignorehitpause = 1
+
+[state 1900,]; いや、こっちもさっさと動いてる・・
+type = changestate
+trigger1 = animtime = 0;16
+value = 1910
+
+;--------------------------------------------------
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "posx=%f,posy=%f,Edistx=%f,Edisty=%f,fac=%d\n"
+params =pos x,pos y,p2bodydist x,p2bodydist y,facing
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+trigger1 = command != "holds"
+text = "velX=%f,velY=%f,RdiX= %f,RdiY=%f,rv30=%d"
+params =vel x,vel y,rootdist x,rootdist y,root,var(30)
+
+;-------------------------動き始め
+[statedef 1910];----5回殴るか叩かれると戻りへ　これまたvar(34,35)
+type    = A
+movetype= A
+physics = N
+poweradd= 0
+ctrl = 0
+;velset = 0,0
+;anim = 1910
+sprpriority = 2
+hitcountpersist = 1
+
+[State 1430, sound];
+type = changeanim
+;triggerall = anim != 1920
+trigger1 = time = 0
+value = 1920
+ignorehitpause = 1
+persistent = 0
+
+[State 1430, sound];振り回し音ジャブ、フック？あと知らない
+type = PlaySnd
+triggerall = anim = 1910
+trigger1 = animelem = 3
+trigger2 = animelem = 8
+trigger3 = animelem = 12
+value = s300,1
+channel = 2
+ignorehitpause = 1
+
+[State 1430, sound];振り回し音ジャブ、フック？あと知らない
+type = PlaySnd
+triggerall = anim = 1920
+trigger1 = animelem = 4
+trigger2 = animelem = 10
+trigger3 = animelem = 17
+value = s300,1
+channel = 2
+ignorehitpause = 1
+;----------------------モードによる無敵などの設定 
+;ラッシュ　通常モード食らう　EX,無敵
+[state 8000x,]
+type = nothitby
+trigger1 = root,var(20) = 1
+value = sca,na,nt,np,sa,sp,st,ha,hp,ht
+time = 1
+ignorehitpause = 1
+
+[State 8000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1;root,var(20) = 0 
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =1990
+time = 1
+ignorehitpause = 1
+
+[state 8000x,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+;-------------------------近い時はYYに戻らず消える
+[state 8110,varset];手ぶらフラグ reset
+type = parentvarset
+trigger1 = rootdist y = [-30,30]  
+trigger1 = rootdist x = [-12,12]
+var(30) = 0
+ignorehitpause = 0
+
+[state 8110,vel]
+type = destroyself
+trigger1 = rootdist y = [-30,30]  
+trigger1 = rootdist x = [-12,12]
+ignorehitpause = 0
+
+[state 3500,next2];消える条件は5接触(v35)、本体被攻撃、本体近づきすぎ
+type = changestate
+trigger1  =root,var(20) = 0 
+trigger1 = root,movetype = h;
+trigger1 = root,stateno !=[120,155] 
+trigger2 = var(35) >= var(36)
+;trigger3 = abs(rootdist y) = [40,55]   
+;trigger3 = rootdist x = [-30,30]
+;trigger3 = rootdist x = [-12,12]
+trigger3 = var(34) >= 256
+value =1990
+ignorehitpause = 1
+
+[State 1900, 1];一
+type = HitDef
+trigger1 = 1;time = 0;20
+attr = A, SA                   
+damage = floor(36 * root,fvar(0)) ,1               
+animtype = back              
+guardflag = MA                  
+hitflag = MAFD                  
+priority = 1,miss            
+pausetime = 0, 10      
+sparkno = -1;2000;s6300   
+guard.sparkno = -1;752;S6150
+sparkxy = -5, -20  
+hitsound   = s205, 7
+guardsound = s150, 1
+ground.type = High              
+ground.slidetime = 15            
+ground.hittime  = 10             
+ground.velocity = -9
+guard.velocity = -9           
+air.type = High                
+air.hittime = 30
+air.fall = 1                 
+fall = 0
+fall.recover = 1
+air.velocity =root,fvar(5),root,fvar(2) / 4 + root,fvar(6)
+ID=2500
+getpower = 20,10
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff    = 0
+guard.cornerpush.veloff  = 0
+airguard.cornerpush.veloff= 0
+p2facing=1
+
+;------------------よろけ　地上相手のみ
+;カウンター判定は 当たってなくtarget=0) 相手攻撃状態movetype=A) で
+;食らってない時(movetype!=h(当たるとターゲットになって0にセットされるので)
+;-----------にフラグを１
+[State 2500x, ];地上のみよろけ  この技は無条件でよろけ
+type = TargetState
+triggerall = Numtarget(2500)
+trigger1 = target(2500),alive 
+trigger1 = movehit
+trigger1 = target,statetype != A
+value = 2550
+ID=2500
+persistent = 0
+ignorehitpause = 1
+;------------------よろけ　ここまで
+;------------------------------------ダストもーど
+[State 2500x, ];きりもみのアレは、29フレム以内の判断はvar(22) > 0
+type = TargetState
+triggerall = Numtarget(2500)
+trigger1 = movehit
+trigger1 = root,var(22) > 0 && root,var(46) = 10
+value = 275
+ID = 2500
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+[state 1910,next2]
+type = changestate
+trigger1 = movecontact
+ctrl = 0
+value = 1915
+ignorehitpause = 1
+
+[state 1910,var];タイムカウント　
+type = varadd
+trigger1 =1
+var(34) = 1
+ignorehitpause = 0
+
+;---------------以下移動、　本体に戻る
+;-------------------------------------------
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+trigger1 = time != 0
+fvar(22) = ifelse(ABS(rootdist x) > ABS(rootdist y),rootdist x / fvar(21),rootdist y / fvar(21))
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+trigger3 = rootdist x = rootdist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝7
+[state 8150,5];-217,90 
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = time != 0
+;trigger1 = ABS(rootdist x) > ABS(rootdist y - 50) 
+x = ABS(rootdist x / fvar(22)) * ifelse(rootdist x < 0,-1,1)
+y = ABS(rootdist y / fvar(22)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+x = ifelse(rootdist x = 0,0,fvar(21)) * ifelse(rootdist x < 0,-1,1)
+y = ifelse(rootdist y = 0,0,fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist x = rootdist y
+trigger1 = rootdist x != 0 && rootdist y != 0
+x = ABS(rootdist x / fvar(21)) * ifelse(rootdist x < 0,-1,1);
+y = ABS(rootdist y / fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger1 = vel x = 0
+x = fvar(21)
+ignorehitpause = 1
+
+
+;--------------------------------------------------
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "posx=%f,posy=%f,Edistx=%f,Edisty=%f,fac=%d\n"
+params =pos x,pos y,p2bodydist x,p2bodydist y,facing
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+trigger1 = command != "holds"
+text = "velX=%f,velY=%f,RdiX= %f,RdiY=%f,rv30=%d"
+params =vel x,vel y,rootdist x,rootdist y,root,var(30)
+
+[statedef 1915];----これまたvar(34,35)  疑似pausetime
+type    = A
+movetype= A
+physics = N
+poweradd= 0
+sprpriority = 2
+hitcountpersist = 1
+
+;----------------------モードによる無敵などの設定 
+;ラッシュ　通常モード食らう　EX,無敵
+[state 8000x,]
+type = nothitby
+trigger1 = root,var(20) = 1
+value = sca,na,nt,np,sa,sp,st,ha,hp,ht
+time = 1
+ignorehitpause = 1
+
+[State 8000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1;root,var(20) = 0 
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =1990
+time = 1
+ignorehitpause = 1
+
+[state 8000x,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+;----------------汎用大ヒットS部
+[state 200x,atc efe];hit guardエフェクト  大（必殺以上）絵揃ったらヘルパーに?がーどとひっと分ける
+type = Explod
+triggerall = numtarget(2500)
+trigger1 = time=0
+anim =ifelse(target(2500),gethitvar(guarded) = 0,6300+ random % 4,6152)
+ID=200
+pos = -5,-50
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[State 3200, ]
+type = ModifyExplod
+trigger1 = Time = [1,3] 
+ID = 205
+scale = time * 0.1 + 0.3,time * 0.1 + 0.3
+ignorehitpause = 1
+
+[state 1510,helper partner];----やっぱ重いよ、どする？
+type = Helper
+trigger1 =0;movehit
+trigger1 = time = 0
+helpertype = normal
+sprpriority  = 0
+name = "hit efe test"
+ID=8500
+pos = 0,-10
+postype = p2
+stateno = 8500 + random % 5 
+keyctrl =0
+ownpal = 1
+persistent = 0
+;----------------------------------ここまで
+
+[state -3,flag reset];ヒットカウント
+type = parentvaradd
+triggerall = numtarget(1900)
+triggerall = target(1900),stateno  != [120,155]
+trigger1 = time = 0
+persistent = 0
+fvar(2) = 1
+ignorehitpause = 1
+
+[state 1910,var];ヒットカウント
+type = varadd
+trigger1 = time = 0
+var(35) = 1
+persietent = 0
+ignorehitpause = 1
+
+[state 1915,];疑似hitpause
+type = posfreeze
+trigger1 = time <= 10
+value = 1
+ignorehitpause = 1
+
+[state 8000x,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+[state 3500,next2];疑似hitpause freezeanim
+type = changeanim
+triggerall = animelemtime(3) >= 0
+triggerall = animelemtime(4) < 0
+trigger1 = time <= 10
+value = 1910
+elem =3
+ignorehitpause = 1
+persistent = 1
+
+[state 3500,next2];疑似hitpause freezeanim
+type = changeanim
+triggerall = animelemtime(7) >= 0
+triggerall = animelemtime(8) < 0
+trigger1 = time <= 10
+value = 1910
+elem =7
+ignorehitpause = 1
+persistent = 1
+
+[state 3500,next2];疑似hitpause freezeanim
+type = changeanim
+triggerall = animelemtime(12) >= 0
+triggerall = animelemtime(13) < 0
+trigger1 = time <= 10
+value = 1910
+elem =12
+ignorehitpause = 1
+persistent = 1
+
+;-------------------------------------------
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+trigger1 = time != 0
+fvar(22) = ifelse(ABS(rootdist x) > ABS(rootdist y),rootdist x / fvar(21),rootdist y / fvar(21))
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+trigger3 = rootdist x = rootdist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝7
+[state 8150,5];-217,90 
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = time != 0
+;trigger1 = ABS(rootdist x) > ABS(rootdist y - 50) 
+x = ABS(rootdist x / fvar(22)) * ifelse(rootdist x < 0,-1,1)
+y = ABS(rootdist y / fvar(22)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+x = ifelse(rootdist x = 0,0,fvar(21)) * ifelse(rootdist x < 0,-1,1)
+y = ifelse(rootdist y = 0,0,fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist x = rootdist y
+trigger1 = rootdist x != 0 && rootdist y != 0
+x = ABS(rootdist x / fvar(21)) * ifelse(rootdist x < 0,-1,1);
+y = ABS(rootdist y / fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time != 0
+trigger1 = rootdist y = 0
+trigger1 = vel x = 0
+x = fvar(21)
+ignorehitpause = 1
+
+[state 3500,next2];攻撃ループ
+type = changestate
+trigger1 = time >= 15
+ctrl = 0
+value = 1910
+ignorehitpause = 1
+
+;------------------------攻撃くらい、戻りへ
+[statedef 1990];----
+type    = A
+movetype= i
+physics = N
+poweradd= 0
+ctrl = 0
+velset = 0,0
+anim =1990
+hitcountpersist = 1
+sprpriority = 2
+
+;----------------------モードによる無敵などの設定 
+;ラッシュ　通常モード食らう　EX,無敵
+[state 8000x,]
+type = nothitby
+trigger1 = 1;
+value = sca,na,nt,np,sa,sp,st,ha,hp,ht
+time = 1
+ignorehitpause = 1
+
+[state 8000x,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+[state 1990,]
+type = posfreeze
+trigger1 = 1
+time = 1
+value = 1
+
+[state 1990,]
+type = parentvarset
+trigger1 = time = 0
+var(30) = 1990
+
+[state 1990,]
+type = changestate
+trigger1 = animtime = 0
+value =8200
+
+;--------------------------------------------------
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "posx=%f,posy=%f,Edistx=%f,Edisty=%f,fac=%d\n"
+params =pos x,pos y,p2bodydist x,p2bodydist y,facing
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+trigger1 = command != "holds"
+text = "velX=%f,velY=%f,RdiX= %f,RdiY=%f,rv30=%d"
+params =vel x,vel y,rootdist x,rootdist y,root,var(30)
+
+;-------------------------変更　キルマシーン　init
+[statedef 3499]
+type    = A
+movetype = A
+physics = N
+sprpriority = 0
+velset = 0,0
+anim = 3500
+hitcountpersist = 1
+sprpriority = 2
+
+[state 8000,];ハグ経由の時機械エフェクトけし　1830
+type = RemoveExplod
+trigger1 = time = 0
+ID=1830
+ignorehitpause = 1
+
+[state 1700,var];タイムリセット　
+type = varset
+trigger1 =time = 0
+var(34) = 0
+
+[state 1700,var];リセット　
+type = varset
+trigger1 =time = 0
+var(35) = 0
+
+[state 3500,];命令レセット
+type = parentvarset
+trigger1 = time = 0
+var(10) = 0
+
+[state 3500,fvarset];クマさん性格により速度違う vel x
+type = varset
+trigger1 = time = 0
+fvar(20) = ifelse(root,var(20) = 0,3.5,0.3)
+
+[state 3500,fvarset];クマさん性格により速度違う vel y
+type = varset
+trigger1 = time = 0
+fvar(21) = ifelse(root,var(20) = 0,4,0.3)
+;felse(root,var(20) = 0,2.5,0.3)
+
+[state 3500,fvarset];クマさん性格により攻撃回数違わない？　V36 = var(35)
+type = varset
+trigger1 = time = 0
+var(36) = ifelse(root,var(20) = 0,13,13) + 1
+
+[state 3500,];ヨーヨーフラグをキルマシーンに3000
+type = parentvarset
+trigger1 = time = 0
+var(30) = 3499
+
+[State 3400, Super A]
+type = SuperPause
+trigger1 = 0;time = 0
+postype = p1
+pos = 18, -53
+anim = -1;1001
+sound = -1;s3000, 0
+poweradd = 0;-1000
+persistent = 0
+time = 15
+movetime = 15
+darken = 1
+
+[State 3499, g voice];N:主では役不足（誤用） E:若さ
+type = PlaySnd
+triggerall = root,var(59)
+trigger1 = anim  =3500
+trigger1 = animelem = 2
+value = s1700, ifelse(root,var(20), 4,3)
+channel = 5
+persistent = 0
+
+[State 3100, voice];効果音1
+type = PlaySnd
+trigger1 = animelem = 3
+value = s1400,0
+parsistent = 0
+channel = 4
+
+[state 3500,]
+type = varset
+trigger1 = 1
+fvar(0) = root,fvar(0)
+
+[state 3500,]
+type = varset
+trigger1 = anim  =3500
+trigger1 = animelem = 3
+fvar(2) = 1
+
+[state 3500,next2];
+type = changestate
+trigger1 = anim  =3500
+trigger1 = animelem = 3
+value = 3500
+
+;---------キルマシーン熊、3499-3510 var(34) time var(35) hit
+[statedef 3500]
+type    = A
+movetype = A
+physics = N
+sprpriority = 2
+hitcountpersist = 1
+
+[state 3500,]
+type = nothitby
+trigger1 = 1
+value = sca
+time = 1
+ignorehitpause = 1
+
+[State 8000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1;
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =3590
+time = 1
+ignorehitpause = 1
+
+[state 200x,];火の輪くぐり
+type = Explod
+trigger1 = numexplod(3500) = 0
+trigger1 = time = 0
+anim = 3510
+ID=3500
+postype = p1
+pos = -9,-10
+sprpriority = 3
+bindtime = -1
+removetime = -1
+ownpal = 1
+persistent = 0
+ignorehitpause = 1
+removeongethit=1
+scale =0.5,0.5
+
+[state 200x,];火の相手
+type = Explod
+triggerall = Numtarget(3500)
+trigger1 = numexplod(3550) = 0
+trigger1 = target(3500),stateno != [120,155] 
+anim = 6800
+ID=3550
+postype =p2
+pos = 0,0
+random = 20,0
+sprpriority = 3
+bindtime = -1
+removetime = -2
+ownpal = 1
+ignorehitpause = 1
+scale =0.5,0.5
+
+[state 3500,];命令レセット
+type = parentvarset
+trigger1 = time = 0
+var(10) = 0
+ignorehitpause = 1
+
+[state 3500,];ヨーヨーフラグをキルマシーンに3000
+type = parentvarset
+trigger1 = time = 0
+var(30) = 3500
+ignorehitpause = 1
+
+;-------------------消える条件は12接触(v35)、タイム v(34)
+[state 200x,]
+type = removeexplod
+trigger1 = var(34) >= 130
+trigger2 = var(35) >= 12
+ID =3500
+ignorehitpause = 1
+
+[state 3500,next2];消える条件は12接触(v35)、タイム v(34)
+type = changestate
+trigger1 = var(34) >= 130
+trigger2 = var(35) >= 12
+value = 3590
+ignorehitpause = 1
+
+;--------------------ﾀﾞﾒ補正テスト
+[state -3,];基底攻撃力1.2　＊　基底ダメ補正　＊　コンボ補正（考え中）
+type = varset
+triggeall = fvar(0) >= 0.8
+trigger1 = 0
+fvar(0) = 1.2 * fvar(1) - (fvar(2) * 0.001)
+ignorehitpause = 1
+
+[state -3,];
+type = varset
+triggeall = fvar(0) <= 0.3
+trigger1 = 0
+fvar(0) = 0.8
+ignorehitpause = 1
+
+[State 3500, 1]
+type = HitDef
+trigger1 = 1;time = 0
+attr = A, HA                     ;立ち状態で、通常の攻撃(ｓは立ち、ｎは通常、aは攻撃を表す)
+damage = floor(22 * fvar(0)),1                   
+animtype = back                 ;当てた時の相手のポーズ（light/midium/hard/back）から選択
+guardflag = MA                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitflag = MAF                    ;当てる事のできる条件
+priority = 7             ;攻撃の優先権（0弱い　4通常　7強い
+pausetime =0 , ifelse(root,var(25) = 0,7,7)                    
+sparkno = -1;2000;   
+guard.sparkno = -1;752;S6150
+sparkxy = -5, -20                ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound   = s205, 7
+guardsound = s150, 1
+ground.type = High               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime = 30             ;相手が後にすべる時間
+ground.hittime  = 10             ;コンボが繋がる時間（高くしすぎない事）
+guard.hittime = 10
+guard.velocity = -8
+ground.velocity = root,fvar(5),root,fvar(6)
+air.type = low                  ;空中で相手がくらった場所（上と同じ）
+air.hittime = 20                 ;空中でコンボが繋がる時間
+air.sliedtime  = 20             ;コンボが繋がる時間（高くしすぎない事）
+air.velocity = root,fvar(5),fvar(2) / 4 + root,fvar(6) 
+airguard.velocity = -3.5
+getpower = 15,15
+fall =1;
+fall.recover =0; 
+air.fall = 1;
+palfx.time = 80
+palfx.add = 240,220,0
+palfx.mul = 200,100,0
+palfx.sinadd = 240,220,0,3
+p1stateno = 3505
+ID=3500
+
+;------------------------------------ダストもーど
+[State 2500x, ];きりもみのアレは、29フレム以内の判断はvar(22) > 0
+type = TargetState
+triggerall = Numtarget(3500)
+trigger1 = movehit
+trigger1 = root,var(22) > 0 && root,var(46) = 10
+value = 275
+ID = 3500
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+[state 3500,next2];攻撃ループ
+type = changestate
+trigger1 = movecontact
+ctrl = 0
+value = 3505
+ignorehitpause = 1
+
+[state 3500,var];タイムカウント　
+type = varadd
+trigger1 =1
+var(34) = 1
+ignorehitpause = 0
+
+;-------------------------------------------きるろじゃだけは特殊、速度０になることはない・・はず
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+triggerall = ABS(rootdist x) > ABS(rootdist y)
+trigger1 =  rootdist x !=[-50,50];[-30,30]
+fvar(22) = rootdist x / fvar(21)
+ignorehitpause = 1
+
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+triggerall = ABS(rootdist x) < ABS(rootdist y)
+trigger1 = rootdist y !=[-10,30];[-10,10]
+fvar(22) = rootdist y / fvar(21)
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+trigger3 = rootdist x = rootdist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝fvar(21)
+[state 8150,5];-217,90 x
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = rootdist x !=[-50,50];[-30,30]
+x = ABS(rootdist x / fvar(22)) * ifelse(rootdist x < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];-217,90 y
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = rootdist y !=[-10,10];[-10,10]
+y = ABS(rootdist y / fvar(22)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];x
+type = velset
+triggerall = !fvar(22);0の時は特殊
+trigger1 = rootdist y = 0
+trigger1 = rootdist x !=[-50,50];[-30,30]
+x = ifelse(rootdist x = 0,0,fvar(21)) * ifelse(rootdist x < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];y
+type = velset
+triggerall = !fvar(22);0の時は特殊
+trigger1 = rootdist x = 0
+trigger1 = rootdist y !=[-10,10];[-10,10]
+y = ifelse(rootdist y = 0,0,fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = rootdist x = rootdist y
+triggerall = rootdist x != 0 && rootdist y != 0
+trigger1 = rootdist y !=[-10,10];[-10,10] 
+trigger1 = rootdist x !=[-50,50];[-30,30]
+x = ABS(fvar(21)) * ifelse(rootdist x < 0,-1,1);
+y = ABS(fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+;--------------------------------------------------
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "dsx=%f,dsy=%f,vx=%f,vy=%f,v21=%f\n"
+params =rootdist x,rootdist y,vel x,vel y,fvar(21)
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+trigger1 = command != "holds"
+text = "v22=%f,velY=%f,R2= %f,R6=%f,y=%f"
+params =fvar(22),vel y,root,fvar(2),root,fvar(6), root,fvar(2) / 3 + root,fvar(6)
+
+[statedef 3505]
+type    = A
+movetype = A
+physics = N
+sprpriority = 2
+hitcountpersist = 1
+
+[state 3500,]
+type = nothitby
+trigger1 = 1
+value = sca
+time = 1
+ignorehitpause = 1
+
+[State 8000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1;
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =3590
+time = 1
+ignorehitpause = 1
+
+;----------------汎用大ヒットS部
+[state 200x,atc efe];hit guardエフェクト  大（必殺以上）絵揃ったらヘルパーに?がーどとひっと分ける
+type = Explod
+triggerall = numtarget(3500)
+triggerall = target(3500),gethitvar(guarded) 
+trigger1 = time=0
+;anim =ifelse(target,gethitvar(guarded) = 0,6300+ random % 4,6152)
+anim = 6152
+ID=200
+pos = -5,-50
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 200x,atc efe];hit guardエフェクト  大（必殺以上）絵揃ったらヘルパーに?がーどとひっと分ける
+type = Explod
+triggerall = numtarget(3500)
+triggerall = target(3500),gethitvar(guarded) = 0
+trigger1 = time=0
+anim =6300+ random % 4
+ID=205
+pos = -5,-50
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.3,0.3
+persistent = 0
+ignorehitpause = 1
+
+[State 3200, ]
+type = ModifyExplod
+trigger1 = Time = [1,3] 
+ID = 205
+scale = time * 0.1 + 0.3,time * 0.1 + 0.3
+ignorehitpause = 1
+
+[state 1510,helper partner];----やっぱ重いよ、どする？
+type = Helper
+trigger1 =0;movehit
+trigger1 = time = 0
+helpertype = normal
+sprpriority  = 0
+name = "hit efe test"
+ID=8500
+pos = 0,-10
+postype = p2
+stateno = 8500 + random % 5 
+keyctrl =0
+ownpal = 1
+persistent = 0
+ignorehitpause = 1
+
+;----------------------------------ここまで
+[state 3500,var];ヒットカウント 全12　正確には「コンタクト」カウントだね
+type = varadd
+trigger1 = time = 0
+var(35) = 1
+persietent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = parentvaradd
+triggerall = numtarget(3500)
+triggerall = target(3500),gethitvar(guarded) = 0
+trigger1 = time = 0
+persistent = 0
+fvar(2) = 1
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+triggerall = numtarget(3500)
+triggerall = target(3500),gethitvar(guarded) = 0
+trigger1 = time = 0
+persistent = 0
+fvar(2) = 1
+ignorehitpause = 1
+
+[state 3500,var];ダメ‐補正実験
+type = varset
+triggerall = numtarget(3500)
+triggerall = target(3500),gethitvar(guarded) = 0
+trigger1 = time = 0
+fvar(0) = fvar(0) * 0.95
+persietent = 0
+ignorehitpause = 1
+
+[state 200x,];火の燃え相手
+type = Explod
+triggerall = Numtarget(3500)
+trigger1 = numexplod(3550) = 0
+trigger1 =target(3500),stateno != [120,155] 
+anim = 6800
+ID=3550
+postype =p2
+pos = 0,0
+sprpriority = 3
+bindtime = -1
+removetime = -2
+ownpal = 1
+ignorehitpause = 1
+scale =0.5,0.5
+
+;---------------以下移動、　本体に戻る
+
+;-------------------------------------------きるろじゃだけは特殊、原作で速度０，０になったこと1度確認、条件不明
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+triggerall = ABS(rootdist x) > ABS(rootdist y)
+trigger1 =  rootdist x !=[-50,50];[-30,30]
+fvar(22) = rootdist x / fvar(21)
+ignorehitpause = 1
+
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+triggerall = ABS(rootdist x) < ABS(rootdist y)
+trigger1 = rootdist y !=[-10,30];[-10,10]
+fvar(22) = rootdist y / fvar(21)
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+trigger3 = rootdist x = rootdist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝fvar(21)
+[state 8150,5];-217,90 x
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = rootdist x !=[-50,50];[-30,30]
+x = ABS(rootdist x / fvar(22)) * ifelse(rootdist x < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];-217,90 y
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = rootdist y !=[-10,10];[-10,10]
+y = ABS(rootdist y / fvar(22)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];x
+type = velset
+triggerall = !fvar(22);0の時は特殊
+trigger1 = rootdist y = 0
+trigger1 = rootdist x !=[-50,50];[-30,30]
+x = ifelse(rootdist x = 0,0,fvar(21)) * ifelse(rootdist x < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];y
+type = velset
+triggerall = !fvar(22);0の時は特殊
+trigger1 = rootdist x = 0
+trigger1 = rootdist y !=[-10,10];[-10,10]
+y = ifelse(rootdist y = 0,0,fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = rootdist x = rootdist y
+triggerall = rootdist x != 0 && rootdist y != 0
+trigger1 = rootdist y !=[-10,10];[-10,10] 
+trigger1 = rootdist x !=[-50,50];[-30,30]
+x = ABS(fvar(21)) * ifelse(rootdist x < 0,-1,1);
+y = ABS(fvar(21)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+;-------------------------------
+[state 3505,]
+type = posfreeze
+trigger1 = time <= 6
+value = 1
+ignorehitpause = 1
+
+[state 3505,]
+type = posadd
+trigger1 = FrontEdgeDist < 40
+trigger1 = 0;time = 6
+x = -20
+ignorehitpause = 1
+
+[state 3500,next2];攻撃ループ
+type = changestate
+trigger1 = time >= 10
+ctrl = 0
+value = 3500
+ignorehitpause = 1
+
+;--------------------------------------------------
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "posx=%f,posy=%f,Edistx=%f,Edisty=%f,0=%f\n"
+params =pos x,pos y,p2bodydist x,p2bodydist y,fvar(0)
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+trigger1 = command != "holds"
+text = "velX=%f,velY=%f,R2= %f,R6=%f,y=%f"
+params =vel x,vel y,root,fvar(2),root,fvar(6), root,fvar(2) / 3 + root,fvar(6)
+
+;-------------------キルマシーン終了　ヨーヨーに戻るまで停止、汎用8200へ
+[statedef 3590]
+type    = A
+movetype = I
+physics = N
+velset = 0,0
+anim = 3520
+hitcountpersist = 1
+
+[state 200x,]
+type = removeexplod
+trigger1 = time = 0
+ID =3500
+
+[State 3590, ];
+type = nothitby
+trigger1 = 1
+value = sca,na,sa,ha,np,sp,hp,nt,st,ht
+time = 1
+
+[state 3590,varset];ヨーヨーフラグセット
+type = parentvarset
+trigger1 = time = 0
+var(30) = 3590
+
+[state 3590,]
+type = changestate
+trigger1 = animtime = 0
+value = 8200
+
+

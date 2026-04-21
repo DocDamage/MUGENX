@@ -1,0 +1,3 @@
+@echo off
+echo Starting MUGEN X ENGINE...
+start engine\Ikemen_GO.exe -r .

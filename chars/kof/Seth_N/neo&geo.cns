@@ -1,0 +1,433 @@
+;Neo&Geo(ストライカー)
+[Statedef 2100]
+type    = S
+movetype= A
+physics = S
+poweradd= 0
+ctrl = 0
+velset = 0,0
+anim = 2100
+sprpriority = -1
+ownpal = 1
+
+[State 2100,1]
+type=PlaySnd
+trigger1 = AnimElem = 1
+value=s13, 5
+
+[State 2100,2];←ヘルパーを呼び出す
+type = Helper
+trigger1 = time = 1
+id = 4000
+name = "neo&geo"
+sprpriority = 4
+pos = -300,-50
+postype = p1
+facing = 1
+stateno = 2110;←呼び出されたヘルパーはこのステートから始まる
+helpertype = normal
+keyctrl = 0          
+ownpal = 1
+
+[State -1];←これで本体の動きは終了
+type = ChangeState
+trigger1 = animtime = 0
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+;Neo&Geo登場
+[Statedef 2110]
+type    = S
+movetype= A
+physics = S
+poweradd= 0
+ctrl = 0
+velset = 60,0
+anim = 2110
+sprpriority = -1
+
+[State 2110, 1];←パワーを減らす
+type = powerAdd
+;trigger1 = animelem = 1
+trigger1 =time = 0
+value = -500
+
+[State 2110, 2];←とりあえず加速させてる
+type = VelAdd
+trigger1 = Time >= 1
+y = .43
+x = .2
+
+[State 2110, 3]
+type = ChangeState
+trigger1 = Vel Y > 0 && Pos Y >= 0
+value = 2120
+ctrl = 0
+
+;---------------------------------------------------------------------------
+;Neo&Geo着地～爆発
+[Statedef 2120]
+type    = S
+movetype= A
+physics = S
+poweradd= 0
+ctrl = 0
+velset = 0,0
+anim = 2120
+sprpriority = -1
+ownpal = 1
+
+[State 2120, 1]
+type=PlaySnd
+trigger1 = Time = 0
+value = s3,7
+
+[State 2120, 1]
+type=PlaySnd
+trigger1 = AnimElem = 5
+value=s13, 1
+
+[State 2120, 2]
+type=PlaySnd
+trigger1 = AnimElem = 8
+value=s13, 2
+
+[State 2120, 3]
+type=PlaySnd
+trigger1 = AnimElem = 11
+value=s13, 3
+
+[State 2120, 3]
+type=PlaySnd
+trigger1 = AnimElem = 17,10
+value=s13, 4
+
+[State 2120, 4] 
+type = posset
+trigger1 = time = 0
+y = 0
+
+[State -3, 5]
+type = Explod
+trigger1 = AnimElem = 17,10
+anim = 8100
+pos = 0,5
+sprpriority = 6
+bindtime = 1
+ownpal = 1
+facing = 1
+
+[State 2120, 6]
+type = HitDef
+trigger1 = AnimElem = 17,11
+attr = S, NA
+animtype  = diagup
+damage = ifelse (Parent,Var(9) = 1,80,100), ifelse (Parent,Var(9) = 1,10,20)
+hitflag = MAFPD
+guardflag = M
+pausetime = 0,12
+sparkno = s7010
+guard.sparkno = S7030
+sparkxy = 0,-60
+hitsound   = s1,4
+guardsound = s2,1
+ground.type = Low
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -0.2,-12
+air.velocity = 0,-11
+down.velocity = 0,-12
+palfx.time = 70
+palfx.mul = 240,210,130
+palfx.add = 160,40,20
+palfx.sinadd = 60,30,0,20
+palfx.invertall = 3
+;fall = 1
+;fall.recover = 0
+yaccel = .45
+P2StateNo = 2122
+
+[State 2120, 7]
+type = HitOverride
+trigger1 = Time = 0
+attr = SCA, NT, ST, HT, NA, SA, HA,NP,SP,HP
+stateno = 2135        
+time = -1
+
+[State 2120, 7]
+type = ChangeState
+trigger1 = animtime = 0
+value = 2130
+ctrl = 0
+
+;---------------------------------------------------------------------------
+;爆発・相手
+[Statedef 2122]
+type = A
+movetype = H
+physics = N
+
+[State 2122, 1]
+type = VelSet
+trigger1 = Time = 0
+x = 0
+y = 0
+z = 0
+
+[State 2122, 2]
+type = ChangeAnim2
+Trigger1 = Time >= 0
+value = 2122
+
+[State 2122, 3]
+type = ChangeState
+trigger1 = HitShakeOver = 1
+value = 2125
+
+;---------------------------------------------------------------------------
+;爆発・相手２
+[Statedef 2125]
+type = A
+movetype = H
+physics = N
+
+[State 2125,1]
+type = VelSet
+trigger1 = HitShakeOver
+persistent = 0
+x = -0.8
+y = -12
+
+[State 2125, 2]
+type = ChangeAnim2
+Trigger1 = Time = 0
+value = 2125
+
+[State 2125, 3]
+type = VelAdd
+trigger1 = Time > 0
+y = .4
+
+[State 2125, 4]
+type = SelfState
+trigger1 = Vel Y > 0
+trigger1 = Pos Y >= 0
+value = 5100
+
+;---------------------------------------------------------------------------
+;Neo&Geo退散
+[Statedef 2130]
+type    = S
+movetype= A
+physics = S
+poweradd= 0
+ctrl = 0
+velset = -10,-10
+anim = 2130
+sprpriority = -1
+
+[State 2130, 1] 
+type = VelAdd
+Trigger1 = 1
+y = -.4
+x = -2
+
+[State 2130, 2]
+type = destroyself
+trigger1 = time = 20
+
+;---------------------------------------------------------------------------
+;Neo&Geo打撃受け吹っ飛び
+[Statedef 2135]
+type = A
+movetype = H
+physics = N
+anim = 2135
+velset = -7,-5
+
+[State 2135, 1]
+type = VelAdd
+trigger1 = Time > 0
+y = .5
+
+[State 2135, 2]
+type = SelfState
+trigger1 = Vel Y > 0
+trigger1 = Pos Y >= 0
+value = 2140
+
+;---------------------------------------------------------------------------
+;Neo&Geo打撃受け起き上がり
+[Statedef 2140]
+type = A
+movetype = H
+physics = N
+anim = 2140
+velset = 0,0
+
+[State 2140, 1] 
+type = posset
+trigger1 = time = 0
+y = 0
+
+[State 2140, 2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 2130
+ctrl = 1
+
+;---------------------------------------------------------------------------
+;巴投げ後追撃
+[Statedef 2150]
+type    = S
+movetype= A
+physics = S
+juggle  = 0
+poweradd= 0
+ctrl = 0
+velset = 20,5
+anim = 2150
+sprpriority = 2
+
+[State 2150, 1]
+type = powerAdd
+trigger1 = animelem = 1
+value = -500
+
+[State 2150, 2]
+type = VelAdd
+Trigger1 = 1
+y = .45
+x = 2.5
+
+[State 2150, 3]
+type = HitDef
+trigger1 = animelem = 1
+attr = A, NA
+damage = ifelse (Parent,Var(9) = 1,40,60)
+animtype  = diagup
+hitflag = MAFPD
+priority = 4
+pausetime = 12,12
+sparkno = s7010
+sparkxy = 20,-40
+hitsound   = s1,4
+ground.type = Low
+fall.velocity = -2,-14
+air.velocity = -2,-12
+;fall = 1
+;fall.recover = 0
+yaccel = .6
+P2StateNo = 2165
+
+[State 2150, 4]
+type = ChangeState
+trigger1 = Vel Y > 0 && Pos Y >= 0
+value = 2155
+ctrl = 0
+
+;---------------------------------------------------------------------------
+;巴投げ後追撃・着地
+[Statedef 2155]
+type    = S
+movetype= A
+physics = S
+poweradd= 0
+ctrl = 0
+velset = 0,0
+anim = 2155
+sprpriority = -1
+
+[State 2155, 1] 
+type = posset
+trigger1 = time = 0
+y = 0
+
+[State 2155, 2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 2160
+ctrl = 1
+
+;---------------------------------------------------------------------------
+;巴投げ後追撃・退散
+[Statedef 2160]
+type    = S
+movetype= A
+physics = S
+poweradd= 0
+ctrl = 0
+velset = -10,-10
+anim = 2110
+sprpriority = -1
+
+[State 2160, 1] 
+type = VelAdd
+Trigger1 = 1
+y = -.4
+x = -2
+
+[State 2160, 2]
+type = destroyself
+trigger1 = time = 20
+
+;---------------------------------------------------------------------------
+;追撃・相手１
+[Statedef 2165]
+type = A
+movetype = H
+physics = N
+
+[State 2165, 1]
+type = VelSet
+trigger1 = Time = 0
+x = 0
+y = 0
+z = 0
+
+[State 2165, 2]
+type = ChangeAnim2
+Trigger1 = Time >= 0
+value = 2165
+
+[State 2165, 3]
+type = ChangeState
+trigger1 = HitShakeOver = 1
+value = 2170
+
+;---------------------------------------------------------------------------
+;追撃・相手３
+[Statedef 2170]
+type = A
+movetype = H
+physics = N
+
+[State 2170, 1] 
+type = Turn
+trigger1 = Time = 0
+
+[State 2170,2]
+type = VelSet
+trigger1 = HitShakeOver
+persistent = 0
+x = 2
+y = -12
+
+[State 2170, 3]
+type = ChangeAnim2
+Trigger1 = Time = 0
+value = 2170
+
+[State 2170, 4]
+type = VelAdd
+trigger1 = Time > 0
+y = .5
+
+[State 2170, 5]
+type = SelfState
+trigger1 = Vel Y > 0
+trigger1 = Pos Y >= 0
+value = 5100
+
+

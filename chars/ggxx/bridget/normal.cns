@@ -1,0 +1,3417 @@
+;ブリジット　通常技;---
+;---摩擦の問題かそれとも吹き飛ばしか・・一応基準数値書いておく。同キャラ・密着での見た目基準、ロマキャン試行済。
+;----がーども、同じだけ動くみたい。ダウンする技とか、guardvelovity設定わすれないように
+;--特殊なのでない限り地上ヒットＸは以下の数値。(近立Ｓ1は？？)
+;--Lv1,-6,lv2,-7 lv3,-8 lv4,-9? lv4,-10?
+;---問題は、ダウン（Yvel)がからむ場合。Xは上のを適用かそれとも別か・・？
+;--必殺技、は落ちるのも横吹き跳びも早く感じる。yaccel設定必須かも。
+
+;----空中 重力について　physics =A　使用禁止
+;V18通常0 空ダッシュ1 R移動2(前半後半でも重力違う)
+;0攻撃 普通　1 カウント(v17)=0まで重力なし 
+;2　軽めの重力をかける　ｘはそのままですっとぶ ;　FDC、ロジャ発動も？　SSは除外
+;---------------------------------------------------------------------------
+; 立ち・P・　s200,swwf13
+[Statedef 200];
+type    = S                      
+movetype= A                      
+physics = n  
+;velset = ifelse(var(8), const(velocity.run.fwd.x) - 1,0),0
+ctrl = 0                         ;このステート中に他のコマンドを受け付けるか(1で受け付ける)
+anim = 200                       ;このステートで表示するスプライトステート番号(0で変化無し)
+sprpriority = 2                  ;表示した絵の重なり具合(2一番前　0通常　-1奥)
+Hitcountpersist = 1
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignorehitpause = 1
+
+[state -3,];基底ダメ補正
+type = varset
+trigger1 = prevstateno = [0,52]
+trigger1 = time = 0
+fvar(1) = 0.9
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.93
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[state 200x,staset]
+type = statetypeset
+triggerall =0; var(8)
+trigger1 = animelem >= 2
+physics =s
+
+[State 200, 1];LV1?のけぞりってpausetimeのことかそれともhitimeのことか・・？どっちよ
+type = HitDef
+trigger1 = time = 0
+attr = S, NA                   
+damage = floor(12 * fvar(0))                
+animtype = Light              
+guardflag = M                  
+hitflag = MAF                  
+priority = 3            
+pausetime = 10, ifelse(!var(25),10,10)          
+sparkno =-1;700;s6300   
+guard.sparkno = -1;s6150;750;S6150
+sparkxy = -10, -85              
+hitsound   = s205, 5
+guardsound = s150, 0
+ground.type = High              
+ground.slidetime = 15
+ground.hittime  = 12             
+ground.velocity = -6           
+air.type = High                
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5  
+air.fall = 1                 
+air.hittime = 15                
+getpower = 30,15
+fall.recover =ifelse(var(25),0,1)
+fall.recovertime = 10 
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6200,6150)
+ID=200
+pos = -5,-80
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[State 200, 7]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 202
+ctrl = 0
+
+; -------------立ち・P・フォロースルー　s202,　何故かあるフォロースルー、ctrl=1、何とか属性がど－たらこーたら
+[Statedef 202];
+type    = S                      
+movetype= i                      
+physics = s  
+velset = 0,0
+ctrl = 1                         ;このステート中に他のコマンドを受け付けるか(1で受け付ける)
+anim = 201                       ;このステートで表示するスプライトステート番号(0で変化無し)
+sprpriority = 2                  ;表示した絵の重なり具合(2一番前　0通常　-1奥)
+Hitcountpersist = 1
+
+[State 200, 7]
+type = ChangeState
+trigger1 = AnimTime = 0
+value =0
+ctrl = 1
+
+; ---------------------立ち・レバー弱・　s205,swwf13
+[Statedef 205];上半身無敵　
+type    = S                      
+movetype= A                      
+physics = n  
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0
+ctrl = 0                         ;このステート中に他のコマンドを受け付けるか(1で受け付ける)
+anim = 205                       ;このステートで表示するスプライトステート番号(0で変化無し)
+sprpriority = 2                  ;表示した絵の重なり具合(2一番前　0通常　-1奥)
+Hitcountpersist = 1
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignorehitpause = 1
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.90
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 205, 1]
+type = HitDef
+trigger1 = time = 0
+attr = S, NA                     ;立ち状態で、通常の攻撃(ｓは立ち、ｎは通常、aは攻撃を表す)
+damage = floor(30 * fvar(0))                   ;ダメージ量（左が当たった時、右はガードした時）
+animtype = Medium
+guardflag = M                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitflag = MAF                    ;当てる事のできる条件
+priority = 3             ;攻撃の優先権（0弱い　4通常　7強い
+pausetime = 10, ifelse(!var(25),14,18)                            
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -10, -85               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound   = s205, 5
+guardsound = s150, 0
+ground.type = High               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime = 20             ;相手が後にすべる時間
+ground.hittime  =  18            ;コンボが繋がる時間（高くしすぎない事）
+ground.velocity = -7.5             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可）
+air.type = High                  ;空中で相手がくらった場所（上と同じ）
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+air.hittime = 12                 ;空中でコンボが繋がる時間
+getpower = 40,20
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+fall.recovertime =40
+fall.recovertime = 20 
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -10,-85
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[State 205, 7]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+; 立ち・Ｋ　s210,smw 14
+[Statedef 210];蹴り
+type    = S
+movetype= A
+physics =N
+ctrl = 0
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0
+anim = 210
+sprpriority = 2
+Hitcountpersist = 1
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignorehitpause = 1
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.90
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 210, hit2]
+type = HitDef
+trigger1 = time = 0
+attr = S, NA
+animtype  = medium
+damage    = floor(22 * fvar(0))
+guardflag = M
+hitflag = MAF                    
+pausetime = 10,ifelse(!var(25),14,18)                            
+sparkno=-1;701   
+guard.sparkno=-1;751
+sparkxy = -5,-55
+hitsound   = s205, 5
+guardsound = s150, 0
+ground.type = low
+ground.slidetime =  18            
+ground.hittime  = 16
+ground.velocity = -8
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+air.type = high
+getpower = 40,20
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+down.velocity = -5,-3.5            
+down.hittime  = 7
+down.slidetime =  7  
+fall.recovertime = 15 
+          
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -5,-55
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 210,]
+type = posadd
+trigger1 = animelem = 5
+trigger2 = animelem = 6
+trigger3 = animelem = 7
+trigger4 = animelem = 8
+trigger5 = animelem = 9
+trigger6 = animelem = 10
+x = 1.2
+
+[State 40, 6];
+type = playsnd
+trigger1 = animelem = 11
+value = s100,1
+channel = 2
+persistent = 0
+
+[State 210, 5]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+; 立ちレバーＫ　s215,smw 14
+[Statedef 215];中段・足元無敵
+type    = S
+movetype= A
+physics =n
+ctrl = 0
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0
+anim = 215
+sprpriority = 2
+Hitcountpersist = 1
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) + 2
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+trigger1 = animelem = 10
+fvar(2) = 1
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+trigger1 = animelem = 12
+fvar(2) = 1
+persistent = 0
+ignorehitpause = 1
+
+[State 200x,]
+type = Velmul
+trigger1 = prevstateno = [99,100]
+trigger1 = Vel X > 0
+x = 0.95
+
+[State 215, hit2]
+type = HitDef
+trigger1 = animelem = 10
+attr = S, NA
+animtype  = medium
+damage    = floor(20 * fvar(0))
+guardflag = H
+hitflag = MAF             
+pausetime = 10,ifelse(!var(25),12,14)                            
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -5,-55
+hitsound   = s205, 6
+guardsound = s150, 0
+ground.type = low
+ground.slidetime = 16
+ground.hittime  = 14
+ground.velocity = -7
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+getpower = 40,20
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+fall.recovertime = 20 
+id=215
+
+[State 215, hit2]
+type = HitDef
+trigger1 = animelem = 12
+attr = S, NA
+animtype  = medium
+damage    = floor(20 * fvar(0))
+guardflag = H
+hitflag = MAFD             
+pausetime = 10,ifelse(!var(25),12,14)                            
+sparkno = 701;s6300   
+guard.sparkno = 751;S6150
+sparkxy = -5,-10
+hitsound   = s205, 6
+guardsound = s150, 0
+ground.type = low
+ground.slidetime = 30
+ground.hittime  = 25
+ground.velocity = -7
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+getpower = 40,20
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+down.velocity = -5,-3.5            
+down.hittime  = 7
+down.slidetime =  7    
+fall.recovertime = 20 
+Id=216
+       
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+triggerall = numtarget(215)
+trigger1 = animelemtime(10) >= 0
+trigger1 = animelemtime(12) < 0
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -5,-55
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+triggerall = numtarget(216)
+trigger1 = animelemtime(12) >= 0
+trigger1 = animelemtime(14) < 0
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -5,-10
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 215,]
+type  = veladd
+trigger1 = animelemtime(2) >= 0
+trigger1 = animelemtime(11) <= 2
+x = ifelse(prevstateno = 99 || prevstateno = 100,0.05,0.2)
+
+[state 215,]
+type  = velset
+trigger1 = animelemtime(12) = 0
+x = 0.0
+
+[State 215, 5]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;立ちS・近距離　s220,ssw
+;-------------------------------------
+[Statedef 220]; 2hit
+type    = S                      
+movetype= A                      
+physics = n
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0
+ctrl = 0                         ;このステート中に他のコマンドを受け付けるか(1で受け付ける)
+anim = 220                       ;このステートで表示するスプライトステート番号(0で変化無し)
+sprpriority = 0                  ;表示した絵の重なり具合(2一番前　0通常　-1奥)
+Hitcountpersist = 1
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+trigger1 = animelem = 5
+fvar(2) = 1
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+trigger1 = animelem = 6
+fvar(2) = 1
+persistent = 0
+ignorehitpause = 1
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.90
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 220, hit1]
+type = HitDef
+trigger1 =animelem = 5
+attr = S, NA                     ;立ち状態で、通常の攻撃(ｓは立ち、ｎは通常、aは攻撃を表す)
+damage = floor(22 * fvar(0)),0                   ;ダメージ量（左が当たった時、右はガードした時）
+animtype = medium
+guardflag = M                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitflag = MAF                   ;当てる事のできる条件
+priority = 7, Hit                ;攻撃の優先権（0弱い　4通常　7強い
+pausetime = 12,ifelse(!var(25),14,16)                            
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -15, -55               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound   = s205, 6
+guardsound = s150, 0
+ground.type = low               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime = 20
+ground.hittime  = 18             ;コンボが繋がる時間（高くしすぎない事）
+ground.velocity = -2.5             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可）
+air.type = High                  ;空中で相手がくらった場所（上と同じ）
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+air.hittime =  ifelse(!var(25),16,20) 
+getpower = 40,20
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+fall.recovertime = 20 
+ID=220
+
+[State 220, hit1]
+type = HitDef
+trigger1 =animelem = 11
+attr = S, NA                     ;立ち状態で、通常の攻撃(ｓは立ち、ｎは通常、aは攻撃を表す)
+damage = floor(22 * fvar(0)),0                   ;ダメージ量（左が当たった時、右はガードした時）
+animtype = back
+guardflag = M                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitflag = MAF                   ;当てる事のできる条件
+priority = 7, Hit                ;攻撃の優先権（0弱い　4通常　7強い
+pausetime = 12,ifelse(!var(25),14,18)                            ;攻撃が当たった時の硬直時間（左が自分、右が相手）
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -10, -75               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound   = s205, 6
+guardsound = s150, 0
+ground.type = high               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime =  18
+ground.hittime  = 16             ;コンボが繋がる時間（高くしすぎない事）
+ground.velocity = -8             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可）
+air.type = High                  ;空中で相手がくらった場所（上と同じ）
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+air.hittime = 12                 ;空中でコンボが繋がる時間
+getpower = 40,20
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+fall.recovertime = 20 
+ID=221
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+triggerall = numtarget(220)
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -15,-55
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+triggerall = numtarget(221)
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -10,-75
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[State 220, 7]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;立ちS・遠距離　s225,ssw
+;-------------------------------------
+[Statedef 225];横
+type    = S                      
+movetype= A                      
+physics = n
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0
+ctrl = 0                         ;このステート中に他のコマンドを受け付けるか(1で受け付ける)
+anim = 225                       ;このステートで表示するスプライトステート番号(0で変化無し)
+sprpriority = 0                  ;表示した絵の重なり具合(2一番前　0通常　-1奥)
+Hitcountpersist = 1
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignorehitpause = 1
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.90
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 225, hit1]
+type = HitDef
+trigger1 =time = 0
+attr = S, NA                    
+damage = floor(34 * fvar(0)),0                  
+animtype = medium
+guardflag = M                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitflag = MAFD                   ;当てる事のできる条件
+priority = 7, Hit                ;攻撃の優先権（0弱い　4通常　7強い
+pausetime = 10, ifelse(!var(25),14,18)               
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -5, -60               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound   = s205, 6
+guardsound = s150, 0
+ground.type = high               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime = 18
+ground.hittime  = 16             ;コンボが繋がる時間（高くしすぎない事）
+ground.velocity = -8             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可）
+air.type = High                  ;空中で相手がくらった場所（上と同じ）
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+air.hittime =  18
+getpower = 40,20
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+fall.recovertime = 20 
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -5,-60
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[State 225, 7]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;------立ちSレバー s230,　　HS扱い、Sレバー入れ前上方向攻撃
+[Statedef 230];1hit  カウンターで壁跳ねかえり
+type    = S                      
+movetype= A                      
+physics = n
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0                      
+;velset = 0,0                     ;このステートが始まった時に移動するか（0,0で動かない）
+ctrl = 0                         ;このステート中に他のコマンドを受け付けるか(1で受け付ける)
+anim = 230                       ;このステートで表示するスプライトステート番号(0で変化無し)
+sprpriority = 2                  ;表示した絵の重なり具合(2一番前　0通常　-1奥)
+Hitcountpersist = 1
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.90
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 230, hit1]
+type = HitDef
+trigger1 =time = 0
+attr = S, NA                     ;立ち状態で、通常の攻撃(ｓは立ち、ｎは通常、aは攻撃を表す)
+damage = floor(46 * fvar(0)),0                   ;ダメージ量（左が当たった時、右はガードした時）
+animtype = hard                 ;当てた時の相手のポーズ（light/midium/hard/back）から選択
+guardflag = M                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitflag = MAF                   ;当てる事のできる条件
+priority = 6, Hit                ;攻撃の優先権（0弱い　4通常　7強い
+pausetime =10, ifelse(!var(25),17,25)               
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -10, ifelse(p2dist x < 50,-70,-80)              
+hitsound   = s205, 5
+guardsound = s150, 0
+ground.type = high               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime = 21            ;相手が後にすべる時間
+ground.hittime  = 19             ;コンボが繋がる時間（高くしすぎない事）
+ground.velocity = -9,0             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可
+air.type = High                  ;空中で相手がくらった場所（上と同じ）
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+air.hittime = 19
+air.sliedtime = 21                 
+getpower = 40,20
+fall = 0
+air.fall = 1
+fall.recover = 1
+fall.recovertime =40
+ID=2400
+p2facing = ifelse(var(25),1,0)
+fall.recovertime = 20 
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -10, ifelse(p2dist x < 50,-70,-80)              
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+;------------------壁跳ねかえり　カウンター時のみ
+;カウンター判定は 当たってなくtarget=0) 相手攻撃状態movetype=A) で
+;食らってない時(movetype!=h(当たるとターゲットになって0にセットされるので)
+;-----------にフラグを１
+[State 2500x, ];
+type = TargetState
+triggerall = var(25) = 1
+trigger1 = Numtarget(2400)
+;trigger1 = target(2400),alive 
+trigger1 = movehit
+trigger1 = 1;target,statetype != A
+value = 2400
+ID = 2400
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+[State 230, 7]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;------立ちD　（エリアル s240,
+[Statedef 240];エリアル
+type    = S                      
+movetype= A                      
+physics = n
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0                      
+;velset = 0,0                     ;このステートが始まった時に移動するか（0,0で動かない）
+ctrl = 0                         ;このステート中に他のコマンドを受け付けるか(1で受け付ける)
+anim = 240                       ;このステートで表示するスプライトステート番号(0で変化無し)
+sprpriority = 2                  ;表示した絵の重なり具合(2一番前　0通常　-1奥)
+Hitcountpersist = 1
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.80
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 240, hit1]
+type = HitDef
+trigger1 = time = 0
+attr = S, NA                     ;立ち状態で、通常の攻撃(ｓは立ち、ｎは通常、aは攻撃を表す)
+damage = floor(17 * fvar(0)),0                   ;ダメージ量（左が当たった時、右はガードした時）
+animtype = diagup                 ;当てた時の相手のポーズ（light/midium/hard/back）から選択
+guardflag = H                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitflag = MAFD                   ;当てる事のできる条件
+priority = 6, Hit                ;攻撃の優先権（0弱い　4通常　7強い
+pausetime =6, 10                 ;攻撃が当たった時の硬直時間（左が自分、右が相手）
+guard.pausetime =10, 6                 ;攻撃が当たった時の硬直時間（左が自分、右が相手）
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -5, -56               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound   = s205, 6
+guardsound = s150, 0
+ground.type = low               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime = 60             ;相手が後にすべる時間
+ground.hittime  = 80             ;コンボが繋がる時間（高くしすぎない事）
+ground.velocity = -0.8,-8.5             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可
+guard.velocity = -6.5             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可）
+guard.hittime = 20
+guard.slidetime = 18             
+air.type = High                
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+air.hittime = 20
+air.sliedtime = 18                 
+down.velocity = -5,-3.5            
+down.hittime  = 7
+down.slidetime =  7            
+yaccel = 0.38
+fall.envshake.time = 15
+fall = 1
+getpower = 40,20
+fall.recover = ifelse(var(25),0,1)
+ID=240
+p2facing=1
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos =  -5, -56               
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 240,]
+type  =varset
+triggerall = numtarget(240)
+trigger1 = target(240),ishelper = 0
+trigger1 =movehit
+var(4) =target(240),ID
+ignorehitpause = 1
+
+[state 240,helper partner];----dust場合のはりつき
+type = Helper
+triggerall = 0;NumHelper(240) = 0
+trigger1 = target(240),ishelper = 0
+trigger1 = movehit
+helpertype = normal
+sprpriority  = 0
+name = "dust enemydist"
+ID = 240
+pos = 0,0
+postype =playerID(var(4))
+stateno = 670
+keyctrl =0
+ownpal = 1
+persistent = 0
+ignorehitpause = 1
+
+;-----------------地上相手のみ
+;-----------にフラグを１
+[State 2500x, ];地上み
+type = TargetState
+trigger1 = Numtarget(240)
+trigger1 = target(240),ishelper = 0
+trigger1 = target(240),statetype= S || target(240),statetype = C
+trigger1 = movehit
+value = 245
+ID = 240
+persistent = 0
+ignorehitpause = 1
+;------------------　ここまで
+
+[State 240, 7]
+type = ChangeState
+triggerall = 0;numtarget(240)
+trigger1 = target(240),ishelper = 0
+trigger1 = target(240),statetype = s
+trigger1 = command = "holdup"
+trigger1 = movehit
+value = 242
+ctrl = 0
+ignorehitpause = 1
+
+[state 240,var(11)];ダストえっと・・22に。ちょうど二倍でおぼえやす
+type = varset
+triggerall = 0;numtarget(240)
+trigger1 = movehit
+trigger1 = target(240),stateno = 245;type = s
+trigger1 = command = "holdup"
+var(22) = 30
+ignorehitpause = 1
+
+[state 240,var(11)];エリアル
+type = varset
+triggerall = numtarget(240)
+trigger1 = movehit
+var(11) = 60
+ignorehitpause = 1
+
+[State 240, 7]
+type = ChangeState
+triggerall = numtarget(240)
+triggerall = command = "holdup"
+trigger1 = target(240),stateno = 245
+trigger1 = movehit
+trigger2 = target(240),statetype= S || target(240),statetype = C
+trigger2 = movehit
+value = 40
+ctrl = 1
+ignorehitpause = 1
+
+[state 215,]
+type  = posadd
+trigger1 = animelem = 1
+trigger2 = animelem = 2
+trigger3 = animelem = 3
+trigger4 = animelem = 4
+trigger5 = animelem = 5
+trigger6 = animelem = 6
+trigger7 = animelem = 7
+trigger8 = animelem = 8
+x = 5
+
+[State 240, 7]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+[Statedef 242];test エリアル 地上で当たったらホーミング
+type    = A                      
+movetype= A                      
+physics = A
+ctrl = 0 
+velset = 1.5,const(velocity.jump.y) - 1; - 2
+anim = 41
+hitcountpersist = 1
+
+;-----------------地上相手のみ
+;-----------にフラグを１
+[State 2500x, ];地上み
+type = TargetState
+trigger1 = Numtarget(240)
+trigger1 = time = 0
+value = 245
+ID = 240
+persistent = 0
+ignorehitpause = 1
+;------------------　ここまで
+
+[state 240,var(11)];エリアル
+type = varset
+triggerall = numtarget(240)
+trigger1 = time = 0
+var(11) = 60
+ignorehitpause = 1
+
+[State 240, 7]
+type = ChangeState
+trigger1 = Time = 0
+value = 50
+ctrl = 1
+ignorehitpause = 1
+
+[Statedef 244];test エリアル
+type    = U                      
+movetype= H                      
+physics = n
+ctrl = 0 
+
+[state 244,]
+type = posfreeze
+trigger1 = 1
+time = 1
+ignorehitpause = 1
+
+[state 245,]
+type = velset
+trigger1 = statetype = L
+trigger1 = time = 0
+x = -5
+y = -3.5
+ 
+[state 245,]
+type = selfstate
+trigger1 = statetype = L
+trigger1 = time = 0
+value = 5080
+
+[state 245,]
+type = velset
+trigger1 = statetype = A
+trigger1 = time = 0
+x = -5
+y = -6.5
+ 
+[state 245,]
+type = selfstate
+trigger1 = statetype = a
+trigger1 = time =0
+value = 5030
+
+[state 245,]
+type = changestate
+trigger1 = statetype = S || statetype = C
+trigger1 = time = 0
+value = 245
+
+;---------エリアル、打ち上げられた敵、usep2spr　　復帰可能、しょぼしょぼ。
+[Statedef 245];test エリアル
+type    = A                      
+movetype= H                      
+physics = n
+ctrl = 0 
+velset = -0.8,-9.0
+                        
+[state 3800,];  ふきとび
+type = changeanim
+trigger1 = time = 0
+trigger1 = selfanimexist(5052)
+value = ifelse(authorname = "R-R",5052 + var(0),5052)
+ignorehitpause = 1
+
+[state 3800,];  ふきとび
+type = changeanim
+triggerall = time = 0
+trigger1 = !selfanimexist(5052)
+trigger1 = selfanimexist(5051)
+value = ifelse(authorname = "R-R",5051 + var(0),5051)
+ignorehitpause = 1
+
+[state 3800,];  ふきとび
+type = changeanim
+triggerall = time =0
+trigger1 = !selfanimexist(5052)
+trigger1 = !selfanimexist(5051)
+value = ifelse(authorname = "R-R",5050 + var(0),5050)
+ignorehitpause = 1
+
+[state 3800,]
+type = veladd
+trigger1 = 1
+y = 0.38
+
+[state 245,]
+type = selfstate
+trigger1 = vel y > 0
+value = 5050
+
+[Statedef 262];test エリアル 地上で当たったらホーミング
+type    = A                      
+movetype= A                      
+physics = A
+ctrl = 0 
+velset = 1.5,const(velocity.jump.y) - 1; - 2
+anim = 41
+hitcountpersist = 1
+
+;-----------------地上相手のみ
+;-----------にフラグを１
+[State 2500x, ];地上み
+type = TargetState
+trigger1 = Numtarget(240)
+trigger1 = time = 0
+value = 245
+ID = 240
+persistent = 0
+ignorehitpause = 1
+;------------------　ここまで
+
+[state 260,var(11)];エリアル
+type = varset
+triggerall = numtarget(240)
+trigger1 = time = 0
+var(11) = 60
+ignorehitpause = 1
+
+[State 260, 7]
+type = ChangeState
+trigger1 = Time = 0
+value = 50
+ctrl = 1
+ignorehitpause = 1
+
+;------立ちpレバー右下 s230,　お尻攻撃 上段、カウンターでよろけ
+;ーーーーよろけ解説…相手が攻撃状態であるかを判定、var(25)にセット、movehit&targetstateで2000
+;-------レバガチャ？後で考える
+[Statedef 250];1hit
+type    = S                      
+movetype= A                      
+physics = n
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0                      
+ctrl = 0                         ;このステート中に他のコマンドを受け付けるか(1で受け付ける)
+anim = 250                       ;このステートで表示するスプライトステート番号(0で変化無し)
+sprpriority = 2                  ;表示した絵の重なり具合(2一番前　0通常　-1奥)
+Hitcountpersist = 1
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.90
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 230, hit1]
+type = HitDef
+trigger1 = time = 0
+attr = S, NA                     ;立ち状態で、通常の攻撃(ｓは立ち、ｎは通常、aは攻撃を表す)
+damage = floor(24 * fvar(0)),0                   ;ダメージ量（左が当たった時、右はガードした時）
+animtype = hard                 ;当てた時の相手のポーズ（light/midium/hard/back）から選択
+guardflag = M                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitflag = MAF                   ;当てる事のできる条件
+priority = 6, Hit                ;攻撃の優先権（0弱い　4通常　7強い
+pausetime =10, ifelse(!var(25),14,18)               
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -10, -55               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound   = s205, 5
+guardsound = s150, 0
+ground.type = low               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime = 18             ;相手が後にすべる時間
+ground.hittime  = 16             ;コンボが繋がる時間（高くしすぎない事）
+ground.velocity = -8,0             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可
+air.type = High                  ;空中で相手がくらった場所（上と同じ）
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+air.hittime = 20                 ;空中でコンボが繋がる時間
+ID = 2500
+getpower = 40,20
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+p2facing=1
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos =  -10, -55               
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 250,]
+type = velset
+trigger1 = animelemtime(4) >= 0
+trigger1 = animelemtime(5) <= 0 
+x = 3.5
+
+[state 250,]
+type = velset
+trigger1 = animelemtime(5) > 0 
+trigger1 = animelemtime(6) <= 0 
+x = 3.0
+
+[state 250,]
+type = velset
+trigger1 = animelemtime(7) >= 0 
+x = 0
+
+;------------------よろけ　地上相手のみ
+;カウンター判定は 当たってなくtarget=0) 相手攻撃状態movetype=A) で
+;食らってない時(movetype!=h(当たるとターゲットになって0にセットされるので)
+;-----------にフラグを１
+[State 2500x, ];地上のみよろけ
+type = TargetState
+triggerall = var(25) = 1
+trigger1 = Numtarget(2500)
+trigger1 = movehit
+trigger1 = target,statetype != A
+trigger1 = target(2500),alive 
+value = 2550
+ID = 2500
+persistent = 0
+ignorehitpause = 1
+
+;------------------よろけ　ここまで
+
+[State 250, 7]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+;屈み・p・s400,cwn 16
+[statedef 400];
+type    = C
+movetype= A
+physics = n
+ctrl = 0
+anim = 400
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0
+sprpriority = 2
+Hitcountpersist = 1
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+[state -3,];基底ダメ補正
+type = varset
+trigger1 = prevstateno = [0,52]
+trigger1 = time = 0
+fvar(1) = 0.8
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.90
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 400, 2]
+type = HitDef
+trigger1 = Time = 0
+attr = C, NA
+damage    = floor(16 * fvar(0))
+priority  = 4
+animtype  = Light
+hitflag = MAF
+guardflag = M
+pausetime = 10,ifelse(!var(25),10,10)            
+sparkno = -1;;700;s6300   
+guard.sparkno = -1;750;S6150
+sparkxy = -10,-30
+hitsound   = s205, 5
+guardsound = s150, 0
+ground.type = Low
+ground.slidetime =  12
+ground.hittime  = 10
+ground.velocity = -6
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+getpower = 20,10
+fall = 0
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6200,6150)
+ID=200
+pos = -10,-30
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[State 400, 4]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 11
+ctrl = 1
+
+;---------------------------------------------------------------------------
+;屈み・k s410,cmw17
+[Statedef 410];
+type    = C
+movetype= A
+physics = n
+ctrl = 0
+anim = 410
+sprpriority = 0
+Hitcountpersist = 1
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+[state -3,];基底ダメ補正
+type = varset
+trigger1 = prevstateno = [0,52]
+trigger1 = time = 0
+fvar(1) = 0.7
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.90
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 410, 2]
+type = HitDef
+trigger1 = time = 0
+attr = C, NA
+damage    = floor(12 * fvar(0))
+animtype  = light
+hitflag = MAFD
+guardflag = L
+pausetime = 10,ifelse(!var(25),10,10)            
+sparkno = -1;700;s6300   
+guard.sparkno = -1; 750;S6150
+sparkxy = -10,-5
+hitsound   = s205, 6
+guardsound = s150, 0
+ground.type = Low
+ground.slidetime =  12          
+ground.hittime  = 10
+ground.velocity = -6
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+getpower = 30,15
+fall = 0
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+down.velocity = -5,-3.5            
+down.hittime  = 7
+down.slidetime =  7 
+       
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6200,6150)
+ID=200
+pos = -10,-5
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[State 410, 4]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 11
+ctrl = 1
+
+;-屈s　　s420,csw----------
+[statedef 420]; 
+type    = C
+movetype= A
+physics = n
+ctrl = 0
+anim = 420
+sprpriority = 2
+Hitcountpersist = 1
+;velset = ifelse(var(8), const(velocity.run.fwd.x) + 2,0),0
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.90
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 420, test] 
+type = HitDef
+trigger1 = time = 0
+attr = C, NA
+damage    = floor(30* fvar(0))
+animtype  = hard
+hitflag = MAF
+guardflag = M
+pausetime = 10,ifelse(!var(25),14,18)            
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -10,ifelse(p2dist x > 50,-50,-35)
+hitsound   = s205, 6
+guardsound = s150, 0
+ground.type = low
+ground.slidetime = 18
+ground.hittime  =  16
+ground.velocity = -8,0
+air.velocity = fvar(5), fvar(2) / 4 + fvar(6);-2.5, -6.5                    
+air.slidetime = 20
+air.hittime  = 20
+getpower = 40,20
+fall = 0
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+fall.recovertime =40
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -10,ifelse(p2dist x > 50,-50,-35)
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[State 420, 4]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 11
+ctrl = 1
+
+;-屈D　　s440,csw----------
+[statedef 440]; 足払い18
+type    = C
+movetype= A
+physics = n
+ctrl = 0
+anim = 440
+sprpriority = 2
+Hitcountpersist = 1
+;velset = ifelse(var(8), const(velocity.run.fwd.x),0),0
+
+[state -3,flag reset];ダッシュ慣性1　継続させる
+type = velset
+trigger1 = var(8)
+trigger1 = time = 0
+trigger1  =prevstateno = [0,52]
+x = const(velocity.run.fwd.x) 
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ダッシュ慣性2　　０にする
+type = velset
+trigger1 = !var(8)
+trigger1 = time = 0
+x = 0
+y = 0
+persistent = 0
+ignorehitpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+[State 200x,]
+type = Velmul
+trigger1 = Vel X > 0
+x = 0.90
+
+[State 200x,]
+type = Velset
+trigger1 = Vel X <= 0.5
+x = 0
+
+[State 440, test] 
+type = HitDef
+trigger1 = time = 0
+attr = C, NA
+damage    = floor(32* fvar(0))
+animtype  = hard
+hitflag = MAFD
+guardflag = L
+pausetime = 15,15
+guardpausetime = 15,15
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -5,-10
+hitsound   = s205, 6
+guardsound = s150, 0
+ground.type = trip
+ground.slidetime = 25
+ground.hittime  = 20
+ground.velocity = -3,-8
+guard.velocity = -9
+guard.hittime  = 18
+guard.slidetime = 20
+air.type = trip
+air.velocity = -2.5,-6.5            ;fvar(5),fvar(6);-2.5, -6.5                    
+air.slidetime = 20
+air.hittime  = 20
+fall.animtype = back
+down.animtype = back
+down.velocity = -5,-3.5            
+down.hittime  = 7
+down.slidetime =  7            
+down.bounce = 1
+fall.xvelocity  = 0
+fall.yvelocity =-3
+getpower = 40,20
+fall = 1
+air.fall = 1
+fall.recover = 0
+;p2stateno = ifelse(enemynear,statetype != L,450,445)
+ID=440
+p2facing = 1
+
+;-----------にフラグを１
+[State 2500x, ];地上のみ
+type = TargetState
+trigger1 = Numtarget(440)
+trigger1 = target(440),ishelper = 0
+trigger1 = movehit
+value = ifelse(target(440),statetype != L,450,445)
+ID = 440
+persistent = 0
+ignorehitpause = 1
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -5,-10
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[State 440, 4]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 11
+ctrl = 1
+
+;--------down中あたり
+[Statedef 445];
+type    = u
+movetype= H
+physics = n
+ctrl = 0
+sprpriority = 0
+;velset = -5,-3.5
+
+[state 455,]
+type = velset
+trigger1 = time = 0
+trigger1 = statetype = L
+x = -5
+y = -3.5
+
+[state 455,]
+type = velset
+trigger1 = time = 0
+trigger1 = statetype = A
+x = fvar(3)
+y = fvar(6)
+
+[state 455,]
+type = posfreeze
+trigger1 = time <= 8
+time = 1
+value = 1
+
+[state 455,]
+type = selfstate
+trigger1 = time >= 8
+value = 5080
+
+;------------原作ではｔりｐでも跳ねます
+[Statedef 450];
+type    = A
+movetype= H
+physics = N
+ctrl = 0
+sprpriority = 0
+velset = 0,0
+
+[State 1293, 1]
+type = ChangeAnim
+trigger1 =time <= 17
+value = ifelse(authorname = "R-R",5070 + var(0),5070)
+
+[State 1293, 1]
+type = posadd
+trigger1 =1
+value = ifelse(time % 2 = 0,1,-1)
+
+[State 440, 4]
+type = ChangeState
+trigger1 = Time >= 17
+value = 460
+
+[statedef 460]
+type    = A
+movetype= H
+physics = n
+ctrl = 0    
+velset = -1.6,-4.5
+
+[state 460,]
+type = veladd;gravity
+trigger1 = 1
+y = 0.38
+
+[State 1000, 3]
+type = EnvShake
+trigger1 = pos y >= -5
+trigger1 = vel y > 0
+time = 10
+ampl = 5
+
+[state 1293,]
+type = HitFallSet
+trigger1 = time > 1
+value = 1
+
+[State 830,]
+type = changeState
+trigger1 = pos y >= -5
+trigger1 = vel y > 0
+value = 2420;5110
+
+[Statedef 470];イントロ用の2回目跳ねにしてしまったのでばぐってるよ
+type    = A
+movetype= H
+physics = N
+ctrl = 0
+sprpriority = 0
+velset = 0,0
+
+[State 1293, 1]
+type = ChangeAnim
+trigger1 =time = 0
+value = ifelse(authorname = "R-R",5070 + var(0),5070)
+
+[State 1293, 1]
+type = posadd
+trigger1 =1
+value = ifelse(time % 2 = 0,1,-1)
+
+[State 440, 4]
+type = ChangeState
+trigger1 = Time >= 1
+value = 480
+
+[statedef 480]
+type    = A
+movetype= H
+physics = n
+ctrl = 0    
+velset = 0,-3
+
+[state 460,]
+type = gravity
+trigger1 = 1
+
+[State 1000, 3]
+type = EnvShake
+trigger1 = pos y >= -5
+trigger1 = vel y > 0
+time = 10
+ampl = 5
+
+[state 1293,]
+type = HitFallSet
+trigger1 = time > 1
+value = 1
+
+[State 830,]
+type = changeState
+trigger1 = pos y >= -5
+trigger1 = vel y > 0
+value = 2420;5110
+
+;-------------------------------------------airpart- 空中パート　通常、ダッシュR移動 エリアル-------------------------------
+;空中・弱・19
+[Statedef 600];
+type    = A
+movetype= A
+physics = N
+ctrl = 0
+anim = 600
+sprpriority = 2
+Hitcountpersist = 1
+
+[state -3,flag reset];ヒットカウント:浮き・ダメ補正に
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+;-----------------airだっしゅ中の処理（ｘしばらく継続、0になったらｙかかる
+[State 200x,];前空中ダッシュでセットされるvar7)、０じゃなければダッシュ慣性つき→prevだと、チェーンの場合変。
+type = Velmul
+trigger1 = var(17) > 0
+trigger1 = Vel X > 0.1
+x = 0.95
+
+[State 200x,]
+type = Velset
+trigger1 = var(17)
+trigger1 = Vel X = [0,1]
+x = 1
+
+[state 200x,com var];
+type = varadd
+trigger1 = var(17) > 0
+trigger1 = 1
+var(17) = -1
+
+[state 200x,com var];
+type = varset
+trigger1 = var(17) <= 0
+var(17) = 0
+
+;--------------------------
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+triggerall = var(18) != 2 && var(18) !=3 
+trigger1 = var(18) = 1 && !var(17);
+trigger2 = !var(18) || !var(17) 
+y = const(movement.yaccel) 
+
+;--------------------------R移動中の処理
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=2 ;|| var(18) = 3
+y = fvar(18);0.35
+
+;--------------------------R移動中の処理
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=3 ;|| var(18) = 3
+y = 0.4
+
+[state 200x,com var];
+type = varadd
+trigger1 = time = 0
+var(19) = 1
+
+;--------------------------------こっちはエリアル（MB）（敵は垂直に吹き飛ぶ）
+[State 600, 2]
+type = HitDef
+trigger1 = Time = 0
+attr = A, NA
+damage    = ceil(16 * fvar(0) / var(19))
+guardflag = HA
+hitflag = MAFD
+priority = 3
+animtype  = light
+pausetime = 10,ifelse(!var(25),10,10)            
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -10,ifelse(enemynear,statetype != A,-20,-58)
+hitsound   = s205, 5
+guardsound = s150, 0
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 10 
+ground.velocity = -6.0
+air.velocity = ifelse(!var(11),fvar(5),0), fvar(2) / 4 + fvar(6) - var(11) / 120 
+air.hittime  = 10 + var(11)
+airguard.hittime  = 12
+air.sliedtime  =12 + var(11)
+getpower = 20,10
+fall = 0
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+ID = 600
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？
+type = Explod
+trigger1 = numtarget
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6200,6150)
+ID=200
+pos = -10,ifelse(target,statetype = A,-58,-62)
+;pos = 68,-40
+postype = p2;自分基準は・・・横幅がない判定、同位置なら自然になる
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+;------------------------------------ダストもーど
+[State 2500x, ];きりもみのアレは、29フレム以内の判断はvar(22) > 0
+type = TargetState
+triggerall = Numtarget(600)
+trigger1 = movehit
+trigger1 = var(22) > 0 && var(46) = 10
+value = 275
+ID = 600
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+ 
+[state 600,];v18=0（重力が普通）なら蹴りと共通降下ステートへ 
+type = changestate
+trigger1 = animtime =0
+value =605
+ctrl  =0
+
+[state 600,]
+type = changestate
+trigger1 = pos y >= 0 && vel y > 0
+value = 52
+
+;--------エレム途中にはチェンステではできない
+[Statedef 605];
+type    = A
+movetype= I
+physics = n
+sprpriority = 0
+Hitcountpersist = 1
+
+[state 605,]
+type = changeanim
+trigger1 = time = 0
+value = 41
+elem  = 6
+
+[State 40, 6];降下音
+type = playsnd
+trigger1 = time = 0
+value = s40,2
+channel = 2
+persistent = 0
+
+;--------------------------
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+triggerall = var(18) != 2 && var(18) != 3
+trigger1 = var(18) = 1 && !var(17);
+trigger2 = !var(18) || !var(17) 
+y = const(movement.yaccel) 
+
+;--------------------------R移動中の処理
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=2
+y = fvar(18)
+
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=3; || var(18) = 3
+y = 0.4
+
+[state 200x,com var];
+type = varset
+trigger1 = time = 0
+var(17) = 0
+
+[state 600,]
+type = changestate
+trigger1 = pos y >= 0 && vel y > 0
+value = 52
+
+;---------------------------------------------------------------------------
+;空中k・・20
+[Statedef 610];？
+type    = A
+movetype= A
+physics = n
+ctrl = 0
+anim = 610
+sprpriority = 2
+Hitcountpersist = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+;-----------------airだっしゅ中の処理（ｘしばらく継続、0になったらｙかかる
+[State 200x,];前空中ダッシュでセットされるvar7)、０じゃなければダッシュ慣性つき→prevだと、チェーンの場合変。
+type = Velmul
+trigger1 = var(18) = 1
+trigger1 = var(17) > 0
+trigger1 = Vel X > 0.1
+x = 0.95
+
+[State 200x,]
+type = Velset
+trigger1 = var(18) = 1
+trigger1 = var(17)
+trigger1 = Vel X = [0,1]
+x = 1
+
+[state 200x,com var];
+type = varadd
+trigger1 = var(18) = 1
+trigger1 = var(17) > 0
+trigger1 = 1
+var(17) = -1
+
+[state 200x,com var];
+type = varset
+trigger1 = var(17) <= 0
+var(17) = 0
+
+;--------------------------
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+triggerall = var(18) != 2 && var(18) != 3
+trigger1 = var(18) = 1 && !var(17);
+trigger2 = !var(18) || !var(17) 
+y = const(movement.yaccel) 
+
+;--------------------------R移動中の処理
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=2; || var(18) = 3
+y = fvar(18)
+
+;--------------------------R移動中の処理
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=3 ;|| var(18) = 3
+y = 0.4
+
+[State 610, 3]
+type = HitDef
+trigger1 = Time = 0
+attr = A, NA
+damage = floor(20 * fvar(0))
+guardflag = HA
+priority = 4
+pausetime = 10,ifelse(!var(25),12,14)            
+sparkno = -1;700;s6300   
+guard.sparkno = -1;s6150;750;S6150
+sparkxy = -10,-45
+hitsound   = s205, 5
+guardsound = s150, 0
+animtype = medium
+ground.type = High
+ground.slidetime = 16
+ground.hittime  = 14
+guard.hittime  = 14
+ground.velocity = -7
+air.velocity =  ifelse(!var(11),fvar(5),0), fvar(2) / 4 + fvar(6) - var(11) / 120
+air.hittime  = 14 + var(11)
+airguard.hittime  = 14
+air.sliedtime  =18 + var(11)
+fall.recovertime =30
+getpower = 30,15
+fall = 0
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+id = 610
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -10,-45
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+;--------------------------------------------------ダすト
+[State 2500x, ];きりもみのアレ
+type = TargetState
+triggerall = Numtarget(610)
+trigger1 = movehit
+trigger1 = var(22) > 0 && var(46) = 10
+value = 275
+ID = 610
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+[state 610,]
+type = changestate
+trigger1 = animtime =0
+value = 605
+ctrl  =0
+
+[state 600,]
+type = changestate
+trigger1 = pos y >= 0 && vel y > 0
+value = 52
+
+;---------------------------------------------------------------------------
+;空中・s・s620,asw21
+[Statedef 620];
+type    = A
+movetype= A
+physics = n
+ctrl = 0
+anim = 620
+sprpriority = 2
+Hitcountpersist = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+;-----------------airだっしゅ中の処理（ｘしばらく継続、0になったらｙかかる
+[State 200x,];前空中ダッシュでセットされるvar7)、０じゃなければダッシュ慣性つき→prevだと、チェーンの場合変。
+type = Velmul
+trigger1 = var(18) = 1
+trigger1 = var(17) > 0
+trigger1 = Vel X > 0.1
+x = 0.95
+
+[State 200x,]
+type = Velset
+trigger1 = var(18) = 1
+trigger1 = var(17)
+trigger1 = Vel X = [0,1]
+x = 1
+
+[state 200x,com var];
+type = varadd
+trigger1 = var(18) = 1
+trigger1 = var(17) > 0
+trigger1 = 1
+var(17) = -1
+
+[state 200x,com var];
+type = varset
+trigger1 = var(17) <= 0
+var(17) = 0
+
+;--------------------------
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+triggerall = var(18) != 2 && var(18) != 3
+trigger1 = var(18) = 1 && !var(17);
+trigger2 = !var(18) || !var(17) 
+y = const(movement.yaccel) 
+
+;--------------------------R移動中の処理
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=2; || var(18) = 3
+y = fvar(18)
+
+;--------------------------R移動中の処理
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=3 ;|| var(18) = 3
+y = 0.4
+
+[State 620, 3]
+type = HitDef
+trigger1 = time = 0
+attr = A, NA
+damage = floor(32 * fvar(0))
+hitflag = MAFD
+guardflag = HA
+priority = 4
+pausetime = 10,ifelse(!var(25),14,18)            
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -10,-55
+hitsound   = s205,6
+guardsound = s150, 0
+animtype = hard
+ground.type = High
+ground.slidetime = 18
+ground.hittime  = 16 
+ground.velocity = -8
+air.velocity = ifelse(!var(11),fvar(5),0), fvar(2) / 4 + fvar(6) - var(11) / 120 
+air.hittime  = 16 + var(11)
+airguard.hittime  = 16
+air.sliedtime  =18 + var(11)
+getpower = 40,20
+fall = 0
+air.fall =1
+fall.recover = ifelse(var(25),0,1)
+fall.recovertime =40
+Id=620
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -10,-55
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+;--------------------------------------------------ダすト
+[State 2500x, ];きりもみのアレ
+type = TargetState
+triggerall = Numtarget(620)
+trigger1 = movehit
+trigger1 = var(22) > 0 && var(46) = 10
+value = 275
+ID = 620
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+[state 600,]
+type = changestate
+trigger1 = pos y >= 0 && vel y > 0
+value = 52
+
+;---------------------------------------------------------------------------
+;空中・レバー下S・s630,asw213　　HS扱い、レバー下S
+[Statedef 630];
+type    = A
+movetype= A
+physics = n
+ctrl = 0
+anim = 630
+sprpriority = 2
+Hitcountpersist = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+;-----------------airだっしゅ中の処理（ｘしばらく継続、0になったらｙかかる
+[State 200x,];前空中ダッシュでセットされるvar7)、０じゃなければダッシュ慣性つき→prevだと、チェーンの場合変。
+type = Velmul
+trigger1 = var(18) = 1
+trigger1 = var(17) > 0
+trigger1 = Vel X > 0.1
+x = 0.95
+
+[State 200x,]
+type = Velset
+trigger1 = var(18) = 1
+trigger1 = var(17)
+trigger1 = Vel X = [0,1]
+x = 1
+
+[state 200x,com var];
+type = varadd
+trigger1 = var(18) = 1
+trigger1 = var(17) > 0
+trigger1 = 1
+var(17) = -1
+
+[state 200x,com var];
+type = varset
+trigger1 = var(17) <= 0
+var(17) = 0
+
+;--------------------------
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+triggerall = var(18) != 2 && var(18) != 3
+trigger1 = var(18) = 1 && !var(17);
+trigger2 = !var(18) || !var(17) 
+y = const(movement.yaccel) 
+
+;--------------------------R移動中の処理
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=2; || var(18) = 3
+y = fvar(18)
+
+;--------------------------R移動中の処理
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=3 ;|| var(18) = 3
+y = 0.4
+
+[State 630, 3]
+type = HitDef
+trigger1 = time = 0
+attr = A, NA
+damage = floor(46 * fvar(0))
+hitflag = MAFD
+guardflag = HA
+priority = 7
+pausetime = 10,ifelse(!var(25),14,18)            
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -10,-55
+hitsound   = s205,6
+guardsound = s150, 0
+animtype = hard
+ground.type = High
+ground.slidetime = 18 
+ground.hittime  = 16 
+ground.velocity = -8
+air.velocity =  ifelse(!var(11),fvar(5),0), fvar(2) / 4 + fvar(6) - var(11) / 120 
+air.hittime  = 16 + var(11)
+air.sliedtime  =18 + var(11)
+airguard.hittime  =16
+ID=2500
+getpower = 40,20
+air.fall = 1
+fall.recover = ifelse(var(25),0,1)
+fall.recovertime =40
+p2facing=1
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -10,-55
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+;------------------よろけ　地上相手のみ
+;カウンター判定は 当たってなくtarget=0) 相手攻撃状態movetype=A) で
+;食らってない時(movetype!=h(当たるとターゲットになって0にセットされるので)
+;-----------にフラグを１
+[State 2500x, ];地上のみよろけ  
+type = TargetState
+triggerall = var(25) = 1 
+trigger1 = Numtarget(2500)
+trigger1 = target(2500),alive 
+trigger1 = target(2500),statetype != A && target(2500),statetype != L
+trigger1 = movehit
+value = 2550
+ID = 2500
+persistent = 0
+ignorehitpause = 1
+;------------------よろけ　ここまで
+
+;--------------------------------------------------ダすト
+[State 2500x, ];きりもみのアレ
+type = TargetState
+triggerall = Numtarget(2500)
+trigger1 = movehit
+trigger1 = var(22) > 0 && var(46) = 10
+value = 275
+ID = 2500
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+
+[state 610,]
+type = changestate
+trigger1 = animtime =0
+value = 605
+ctrl  =0
+
+[state 600,]
+type = changestate
+trigger1 = pos y >= 0 && vel y > 0
+value = 52
+
+;---------------------------------------------------------------------------
+;空中・D・s640,asw21
+[Statedef 640];
+type    = A
+movetype= A
+physics = n
+ctrl = 0
+anim = 640
+;velset = ifelse(vel x = 0,0,ifelse(vel x > 0,1,-1)),0
+sprpriority = 2
+Hitcountpersist = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+trigger1 = animelem = 5
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+trigger1 = animelem = 6
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+[state -3,flag reset];ヒットカウント
+type = varadd
+trigger1 = movehit
+trigger1 = animelem = 7
+fvar(2) = 1
+persistent = 0
+ignoregutpause = 1
+
+[State 40, 6];
+type = playsnd
+triggerall = anim = 640
+trigger1 = animelem = 5
+trigger2 = animelem = 6
+trigger3= animelem = 7
+value = s100,0
+channel = 2
+
+[State 640, 3];
+type = HitDef
+triggerall = anim = 640
+trigger1 = animelem = 5
+attr = A, NA
+damage = floor(16 * fvar(0))
+hitflag = MAFD
+guardflag = HA
+priority = 4
+pausetime = 10,ifelse(!var(25),12,14)            
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -10,-55
+hitsound   = s205,6
+guardsound = s150, 0
+animtype = back
+ground.type = High
+ground.slidetime = 16 
+ground.hittime  = 14
+;ground.velocity = -7;#R
+guard.velocity = -0.1;slash引き寄せ浮かせ
+ground.velocity = 0.5,-5;slash引き寄せ浮かせ
+air.velocity = 0.5,-5;slash引き寄せ浮かせ
+;air.velocity = fvar(5) + var(11) / 60, fvar(2) / 4 + fvar(6) - var(11) / 120;＃R
+air.hittime  = 14 + var(11)
+air.sliedtime  =16 + var(11)
+airguard.hittime  = 15
+fall = 0
+air.fall = 1
+fall.recovertime = 25
+getpower = 20,15
+ID= 640
+
+[State 640, 3];
+type = HitDef
+triggerall = anim = 640
+trigger1 = animelem = 6
+attr = A, NA
+damage = floor(16 * fvar(0))
+hitflag = MAFD
+guardflag = HA
+priority = 4
+pausetime = 10,ifelse(!var(25),12,14)            
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -10,-55
+hitsound   = s205,6
+guardsound = s150, 0
+animtype = back
+ground.type = High
+ground.slidetime = 16 
+ground.hittime  = 14
+;ground.velocity = -7;#R
+guard.velocity = -0.1;slash引き寄せ浮かせ
+ground.velocity = 0.3,-5;slash引き寄せ浮かせ
+air.velocity = 0.3,-5;slash引き寄せ浮かせ
+;air.velocity = fvar(5) + var(11) / 60, fvar(2) / 4 + fvar(6) - var(11) / 120;＃R
+air.hittime  = 14 + var(11)
+air.sliedtime  =16 + var(11)
+airguard.hittime  = 15
+fall = 0
+air.fall = 1
+getpower = 20,15
+fall.recovertime = 25
+ID= 641
+
+[State 640, 3];
+type = HitDef
+triggerall = anim = 640
+trigger1 = animelem = 7
+attr = A, NA
+damage = floor(16 * fvar(0))
+hitflag = MAFD
+guardflag = HA
+priority = 4
+pausetime = 10,ifelse(!var(25),12,14)            
+sparkno = -1;701;s6300   
+guard.sparkno = -1;751;S6150
+sparkxy = -10,-55
+hitsound   = s205,6
+guardsound = s150, 0
+animtype = back
+ground.type = High
+ground.slidetime = 16 
+ground.hittime  = 14
+;ground.velocity = -7;#R
+guard.velocity = -0.1;slash引き寄せ浮かせ
+ground.velocity = 0.3,-5;slash引き寄せ浮かせ
+air.velocity = 0.3,-5;slash引き寄せ浮かせ
+;air.velocity = fvar(5) + var(11) / 60, fvar(2) / 4 + fvar(6) - var(11) / 120;＃R
+air.hittime  = 14 + var(11)
+air.sliedtime  =16 + var(11)
+airguard.hittime  = 15
+fall = 0
+air.fall = 1
+getpower = 20,15
+fall.recovertime = 25
+ID= 642
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = numtarget(640)
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -10,-55
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = numtarget(641)
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -10,-55
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = numtarget(642)
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -10,-55
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+;--------------------------------------------------ダすト
+[State 2500x, ];きりもみのアレ
+type = TargetState
+triggerall = Numtarget(640)
+trigger1 = movehit
+trigger1 = var(22) > 0 && var(46) = 10
+value = 275
+ID = 640
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+[State 2500x, ];きりもみのアレ
+type = TargetState
+triggerall = Numtarget(641)
+trigger1 = movehit
+trigger1 = var(22) > 0 && var(46) = 10
+value = 275
+ID = 641
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+[State 2500x, ];きりもみのアレ
+type = TargetState
+triggerall = Numtarget(642)
+trigger1 = movehit
+trigger1 = var(22) > 0 && var(46) = 10
+value = 275
+ID = 642
+persistent = 0
+ignorehitpause = 1
+;------------------
+
+;-----------------
+;-----------------airだっしゅ中の処理640はちょう特殊
+;------通常 3パターン vel x = 0,vel x >0 vel x < 0 
+[state 200x,com var];
+type = varadd
+trigger1 = var(17) > 0
+trigger1 = 1 
+var(17) = -3
+
+[state 200x,com var];
+type = varset
+trigger1 = var(17) <= 0
+var(17) = 0
+
+[State 200x,];Xの固定設定
+type = Velset
+triggerall = Vel X = [0,2]
+trigger1 = var(18) = 1;
+trigger2  =var(18) 
+x = 1.5
+
+;--------------------------
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+triggerall = 0;var(18) != 2
+trigger1 = var(18) = 1 && !var(17);
+trigger2 = !var(18) || !var(17)
+trigger3 = animelemtime(5) >= 0 
+y = const(movement.yaccel) 
+
+;--------------------------R移動中の処理
+[state 600];重力→普通ジャンプ、ダッシュ後なら通常、R移動ごならR移動重力。
+type = veladd
+trigger1 = var(18)=2 ;|| var(18) = 3
+y = fvar(18);0.35
+
+;-----------------旧慣性しすてむ
+[state 640,];ここは初速だから17だけでもいいかも？
+type = velset
+triggerall = var(18) != 2 
+triggerall = time = 0
+trigger1 = var(18) = 1 && !var(17);
+trigger2 = !var(18) || !var(17) 
+y = ifelse(vel y < 0,-2,vel y)
+x = ifelse(vel x = 0,0,ifelse(vel x > 0,1.5,-1.5))
+
+[state 640,]
+type = velset
+trigger1 = var(17) > 0 && var(18)= 1;prevstateno = [102,107]
+trigger1 = time = 0
+y = ifelse(vel y < 0,-2,vel y)
+
+[state 640,];ダッシュまたはR移動からの時mul
+type = velmul
+triggerall = time = 0
+trigger1 = var(18) = 1;prevstateno = [102,107]
+trigger2 = var(18) = 2;prevstateno = [1400,1490]
+x =0.5;vel x / 2 
+
+[state 640,vel];vel x
+type = veladd
+triggerall = 0;anim = 640
+trigger1 = animelemtime(5) >=0
+trigger1=animelemtime(7) < 0 
+trigger1 = vel x <= 1.2
+trigger1 = vel x != 0
+x = ifelse(vel x > 0,0.2,-0.2)
+
+[State 200x,];xの設定
+type = Velset
+triggerall = vel x != 0;prevstateno = 102
+trigger1 = animelemtime(4) >= 0
+x = ifelse(vel x > 0,1.5,-1.5)
+
+[state 640,vel]
+type =veladd
+triggerall = var(18) != 2 && var(18) != 3
+trigger1 = var(18) = 1 && !var(17);
+trigger2 = !var(18) || !var(17) 
+trigger3 = animelemtime(5) >= 0 
+y = 0.25
+
+[state 610,]
+type = changestate
+trigger1 = animtime =0
+value = 605
+ctrl  =0
+
+[state 640,end];専用硬直ステートヘ
+type = changestate
+trigger1 = vel y > 0
+trigger1 = pos y >= 0
+value = 645
+ctrl  =0
+
+;-----------------空D硬直8ふれーむ
+[statedef 645]
+type = s
+movetype =I
+physics = s
+velset = 0,0
+anim = 47
+ctrl = 0
+
+[state 645,]
+type = posset
+trigger1 = time = 0
+y = 0
+
+[state 100x,atc efe];着地エフェクト
+type = Explod
+trigger1 = anim = 47
+anim =6047;f802
+ID = 52
+postype = p1
+pos = 0,0
+random = 30,0
+sprpriority = -2
+bindtime = 1
+removetime = -2
+ownpal=1
+persistent =0
+scale = 0.5,0.5
+
+[state 100x,atc efe];着地エフェクト
+type = Explod
+trigger1 = anim = 47
+anim =6047;f802
+ID = 52
+postype = p1
+pos = 0,0
+random = 30,0
+sprpriority = -2
+bindtime = 1
+removetime = -2
+ownpal=1
+persistent =0
+scale = 0.5,0.5
+
+[state 645,]
+type = changestate
+trigger1 = time >= 8
+value = 0
+ctrl = 1
+
+;地上投げ
+;----------------------------------
+[statedef 800]
+type = s
+movetype =A
+physics = s
+velset = 0,0
+;anim = 800
+ctrl = 0
+sprpriority = 0
+
+[State 800, 1]
+type = HitDef
+Trigger1 = time = 0
+attr = S, NT        
+hitflag = M         
+priority = 1, Miss    
+sprpriority = -1       
+numhits = 0
+p1facing = ifelse (command = "holdback", -1, 1) 
+;p2facing = 1          ;？
+forcestand = 1
+pausetime = 0, 0                 ;攻撃が当たった時の硬直時間（左が自分、右が相手）
+sparkno = -1    ;ヒットエフェクトのスプライトステート（無ければ0）
+guard.sparkno = -1
+sparkxy = -5, -70               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound = 0;s205,0
+hitcount = 0
+guardsound = 0
+p1stateno = 810       ;投げが成功した場合の移動する１Ｐのステート
+p2stateno = 820      ;投げが成功した場合の移動する２Ｐのステート
+snap = 25,0
+p2facing=1
+
+[state 800,end]
+type = changestate
+trigger1 = time = 1;animtime = 0
+value = ifelse(!var(30),1500,1520)
+ctrl =0
+
+;----------------------------------
+[statedef 810]
+type = s
+movetype =A
+physics = n
+velset = 0,0
+anim = 800
+sprpriority = 2
+
+[state 817,]
+type = nothitby
+trigger1 = 1
+value = sca
+time = 1
+
+[state 810,voice];わぁ!?　ぁれぇっ!?　
+type = playsnd
+trigger1 =animelem = 7
+value = s800, ifelse(var(1) = 3, random % 3,var(1))
+channel = 0
+volume= 255
+
+[state 810,pos];
+type = targetbind
+trigger1 = animelem = 3
+pos = 40,-5
+
+[state 810,pos];
+type = targetbind
+trigger1 = animelem = 4
+pos = 55,0
+
+[state 810,pos];
+type = targetbind
+trigger1 = animelem = 4
+pos = 30,-15
+
+[state 810,pos];
+type = targetbind
+trigger1 = animelem = 5
+pos = 0,-45
+
+[state 810,pos];
+type = targetbind
+trigger1 = animelem = 6
+pos = -50,-15
+
+[state 810,pos];
+type = targetbind
+trigger1 = animelem = 7
+pos = -20,0
+
+[state 810,pos];
+type = targetbind
+trigger1 =0; animelem = 8
+pos = -20,0
+
+[state 810,tstate]
+type = targetstate
+trigger1 = animelem  =7
+value = 830
+
+[state 810,]
+type = velset
+trigger1 = animelem = 7
+y = -5
+x = -1
+persistent = 0
+
+[state 810,]
+type = veladd
+trigger1 = animelemtime(7) >= 0
+y = 0.44
+
+[State 810, 1]
+type = HitDef
+trigger1 = animelemtime(10) >= 0
+Trigger1 = pos y >= 0
+attr = s, NT          ;ｓ：立ち　ｎ：通常　ｔ：投げ
+hitflag = MD+          ;コンボの途中から投げが入らないよう設定してある
+animtype = back                 ;当てた時の相手のポーズ（light/midium/hard/back）から選択
+priority = 7, hit    ;１は優先順位が低いので技がでないかミスするという設定
+damage = floor(fvar(0) * 48)
+pausetime = 10, 14                 ;攻撃が当たった時の硬直時間（左が自分、右が相手）
+sparkno = -1;701    
+guard.sparkno = -1;751
+sparkxy = -5, -20               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound = s205,6
+ground.velocity = 0,-1
+down.velocity = 0,-1
+ground.type = High               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+air.type = High               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+yaccel  =0.38
+fall = 1
+fall.recover = 0
+hitsound = s205,5
+guardsound = 0
+p1stateno = 815       ;投げが成功した場合の移動する１Ｐのステート
+p2stateno  = 835
+persistent = 0
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movecontact;guarded
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -5,-20
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 810,end]
+type = changestate
+trigger1 = numtarget = 0
+trigger2 = pos y > 30
+trigger2 = vel y > 0
+value = 815
+ctrl = 0
+
+;------root state-----------------------------------------------------------
+[Statedef 815]
+type = A
+movetype= A
+physics = n
+velset = -2,-5.5
+anim = 805
+ctrl = 0
+sprpriority = 2
+
+[state 200x,atc efe];hit guardエフェクト  hitdefだとサイズが大きくなる。のでこうする？ 中サイズ
+type = Explod
+trigger1 = movehit
+trigger1 = time = 0
+anim =ifelse(movehit,6210,6151)
+ID=200
+pos = -5,-20
+postype = p2
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+[state 817,]
+type = nothitby
+trigger1 = 1
+value = sca
+time = 1
+
+[state 815,]
+type = veladd
+trigger1 = 1
+y = 0.4
+
+[state 815,]
+type = changestate
+trigger1 = vel y > 0 && pos y >= 0
+value = 817
+
+[Statedef 817]
+type = s
+movetype= A
+physics = s
+velset = 0,0
+anim = 0
+ctrl = 0
+sprpriority = 2
+
+[state 817,]
+type = nothitby
+trigger1 = 1
+value = sca
+time = 1
+
+[state 817,]
+type = posset
+trigger1 = time = 0
+y = 0
+
+[state 815,end]
+type = changestate
+trigger1 = time >= 5
+value = 0
+ctrl = 1
+
+;------enemy state-----------------------------------------------------------use p2spr  
+[Statedef 820]
+type = S
+movetype= H
+physics = N
+velset = 0,0
+sprpriority = 2
+
+[state 820,]
+type = turn
+trigger1 = anim = 820
+trigger1 = animelem= 2
+trigger1 = enemy,facing != facing
+persistent = 0
+
+[State 820, 1]
+type = ChangeAnim2
+triggerall = 1   ;debug
+Trigger1 = Time = 0
+value = ifelse(authorname = "R-R",820 + var(0),820)
+
+;------enemy state2-----------------------------------------------------------use p2spr  
+[Statedef 830];5100
+type = L
+movetype= H
+physics = c
+velset = 0,0
+sprpriority = -2
+
+[State 5100, EnvShake]
+type = FallEnvShake
+trigger1 = Time = 0
+
+[State 5100, 4]
+type = PosSet
+trigger1 = 1;Time = 0
+y = 0
+
+[State 5100, 8]
+type = GameMakeAnim
+trigger1 = Time = 0
+;value = 61
+;pos = 0, 0
+;under = 1
+value = 60 + (sysvar(1) > 5) + (sysvar(1) > 14)
+pos = 0, 0
+under = sysvar(1) <= 10
+
+[State 5100, 10]
+type = PlaySnd
+trigger1 = Time = 1
+;value = F7, 0 ;Hit ground
+value = F7, (sysvar(1) > 5) + (sysvar(1) > 14)
+
+[State 5100, 11]
+type = PosFreeze
+trigger1 = 1
+
+[State 5100, 13]
+type = ForceFeedback
+trigger1 = Time = 0
+waveform = sinesquare
+ampl = 128,-3,-.2,.005
+time = 20
+
+[State 830, 1]
+type = ChangeAnim
+triggerall = 1   ;debug
+Trigger1 = Time = 0
+value = ifelse(authorname = "R-R",5100 + var(0),5100)
+
+[State 5100, 7]
+type = Changeanim
+trigger1 = anim = 5100 + ifelse(authorname = "R-R",var(0),0) 
+trigger1 = animTime = 0
+value = ifelse(authorname = "R-R",5110 + var(0),5110)
+
+[State 5100, 7];むずい
+type =Changeanim
+trigger1 = anim = 5160 + ifelse(authorname = "R-R",var(0),0) 
+trigger1 = 0;Time = 0
+value = ifelse(authorname = "R-R",5110 + var(0),5110)
+
+[State 840,]
+type = selfState
+trigger1 = time > 100
+value = 5120
+
+;------enemy state3------------------地上投げ----------------------------------------use p2spr  
+[Statedef 835]
+type = A
+movetype= H
+physics =n
+velset = 0,-2
+
+[State 830, 1]
+type = ChangeAnim
+triggerall = 1   ;debug
+Trigger1 = Time = 0
+value = ifelse(authorname = "R-R",5100 + var(0),5100)
+
+[state 835,]
+type =  veladd
+trigger1 = time >= 8
+y = 0.44
+
+[State 830,]
+type = selfState
+trigger1 = pos y >= 0 && vel y > 0
+value = 5110
+
+;空中投げ　投げすかりなし、
+;----------------------------------
+[statedef 850]
+type = A
+movetype =A
+physics = A
+;anim = 850
+ctrl = 0
+Hitcountpersist = 1
+
+[State 850, 1]
+type = HitDef
+Trigger1 = time = 0
+attr = A, NT          ;ｓ：立ち　ｎ：通常　ｔ：投げ
+hitflag = A-
+numhits = 0
+priority = 1, Miss    ;１は優先順位が低いので技がでないかミスするという設定
+sprpriority = 2       ;２Ｐより上に表示される
+pausetime = 0, 0                 ;攻撃が当たった時の硬直時間（左が自分、右が相手）
+sparkno = -1    ;ヒットエフェクトのスプライトステート（無ければ0）
+guard.sparkno = 0
+sparkxy = 0,0               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound = 0
+hitcount = 0
+ground.hittime =60
+p1stateno = 860       ;投げが成功した場合の移動する１Ｐのステート
+p2stateno = 875      ;投げが成功した場合の移動する２Ｐのステート
+snap  =30,0
+
+[state 850,end]
+type = changestate
+trigger1 = time = 1
+value = 51;870
+ctrl  =1
+
+;----------------------------------
+[statedef 860]
+type = A
+movetype =A
+physics = N
+ctrl = 0
+anim  = 855
+Hitcountpersist = 1
+
+[state 860,]
+type  =posfreeze
+trigger1  = 1
+time = 1
+value = 1
+
+[state 860,]
+type = playerpush
+trigger1 = 1
+time  =1
+value = 0
+
+[state 860,tb]
+type = TargetBind
+trigger1 =animelem = 1
+pos = 30,-30
+
+[state 860,tb]
+type = TargetBind
+trigger1 =animelem = 2
+pos = 15,-15
+
+[state 860,tb]
+type = TargetBind
+trigger1 =animelem = 3
+pos = 10,10
+
+[state 860,tb]
+type = TargetBind
+trigger1 =animelem = 4
+pos = 0,5
+
+[state 860,tb]
+type = Targetstate
+trigger1 =0;animelem = 4
+value = 880
+
+[State 850, 1]
+type = HitDef
+trigger1 =animelem = 4
+attr = A, Nt          ;ｓ：立ち　ｎ：通常　ｔ：投げ
+hitflag = A+
+priority = 1, Miss    ;１は優先順位が低いので技がでないかミスするという設定
+sprpriority = 2       ;２Ｐより上に表示される
+pausetime = 0, 0                 ;攻撃が当たった時の硬直時間（左が自分、右が相手）
+sparkno = -1    ;ヒットエフェクトのスプライトステート（無ければ0）
+guard.sparkno = 0
+damage = floor(54 * fvar(0)),0                  ;ダメージ量（左が当たった時、右はガードした時）
+animtype = back                 ;当てた時の相手のポーズ（light/midium/hard/back）から選択
+guardflag = M                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitsound   = 0;s205, 6
+guardsound = 0;s150, 0
+ground.type = High               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime =20             ;相手が後にすべる時間
+ground.hittime  = 20             ;コンボが繋がる時間（高くしすぎない事）
+ground.velocity = -1,-2             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可）
+air.type = High                  ;空中で相手がくらった場所（上と同じ）
+air.velocity = 5,8           ;空中で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可）
+fall = 1
+air.fall = 1
+fall.recover = 0
+p2facing = -1 
+ 
+[state 860,end1]
+type = changestate
+trigger1 = animtime = 0
+value = 870
+ctrl  = 0
+
+;----------------------------------root end miss
+[statedef 870]
+type = A
+movetype =I
+physics = A
+ctrl = 0
+anim = 870
+Hitcountpersist = 1
+
+[state 860,end]
+type = null;changestate
+trigger1 = 1;animtime = 0
+;value = 51
+;ctrl  =1
+
+;----------air t--enemy hit---------------------usep2spr-
+[statedef 875]
+type = A
+movetype =H
+physics = N
+ctrl = 0
+
+[State 875, 1]
+type = ChangeAnim
+triggerall = 1   ;debug
+Trigger1 = 1;Time = 0
+value = ifelse(authorname = "R-R",5011 + var(0),5011)
+
+[State 875,]
+type = selfState
+trigger1 = time >= 30
+value = 5050
+
+[State 875,]
+type = selfState
+triggerall = vel y > 0
+trigger1 = pos y >= -10
+value = 5100
+
+;------------------
+[statedef 880]
+type = A
+movetype =H
+physics = a
+ctrl = 0
+
+[state 880,]
+type = turn
+trigger1 = time = 0
+
+[State 875, 1]
+type = ChangeAnim
+triggerall = 1   ;debug
+Trigger1 = Time = 0
+value = ifelse(authorname = "R-R",5050 + var(0),5050)
+
+[State 875,]
+type = selfState
+trigger1 = time >= 30
+value = 5050
+
+[State 875,]
+type = selfState
+trigger1 = vel y > 0
+trigger1 = pos y >= -10
+value = 5100

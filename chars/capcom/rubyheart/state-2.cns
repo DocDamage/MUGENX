@@ -1,0 +1,278 @@
+; Quem_sou_eu [Var(39)]: 0-Morto, 1-Primeiro, 2-Segundo
+; Colaboração [Var(38)]: 1-Lutar só, 2-Duplo Especial, 3-Um Ataque, 4-Counter
+; Vez na luta [Var(37)]: 1-Primeiro, 2-Segundo
+; Verificação [Var(36)]: Meu ID
+;             [Var(35)]: 0-Proíbe sair de tela, 1-Permite sair de tela
+; P3 life     [Var(34)]: Memoriza a vida
+; Recuperação [Var(33)]: Memoriza a vida
+
+
+;---------------------------------------------------------------------------
+; States that are always executed (use statedef -2)
+;---------------------------------------------------------------------------
+[Statedef -2]
+
+[State -2, 1] ; debug
+type = DisplayToClipboard
+trigger1 = roundstate > 0
+;text="eu39 %d, vez37 %d, Id %d, sair? %d";bake %d";
+;params = Var(39), var(37),var(36),Var(35);floor(backedgedist);
+text = "Var(10) %d, Var(11) %d, var(12) %d, var(4) %d"
+params= Var(10), Var(11), var(12), var(4);floor(var(11)/10**(var(12)+1))
+;text="39=37? %d, Colab %d, p3life %d, sair? %d";bake %d";
+;params = (Var(39)=Var(37)), var(38),var(34),Var(35);floor(backedgedist);
+;text="p2bodydist x %d, p2bodydist y %d, var(20) %d, var(2) %d"
+;params = floor(p2bodydist x), floor(p2bodydist y), (var(20)),var(2)
+
+;[State 0, ]; super-pulo
+;type = DisplayToClipboard
+;trigger1 = Alive
+;text = "Var(0): %d"
+;params = Var(0)
+;;ignorehitpause = 0
+;;persistent = 1
+
+[State -2, bonerang sound]   ; custom jump-landing sound
+trigger1 = NumProjID(1050) = 1
+trigger1 = (Time % 10) = 0
+type = PlaySnd
+;persistent = 0
+value = 0,var(2)
+volume=95
+
+[State -2, jump landing sound]   ; custom jump-landing sound
+trigger1 = stateno = 52
+trigger1 = Time = 1
+type = PlaySnd
+persistent = 0
+value = 8,1
+volume=190
+
+;[State -2, fall landing sound]   ; custom fall-landing sound
+;trigger1 = stateno = [5100, 5110]
+;trigger1 = Time = 1
+;type = PlaySnd
+;persistent = 0
+;value = 8,2
+
+; custom gethit sounds
+[State -2, gethits]
+type = PlaySnd
+triggerall = Alive && (Time = 1) && (!IsHelper)
+triggerall = random % 10 > 5
+triggerall = stateno = 5000 || stateno = 5020
+trigger1 = anim = 5001  ; standing medium hit high
+trigger2 = anim = 5011  ; stand medium hit low
+trigger3 = anim = 5021  ; crouching medium hit
+persistent = 0
+value = 4,0
+channel = 0
+volume=255
+ignorehitpause = 1
+
+[State -2, gethits]
+type = PlaySnd
+triggerall = Alive && (Time = 1) && (!IsHelper)
+triggerall = random % 10 > 5
+;triggerall = stateno = 5000 || stateno = 5020
+trigger1 = anim = 5002  ; standing hard hit high
+trigger2 = anim = 5012  ; stand hard hit low
+trigger3 = anim = 5022  ; crouching hard hit
+trigger4 = anim = 5030  ; air hit
+trigger5 = anim = 5070  ; tripped
+persistent = 0
+value = 4,1
+channel = 0
+volume=255
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+;-[ Schwarzaile ]-
+[State -2]
+type = VarSet
+trigger1 = StateType != A
+trigger1 = MoveType != A
+var(15) = 0
+
+[State -2]
+type = Explod
+triggerall = NumTarget !=0 
+trigger1 = Numexplod(1505) < 2
+trigger1 = Target, stateno=1565
+anim = 1504 + ((target,const(size.ground.front))>9) + ((target,const(size.ground.front))>29)
+id = 1505
+postype = p2
+pos = (target,const(size.mid.pos.x)),(target,const(size.mid.pos.y))
+removetime = 1;90
+;removeongethit=1
+shadow = -1,0,0
+sprpriority = 1
+;facing=1 - 2*(anim=1550)
+
+;---------------------------------------------------------------------------
+
+[State -2, 1]
+type = AttackMulSet;DefenceMulSet
+trigger1 = 1;stateno=9000
+value = 1 + 1 * (var(9)>0)
+
+[State -2]
+type = Varadd
+triggerall = stateno!=2700;3500
+trigger1 = var(9)>0
+v=9
+value = -2
+
+[State -2]
+type = removeexplod
+trigger1 = var(9)>=0 && numexplod(3520)=1
+id = 3520
+
+[State -2]
+type = removeexplod
+trigger1 = var(9)>=0 && numexplod(3521)=1
+id = 3521
+
+[State -2]
+type = explod
+trigger1 = var(9)>0
+pos = 36+141*(id>(enemy, id)),227
+postype = left 
+bindtime = -1
+sprpriority = 1
+anim = 3521
+removetime = -1
+ownpal = 1
+id = 3521
+ontop = 1
+
+[State -2]
+type = explod
+trigger1 = var(9)>0
+pos = 37+141*(id>(enemy, id)),234  
+postype = left 
+bindtime = -1
+sprpriority = 2
+anim = 3520
+removetime = -1
+scale = var(9)/10,1
+ownpal = 1
+id = 3520
+ontop = 1
+
+[State -2];cancela Power Up
+type = projectile
+projanim = 1100
+triggerall = numpartner!=0
+trigger1 = var(9)=2; && (partner,facing=1)
+postype = back;left
+pos = 0,0;ceil(partner, ScreenPos y);0,0;(partner, pos y)
+bindtime = 1
+ID = 1105
+attr = S, ST
+damage = 0
+getpower = 0,00
+givepower = 0
+hitflag = MAFD
+numhits = 0
+AffectTeam = F
+p2stateno = 1105
+sparkno = -1
+hitonce = 1
+projremovetime = 5
+velocity=40
+accel = 20, 0
+
+
+[State -2];cancela Power Up
+type = null;projectile
+projanim = 4400
+triggerall = numpartner!=0
+trigger1 = var(9)=2 && (partner,facing=-1)
+postype = right
+pos = (partner, pos x),(partner, pos y);0,0;(partner, pos y)
+bindtime = 1
+ID = 1105
+attr = S, ST
+damage = 0
+getpower = 0,00
+givepower = 0
+hitflag = MAFD
+numhits = 0
+AffectTeam = F
+p2stateno = 1105
+sparkno = -1
+hitonce = 1
+projremovetime = 5
+velocity=40
+accel = 20, 0
+
+[State -2, pressstart]
+type = Explod
+triggerall = var(20) != 0 && roundstate < 3
+trigger1 = (gametime%60)= id && life != 0
+id = 9600
+anim = 9600
+pos = ((enemy, id)<id)*160, (id - 32)*2
+postype = Left
+removetime = 30;-2
+bindtime = -1
+sprpriority = -1
+ownpal = 1
+ontop = 1
+
+[State -2, acertou a parede]
+type = Explod
+triggerall = numtarget!=0
+trigger1 = target, statetype = A && target, movetype= H;
+trigger1 = target, backedgedist < 2
+trigger1 = target, anim= 5030 || target, anim= 5035
+trigger1 = numexplod(950)=0
+trigger1 = target, vel x < 0;movehit && 
+id = 950
+anim = 950
+pos = -(target,const(size.air.back))/2,(target,const(size.mid.pos.y))
+postype = P2
+removetime = -2
+bindtime = 1
+;sprpriority = 1
+ownpal = 1
+ontop = 1
+persistent = 0
+ignorehitpause=1
+
+[State -2, gethits]
+type = null;SuperPause 
+triggerall = numpartner!=0
+trigger1 = var(37)=2 && partner, stateno=[4400,4420]
+time = 200
+;ovetime = 79;12
+Anim = -1 
+;oweradd=-1000
+unhittable = 1
+
+[State -2]
+type = Varadd
+;triggerall = target!=0
+trigger1 = var(16)>0
+v=16
+value = -1
+
+[State -2]
+type = targetpoweradd
+triggerall = numtarget!=0
+trigger1 = var(16)>0
+value = -4
+
+[State -2];sou DOS ou Win?
+type = Varset
+trigger1 = (movecontact) > (movecontact=1)
+v=17
+value = 1
+
+;;teste
+;[State -2, gethits]
+;type = varset
+;trigger1 = 1
+;var(20)=1
+

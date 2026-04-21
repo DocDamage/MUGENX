@@ -1,0 +1,439 @@
+; Common File 
+;-------------------------------------------------
+	
+; 0: Stand 
+; 通常の立ち状態
+;-----------------------------
+[Statedef 0]
+type = S
+physics = S
+velset = 0,0
+sprpriority = 0
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim != 0 && Anim != 5
+trigger2 = Anim = 5 && AnimTime = 0
+value = 0
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = !alive
+value = 5050
+ 
+;-------------------------------------------------
+; Crouch Section 
+;-------------------------------------------------
+; State10からState11まではしゃがみ動作の処理。
+	
+; 10: Stand to Crouch 
+; 立ちからしゃがみへ移行する動作
+;-----------------------------
+[Statedef 10]
+type    = C
+physics = C
+anim = 10
+velset = 0,0
+
+[State 10, ChangeState]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 11
+ 
+; 11: Crouching 
+; しゃがみ状態
+;-----------------------------
+[Statedef 11]
+type    = C
+physics = C
+anim = 11
+velset = 0,0
+sprpriority = 0
+
+[State 11, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 6 && AnimTime = 0
+value = 11
+ 
+; 12: Crouch to Stand 
+; しゃがみから立ちへ移行する動作
+;-----------------------------
+[Statedef 12]
+type    = S
+physics = S
+anim = 12
+velset = 0,0
+
+[State 12, ChangeState]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+  
+; 20: Walk 
+; 歩きの処理
+;-----------------------------
+[Statedef 20]
+type    = S
+physics = S
+sprpriority = 0
+
+[State 20, VelSet]
+type = VelSet
+trigger1 = 1
+x = ifelse(command = "holdfwd",const(velocity.walk.fwd.x),ifelse(command = "holdback",const(velocity.walk.back.x),0))
+
+[State 20, ChangeAnim]
+type = ChangeAnim
+trigger1 = command = "holdfwd" &&  Anim != 20
+value = 20
+
+[State 20, ChangeAnim]
+type = ChangeAnim
+trigger1 = command = "holdback" &&  Anim != 21
+value = 21
+ 
+;-------------------------------------------------
+; Jump Section 
+;-------------------------------------------------
+; State40からState52まではジャンプ動作の処理。
+	
+; 40: Jump Start 
+; ジャンプ開始処理
+;-----------------------------
+[Statedef 40]
+type    = S
+physics = S
+anim = 40
+ctrl = 0
+velset = 0,0
+sprpriority = 1
+
+[State 40, VarSet]
+type = VarSet
+trigger1 = Time = 0
+sysvar(1) = command = "holdfwd" - command = "holdback"
+
+[State 40, VarSet]
+type = VarSet
+trigger1 = Time = 0
+sysvar(2) = command = "highjump" || prevstateno = [100,102]
+
+
+[State 40, VarSet]
+type = VarSet
+trigger1 = Time = 0
+sysvar(3) = 0
+
+
+; 通常ジャンプ
+[State 40, VelSet]
+type = VelSet
+trigger1 = AnimTime = 0
+x = ifelse(sysvar(1) = 0,0,ifelse(sysvar(1) = 1,const(velocity.jump.fwd.x),const(velocity.jump.back.x)))
+y = const(velocity.jump.y)
+
+
+
+; 大ジャンプ
+[State 40, VelSet]
+type = VelSet
+trigger1 = AnimTime = 0 && sysvar(2) && !sysvar(3)
+x = ifelse(sysvar(1) = 0,0,ifelse(sysvar(1) = 1,5.65,-4.65))
+y = -10
+
+[State 40, ChangeState]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 50
+ctrl = 1
+ 
+; 45: AirJump Start 
+; 二段ジャンプの処理
+;-----------------------------
+[Statedef 45]
+type    = A
+physics = N
+ctrl = 0
+velset = 0,0
+anim = 48
+
+[State 40, VarSet]
+type = AfterImageTime
+trigger1 = Time = 0
+value = 0
+
+[State 40, VarSet]
+type = VarSet
+trigger1 = Time = 0
+sysvar(1) = command = "holdfwd" - command = "holdback"
+
+[State 40, VarSet]
+type = VarSet
+trigger1 = Time = 0
+sysvar(2) = command = "highjump"
+
+[State 45, 6]
+type = VelSet
+trigger1 = AnimTime = 0
+x = ifelse(sysvar(1)=0, const(velocity.airjump.neu.x), ifelse(sysvar(1)=1, const(velocity.airjump.fwd.x), const(velocity.airjump.back.x)))
+y = const(velocity.airjump.y)
+
+[State 40, VelSet]
+type = VelSet
+trigger1 = AnimTime = 0 && sysvar(2) && !sysvar(3)
+x = ifelse(sysvar(1) = 0,0,ifelse(sysvar(1) = 1,5.65,-4.65))
+y = -10
+
+[State 45, 7]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 50
+ctrl = 1
+ 
+; 50: Jump Up 
+; ジャンプ処理
+;-----------------------------
+[Statedef 50]
+type    = A
+physics = A
+
+[State 50, 1]
+type = VarSet
+trigger1 = Time = 0
+sysvar(1) = 0
+
+[State 50, ChangeAnim]
+type = ChangeAnim
+trigger1 = Time = 0
+value = 41 + (vel x > 0) + (vel x < 0) * 2
+
+
+
+[State 50, ChangeAnim]
+type = ChangeAnim
+trigger1 = Time = 0 && sysvar(2) && !sysvar(3)
+value = 41 + (vel x > 0) + (vel x < 0) * 2
+
+[State 50, AfterImage]
+type = AfterImage
+trigger1 = Time = 0 && sysvar(2) && !sysvar(3) && vel x
+time = 30
+length = 9
+framegap = 4
+trans = add1
+palcontrast = 128,128,128
+paladd = 0,0,0
+palmul = 1,1,1
+ 
+; 52: Jump Land 
+; ジャンプ着地動作
+;-----------------------------
+[Statedef 52]
+type    = S
+physics = S
+ctrl = 0
+anim = 47
+velset = 0,0
+
+[State 52, PosSet]
+type = PosSet
+trigger1 = Time = 0
+y = 0
+
+[State 52, CtrlSet]
+type = CtrlSet
+trigger1 = Time = 2
+value = 1
+
+[State 52, ChangeState]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+  
+;-------------------------------------------------
+; RUN Section 
+;-------------------------------------------------
+; ダッシュの処理。
+	
+; 100: ステップ_1 
+;-----------------------------
+[Statedef 100]
+type    = S
+movetype = I
+physics = N
+anim = 100
+ctrl = 0
+
+[State 100, 1]
+type = VelSet
+trigger1 = AnimElem = 3
+x = const(velocity.run.fwd.x)
+
+[State 100, 2]
+type = VelAdd
+trigger1 = AnimElem = 3,> 0
+x = -.5
+
+[State 100, 4]
+type = ChangeState
+trigger1 = command = "holdup"
+value = 40
+ctrl = 1
+
+[State 100, 3]
+type = ChangeState
+trigger1 = Time = 14 && command = "holdfwd"
+value = 101
+
+[State 100, 4]
+type = ChangeState
+trigger1 = Time = 14
+value = 102
+ 
+; 101: ラン 
+;-----------------------------
+[Statedef 101]
+type    = S
+movetype = I
+physics = N
+anim = 101
+ctrl = 0
+
+[State 101, 1]
+type = VelSet
+trigger1 = Time = 0
+x = 6.5
+
+[State 101, 4]
+type = ChangeState
+trigger1 = command = "holdup"
+value = 40
+ctrl = 1
+
+[State 101, 4]
+type = ChangeState
+trigger1 = command != "holdfwd"
+value = 102
+ 
+; 102: ステップ_2 
+;-----------------------------
+[Statedef 102]
+type    = S
+movetype = I
+physics = S
+ctrl = 0
+anim = 106
+velset = 0,0
+
+[State 106, ChangeState]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+ 
+; 105: RUN_BACK_1 
+; バックダッシュ処理
+;-----------------------------
+[Statedef 105]
+type    = S
+movetype = I
+physics = N
+ctrl = 0
+anim = 105
+velset = 0,0
+sprpriority = 1
+
+[State 105, statetypeset]
+type = statetypeset
+trigger1 = AnimElem = 3
+statetype = A
+
+[State 105, VelSet]
+type = VelSet
+trigger1 = AnimElem = 3
+x = const(velocity.run.back.x)
+y = const(velocity.run.back.y)
+
+[State 105, VelAdd]
+type = VelAdd
+trigger1 = AnimElem = 3,>= 0
+y = .28
+
+[State 105, ChangeState]
+type = ChangeState
+trigger1 = Vel Y > 0 && Pos Y >= 0
+value = 106
+ 
+; 106: RUN_BACK_2 
+; バックダッシュ着地処理
+;-----------------------------
+[Statedef 106]
+type    = S
+movetype = I
+physics = S
+ctrl = 0
+anim = 106
+velset = 0,0
+
+[State 106, PosSet]
+type = PosSet
+trigger1 = Time = 0
+y = 0
+
+[State 106, ChangeState]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+  
+;---------------------------------------------------------------------------
+; HIT_FALLRECOVER (on the ground) 
+[Statedef 5201]
+type    = S
+movetype= H
+physics = N
+anim = 5200
+
+[State 5201, 1] ;Turn if not facing opponent
+type = Turn
+trigger1 = Time = 0
+trigger1 = p2dist X < 0
+
+[State 5201, 2]
+type = VelSet
+trigger1 = Time = 0
+x = -8
+y = 0
+
+[State 5201, 3]
+type = PosSet
+trigger1 = Time = 0
+y = 0
+
+[State 5201, 3]
+type = VelAdd
+trigger1 = 1
+x = .26
+
+[State 5201, 3]
+type = VelAdd
+trigger1 = 1
+x = .26
+
+[State 5201, 3]
+type = VelSet
+trigger1 = vel x > -.2
+x = 0
+
+[State 5201, 4]
+type = NotHitBy
+trigger1 = 1
+value = SCA
+time = 1
+
+[State 5201, 4]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+  

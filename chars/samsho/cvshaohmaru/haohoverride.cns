@@ -1,0 +1,191 @@
+;---------------------------------------------------------------------------
+; Stand
+[Statedef 0]
+type = S
+physics = S
+sprpriority = 0
+anim = 0
+;anim = 1
+
+[State 0, snd]
+type = PlaySND
+triggerall = Anim = 0
+trigger1 = AnimElem(0) = 4
+volume = 75
+channel = 1
+value = 0,0
+
+[State 0, 1]
+type = ChangeAnim
+trigger1 = Anim != 0 && Anim != 5
+trigger2 = Anim = 5 && AnimTime = 0 ;Turn anim over
+value = 0
+
+;[State 0, turn]
+;type = Turn
+;triggerall = Palno = 7
+;trigger1 = p2bodydist X < -20
+
+[State 0, 2]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 0, 3] ;Stop moving if low velocity or 4 ticks pass
+type = VelSet
+trigger1 = abs(vel x) < 2
+trigger2 = Time = 4
+x = 0
+
+;---------------------------------------------------------------------------
+; RUN_FWD
+[Statedef 100]
+type    = S
+physics = S
+anim = 100
+sprpriority = 1
+
+[State -3, Landing Sound]
+type = PlaySnd
+trigger1 = AnimElem = 3
+trigger2 = AnimElem = 6
+volume = 50
+value = 40, 0
+
+[State 100, 1]
+type = VelSet
+trigger1 = 1
+x = 5.2
+
+[State 100, 2] ;Prevent run from canceling into walk
+type = AssertSpecial
+trigger1 = 1
+flag = NoWalk
+
+[State 100, 3] ;Prevent from turning
+type = AssertSpecial
+trigger1 = 1
+flag = NoAutoTurn
+
+[State 100, 4b]
+type = ChangeState
+trigger1 = command = "up"
+value = 710
+
+[State 100, 4]
+type = ChangeState
+trigger1 = command != "holdfwd"
+value = 101
+
+;---------------------------------------------------------------------------
+; RUN_Break
+[Statedef 101]
+type    = S
+physics = S
+anim = 101
+sprpriority = 1
+ctrl = 1
+
+[State 101, 1]
+type = VelAdd
+trigger1 = Time > 1
+trigger2 = Vel X >= 0
+x = -0.3
+
+;[State 101, 2]
+;type = VelSet
+;trigger1 = Time = 2
+;x = 2
+
+;[State 101, 3]
+;type = VelSet
+;trigger1 = Time = 3
+;x = 1
+
+[State 101, 4]
+type = VelSet
+trigger1 = Vel X <= 0
+x = 0
+
+[State 101, a] ;Prevent run from canceling into walk
+type = AssertSpecial
+trigger1 = 1
+flag = NoWalk
+
+[State 101, b] ;Prevent from turning
+type = AssertSpecial
+trigger1 = 1
+flag = NoAutoTurn
+
+[State 101, c]
+type = ChangeState
+trigger1 = AnimTime = 0
+trigger2 = Vel X <= 0
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+; Jump Start
+[Statedef 40]
+type    = S
+physics = S
+anim = 40
+ctrl = 0
+sprpriority = 1
+
+[State 40, 1]
+type = VarSet
+trigger1 = Time = 0
+sysvar(1) = 0
+
+[State 40, 2]
+type = VarSet
+trigger1 = command = "holdfwd"
+sysvar(1) = 1
+
+[State 40, 3]
+type = VarSet
+trigger1 = command = "holdback"
+sysvar(1) = -1
+
+[State 40, 4]
+type = VelSet
+triggerall = Command = "holdup"
+trigger1 = AnimTime = 0
+x = ifelse(sysvar(1)=0, const(velocity.jump.neu.x), ifelse(sysvar(1)=1, const(velocity.jump.fwd.x), const(velocity.jump.back.x)))
+y = const(velocity.jump.y)
+
+[State 40, 4b]
+type = VelSet
+triggerall = Command != "holdup"
+trigger1 = AnimTime = 0
+x = ifelse(sysvar(1)=0, const(velocity.jump.neu.x), ifelse(sysvar(1)=1, const(velocity.jump.fwd.x), const(velocity.jump.back.x)))
+y = -4.21
+
+[State 40, 5]
+type = VelSet
+trigger1 = AnimTime = 0
+trigger1 = prevstateno = 100 ;RUN_FWD
+trigger1 = sysvar(1) = 1
+x = const(velocity.runjump.fwd.x)
+
+[State 40, afterimage]
+type = AfterImage
+trigger1 = Vel y <= 0
+trigger1 = AnimTime = 0
+trigger1 = prevstateno = 100 ;RUN_FWD
+trigger1 = sysvar(1) = 1
+time = 20
+framegap=3
+length=9
+trans = add1
+paladd = 0,0,0
+palmul = 1,1,1
+palbright = 10,10,10
+palcontrast = 120,120,120
+
+[State 40, 6]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 50
+ctrl = 1

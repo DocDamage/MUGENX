@@ -1,0 +1,778 @@
+[Data]
+  ;体力ゲージの初期値
+life = 1000
+  ;攻撃力（これ以上に設定すると強くなる）
+attack = 100
+  ;防御力（これ以上に設定すると強くなる）
+defence = 100
+  ;コンボをくらっている時にあがる防御力
+fall.defence_up = 50
+  ;倒れてから起上がるまでのフレーム数
+liedown.time = 60
+  ;空中でどれだけコンボが繋がるか（高くすると無限コンボになるので注意）
+airjuggle = 15
+  ;hitdefで設定していない時の基本ヒットスパークナンバー
+sparkno = s10000
+  ;設定してない時のガードナンバー
+guard.sparkno = s15100
+  ;KOした時に声にエコーをかけるか（１でＯＮ）
+KO.echo = 0
+ volume = 200
+  IntPersistIndex = 60
+FloatPersistIndex = 40
+power = 2000
+
+[Size]
+xscale = 1           ;水平方向の縮尺（通常１）
+yscale = 1           ;垂直方向の縮尺（通常１）
+ground.back = 15     ;キャラの幅(後方,地上)
+ground.front = 16    ;キャラの幅(前方,地上)
+air.back = 12        ;キャラの幅(後方,空中)
+air.front = 12       ;キャラの幅(前方,空中)
+height = 60          ;キャラの高さ
+attack.dist = 160    ;攻撃をした時相手がガード体制に入る最低距離
+proj.attack.dist = 90;攻撃をした時相手がガード体制に入る最低距離（飛び道具）
+proj.doscale = 0     ;上で設定した縮尺を飛び道具にも適用するか（１でＯＮ）   
+head.pos = -5, -90   ;頭の大体の座標
+mid.pos = -5, -60    ;体の中心の大体の座標
+shadowoffset = 0     ;影の垂直方向のオフセット
+draw.offset = 0,0    ;使用しない
+
+[Velocity]
+walk.fwd  = 2.3
+walk.back = -0.8
+run.fwd  = 4.6
+run.back = -5,-2.5
+jump.neu = 0,-8.8   ;垂直ジャンプの速度
+jump.back = -3    ;後ジャンプの速度
+jump.fwd = 3       ;前ジャンプの速度
+runjump.back = -2.55,-8.1 ;後ダッシュしながらのジャンプ速度(オプション)
+runjump.fwd = 4,-8.1      ;前ダッシュしながらのジャンプ速度(オプション)
+airjump.neu = 0,-8.1      ;２段ジャンプ以降の垂直ジャンプの速度(オプション)
+airjump.back = -2.55      ;２段ジャンプ以降の後ジャンプの速度(オプション)
+airjump.fwd = 2.5         ;２段ジャンプ以降の前ジャンプの速度
+
+[Movement]
+airjump.num = 0      ;空中でジャンプする回数
+airjump.height = 40  ;空中でジャンプする最低限の高さ
+yaccel = .44       ;重力
+stand.friction = .85  ;立ち状態の摩擦係数
+crouch.friction = .82 ;屈み状態の摩擦係数
+
+;---------------------------------------------------------------------------
+; ステイトの解説
+; [Statedef STATENO]
+; type = ?      S/C/A/L  Ｓ：立ち/Ｃ：屈み/Ａ：空中/Ｌ：ダウン
+; movetype = ?  I/A/H    Ｉ：通常状態/Ａ：攻撃状態/Ｈ：ダメージをくらってる状態
+; physics = ?   S/C/A/N  Ｓ：立ち/Ｃ：屈み/Ａ：空中/Ｎ：無し
+; juggle = ?             その攻撃に使うジャグル数
+;
+;---------------------------------------------------------------------------
+; 立ち動作
+[Statedef 0]
+type = S
+physics = S
+sprpriority = 0
+
+[State 0, 1]
+type = ChangeAnim
+triggerall=var(7)!=1
+trigger1 = Anim != 0 && Anim != 5
+trigger2 = Anim = 5 && AnimTime = 0;Turn anim over
+value = 0
+
+[State 0, 1]
+type = ChangeAnim
+triggerall=var(7)=1&&time=1
+trigger1 = Anim != 0 && Anim != 5
+trigger2 = Anim = 5 && AnimTime = 0;Turn anim over
+value = 1
+
+[State 0, 2]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 0, 3] ;Stop moving if low velocity or 4 ticks pass
+type = VelSet
+trigger1 = abs(vel x) < 2
+trigger2 = Time = 4
+x = 0
+
+[State 0, 4] ;Are you dead?
+type = ChangeState
+trigger1 = !alive
+value = 5050
+
+;---------------------------------------------------------------------------
+;1
+[Statedef 1]
+type    = S
+movetype = I
+physics = N
+poweradd = 0
+ctrl = 0
+sprpriority = 2
+anim = 1
+velset = 0,0
+
+[State 1]
+type = changestate
+trigger1 = animtime = 0
+value = 0
+ctrl = 1
+;---------------------------------------------------------------------------
+;立ちからしゃがみ
+[Statedef 10]
+type    = C
+physics = C
+anim = 10
+
+[State 10, 1]
+type = VelMul
+trigger1 = Time = 0
+x = .75
+
+[State 10, 2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 11
+;---------------------------------------------------------------------------
+;しゃがみ
+[Statedef 11]
+type    = C
+physics = C
+anim = 11
+sprpriority = 0
+
+[State 11, 1] ;Change from turning animation
+type = ChangeAnim
+trigger1 = Anim = 6 && AnimTime = 0
+value = 11
+;---------------------------------------------------------------------------
+;しゃがみから立ち
+[Statedef 12]
+type    = S
+physics = S
+anim = 12
+
+[State 12, 1]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+;---------------------------------------------------------------------------
+;歩く
+[Statedef 20]
+type    = S
+physics = S
+sprpriority = 0
+
+[State 20, 1]
+type = VelSet
+trigger1 = command = "holdfwd"
+x = const(velocity.walk.fwd.x)
+
+[State 20, 2]
+type = VelSet
+trigger1 = command = "holdback"
+x = const(velocity.walk.back.x)
+
+[State 20, 3]
+type = ChangeAnim
+triggerall = vel x > 0
+trigger1 = Anim != 20 && Anim != 5
+trigger2 = Anim = 5 && AnimTime = 0
+value = 20
+
+[State 20, 4]
+type = ChangeAnim
+triggerall = vel x < 0
+trigger1 = Anim != 21 && Anim != 5
+trigger2 = Anim = 5 && AnimTime = 0
+value = 21
+;---------------------------------------------------------------------------
+;ジャンプ開始
+[Statedef 40]
+type    = S
+physics = S
+anim = 40
+ctrl = 0
+sprpriority = 1
+
+[State 40, 1]
+type = VarSet
+trigger1 = Time = 0
+sysvar(1) = 0
+
+[State 40, 2]
+type = VarSet
+trigger1 = command = "holdfwd"
+sysvar(1) = 1
+
+[State 40, 3]
+type = VarSet
+trigger1 = command = "holdback"
+sysvar(1) = -1
+
+[State 40, 4]
+type = VelSet
+trigger1 = AnimTime = 0
+x = ifelse(sysvar(1)=0, const(velocity.jump.neu.x), ifelse(sysvar(1)=1, const(velocity.jump.fwd.x), const(velocity.jump.back.x)))
+y = const(velocity.jump.y)
+
+[State 40, 5]
+type = VelSet
+trigger1 = AnimTime = 0
+trigger1 = prevstateno = 100 ;RUN_FWD
+trigger1 = sysvar(1) = 1
+x = const(velocity.runjump.fwd.x)
+
+[State 40, 6]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 50
+ctrl = 1
+;---------------------------------------------------------------------------
+; 空中ジャンプ開始
+[Statedef 45]
+type    = A
+physics = N
+ctrl = 0
+velset = 0,0
+
+[State 45, 1]
+type = ChangeAnim
+trigger1 = SelfAnimExist(44)
+value = 44
+
+[State 45, 2]
+type = ChangeAnim
+trigger1 = !SelfAnimExist(44)
+value = 41
+
+[State 45, 3]
+type = VarSet
+trigger1 = Time = 0
+sysvar(1) = 0
+
+[State 45, 4]
+type = VarSet
+trigger1 = command = "holdfwd"
+sysvar(1) = 1
+
+[State 45, 5]
+type = VarSet
+trigger1 = command = "holdback"
+sysvar(1) = -1
+
+[State 45, 6]
+type = VelSet
+trigger1 = Time = 2
+x = ifelse(sysvar(1)=0, const(velocity.airjump.neu.x), ifelse(sysvar(1)=1, const(velocity.airjump.fwd.x), const(velocity.airjump.back.x)))
+y = const(velocity.airjump.y)
+
+[State 45, 7]
+type = ChangeState
+trigger1 = Time = 2
+value = 50
+ctrl = 1
+;---------------------------------------------------------------------------
+; ジャンプ上昇
+[Statedef 50]
+type    = A
+physics = A
+
+[State 50, 1]
+type = VarSet
+trigger1 = Time = 0
+sysvar(1) = 0
+
+[State 50, 2]
+type = ChangeAnim
+trigger1 = Time = 0
+value = ifelse((vel x)=0, 41, ifelse((vel x)>0, 42, 43))
+
+[State 50, 3]
+type = ChangeAnim
+trigger1 = Vel y > -2
+trigger1 = SelfAnimExist(anim + 3)
+persistent = 0
+value = Anim + 3
+;---------------------------------------------------------------------------
+; ジャンプ下降
+[Statedef 51]
+type    = A
+physics = A
+
+[State 51, 1]
+type = Null
+trigger1 = 1
+;---------------------------------------------------------------------------
+; ジャンプ終
+[Statedef 52]
+type    = S
+physics = S
+ctrl = 0
+anim = 47
+
+[State 52, 1]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 52, 2]
+type = PosSet
+trigger1 = Time = 0
+y = 0
+
+[State 52, 3]
+type = CtrlSet
+trigger1 = Time = 3
+value = 1
+
+[State 52, 4]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+;---------------------------------------------------------------------------
+;前ダッシュ開始
+[Statedef 100]
+type = S
+movetype = I
+physics = S
+velset = 0
+ctrl = 0
+anim = 100
+
+[State 105, 1];前に進む
+type = Velset
+trigger1 = time = [2,26]
+x = 6
+
+[State 105,2]
+type = helper
+trigger1 = time = 26
+name = "kemuri"
+id = 11000
+pos = -10,0
+postype = p1
+stateno = 11000
+helpertype = normal
+ownpal = 1
+keyctrl = 0
+
+[State 105, 2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+;---------------------------------------------------------------------------
+;バックステップ開始
+[Statedef 105]
+type = S
+movetype = I
+physics = S
+velset = 0
+ctrl = 0
+anim = 105
+
+[State 105, 1];後退
+type = Velset
+trigger1 = time = [2,26]
+x = -4
+
+[State 105,2]
+type = helper
+trigger1 = animelem = 5
+name = "kemuri"
+id = 11000
+pos = 20,0
+postype = p1
+stateno = 11000
+helpertype = normal
+ownpal = 1
+keyctrl = 0
+
+[State 105, 2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 106
+;---------------------------------------------------------------------------
+; リカバーなし
+[Statedef 5050]
+type    = A
+movetype= H
+physics = N
+
+[State 5050, 1] ;Change anim when done with transition
+type = ChangeAnim
+trigger1 = AnimTime = 0
+trigger1 = Anim = 5035
+trigger2 = Time = 0     ;If no transition anim
+trigger2 = Anim != 5035
+trigger2 = (Anim != [5051, 5059]) && (Anim != [5061, 5069])
+trigger2 = Anim != 5090 ;Not if hit off ground anim
+value = 5050
+
+[State 5050, 2] ;Coming down anim
+type = ChangeAnim
+trigger1 = anim = [5050,5059]
+trigger1 = Vel Y >= ifelse(anim = 5050, 1, -2)
+trigger1 = SelfAnimExist(anim+10)
+value = anim+10
+persistent = 0
+
+[State 5050, 3] ;Gravity
+type = VelAdd
+trigger1 = 1
+y = GetHitVar(yaccel)
+
+[State 5050, 4] ;Recover near ground
+type = Null
+triggerall = Vel Y > 0
+triggerall = Pos Y >= -20
+triggerall = alive
+triggerall = CanRecover
+trigger1 = Command = "recovery"
+value = 5200 ;HITFALL_RECOVER
+
+[State 5050, 5]; Recover in mid air
+type = Null
+triggerall = Vel Y > -1
+triggerall = alive
+triggerall = CanRecover
+trigger1 = Command = "recovery"
+value = 5210 ;HITFALL_AIRRECOVER
+
+[State 5050, 6]
+type = ChangeState
+trigger1 = Vel Y > 0
+trigger1 = Pos Y >= ifelse((anim = [5051,5059]) || (anim = [5061,5069]), 0, 25)
+value = 5100 ;HIT_BOUNCE
+;---------------------------------------------------------------------------
+; 負け
+[Statedef 5150]
+type    = L
+movetype= H
+physics = N
+sprpriority = -3
+
+[State 5150, 1] ;Normal anim
+type = ChangeAnim
+triggerall = Time = 0
+triggerall = SelfAnimExist(5140)
+trigger1 = (anim != [5111,5119]) && (anim != [5171,5179])
+trigger2 = !SelfAnimExist(5140 + (anim % 10))
+value = 5140
+
+[State 5150, 3] ;Hit up type anim
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = (anim = [5111,5119]) || (anim = [5171,5179])
+trigger1 = SelfAnimExist(5140 + (anim % 10))
+value = 5140 + (anim % 10)
+
+[State 5150, 4] ;Match over anim
+type = ChangeAnim
+persistent = 0
+;trigger1 = Time = 0
+trigger1 = MatchOver = 1
+trigger1 = Anim = [5140,5149]
+trigger1 = SelfAnimExist(anim+10)
+value = anim+10
+
+[State 5150, 5] ;Switch to 5110 if liedead anim does not exist
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = Anim != [5140,5159]
+trigger1 = Anim != [5110,5119]
+value = 5110
+
+[State 5150, 6] ;Friction
+type = VelMul
+trigger1 = 1
+x = 0.85
+
+[State 5150, 7] ;Friction
+type = VelSet
+trigger1 = Vel x < .05
+persistent = 0
+x = 0
+
+[State 5150, 8]
+type = NotHitBy
+trigger1 = 1
+value = SCA
+time = 1
+;---------------------------------------------------------------------------
+;砂嵐
+[Statedef 11000]
+type = A
+movetype = A
+physics = N
+velset = 0,0
+anim = 11000
+juggle = 0
+sprpriority = 3
+ctrl = 0
+
+[State 1201,end]
+type = Destroyself
+trigger1 = animtime = 0
+;---------------------------------------------------------------------------
+;タイムオーバーで負けた時
+[Statedef 170]
+type = S
+ctrl = 0
+anim = 175
+velset = 0,0
+
+[State 170, 1]
+type = NotHitBy
+trigger1 = 1
+value = SCA
+time = 1
+;---------------------------------------------------------------------------
+;勝利
+[Statedef 180]
+type = S
+
+[State 180, 1]
+type = ChangeState
+trigger1 = Time = 0&&var(7) != 1
+value = 181
+
+[State 180, 1]
+type = ChangeState
+trigger1 = Time = 0&&var(7) = 1
+value = 182
+;---------------------------------------------------------------------------
+;勝利
+[Statedef 181]
+type = S
+
+[state 181, 2]
+type = changeanim
+trigger1 = time = 0
+value = 180
+
+[State 180, snd]
+type = PlaySnd
+trigger1 = animelem = 1
+value = 200, 0
+
+;神を信じるザマス
+[State 0, 5]
+type = VarSet
+trigger1 = stateno = 181
+var(10) = 14
+
+[State 0, 6]
+type = Varadd
+trigger1 = stateno != 181
+var(10) = 14
+
+[State 0,exp]
+type = Explod
+triggerall = TeamSide = 1
+trigger1 = var(10) = 14
+anim = 10010
+id = 10010
+pos = 23,25
+postype = left
+sprpriority = 1
+bindtime = -1
+
+[State 0,exp]
+type = Explod
+triggerall = TeamSide = 2
+trigger1 = var(10) = 14
+anim = 10010
+id = 10010
+pos = 180,25
+postype = left
+sprpriority = 1
+bindtime = -1
+
+[State 0,exp]
+type = RemoveExplod
+trigger1 = var(10) != 14
+id = 10010
+
+[State 180,2];精霊
+type = Explod
+trigger1 = animelem = 1
+anim = 181
+id = 1
+pos = 0,0
+postype = p1
+sprpriority = 2
+bindtime = -1
+removetime = 200
+;---------------------------------------------------------------------------
+;勝利
+[Statedef 182]
+type = S
+
+[state 181, 2]
+type = changeanim
+trigger1 = time = 0
+value = 182
+
+[State 180, snd]
+type = PlaySnd
+trigger1 = animelem = 1
+value = 200, 0
+
+;神を信じるザマス
+[State 0, 5]
+type = VarSet
+trigger1 = stateno = 182
+var(10) = 14
+
+[State 0, 6]
+type = Varadd
+trigger1 = stateno != 182
+var(10) = 14
+
+[State 0,exp]
+type = Explod
+triggerall = TeamSide = 1
+trigger1 = var(10) = 14
+anim = 10010
+id = 10010
+pos = 23,25
+postype = left
+sprpriority = 1
+bindtime = -1
+
+[State 0,exp]
+type = Explod
+triggerall = TeamSide = 2
+trigger1 = var(10) = 14
+anim = 10010
+id = 10010
+pos = 180,25
+postype = left
+sprpriority = 1
+bindtime = -1
+
+[State 0,exp]
+type = RemoveExplod
+trigger1 = var(10) != 14
+id = 10010
+;---------------------------------------------------------------------------
+; イントロ
+[Statedef 190]
+type = S
+ctrl = 0
+anim = 190
+velset = 0,0
+movetype = I
+physics = S
+sprpriority = 2
+
+;はじめるざます
+[State 0, 5]
+type = VarSet
+trigger1 = stateno = 190
+var(10) = 13
+
+[State 0, 6]
+type = Varadd
+trigger1 = stateno != 190
+var(10) = 13
+
+[State 0,exp]
+type = Explod
+triggerall = TeamSide = 1
+trigger1 = var(10) = 13
+anim = 10009
+id = 10009
+pos = 23,25
+postype = left
+sprpriority = 1
+bindtime = -1
+
+[State 0,exp]
+type = Explod
+triggerall = TeamSide = 2
+trigger1 = var(10) = 13
+anim = 10009
+id = 10009
+pos = 180,25
+postype = left
+sprpriority = 1
+bindtime = -1
+
+[State 0,exp]
+type = RemoveExplod
+trigger1 = var(10) != 13
+id = 10009
+
+[State 191, 2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 0
+;---------------------------------------------------------------------------
+; 挑発の動作
+[Statedef 195]
+type = S
+ctrl = 0
+anim = 195
+velset = 0,0
+movetype = I
+physics = S
+sprpriority = 2
+
+[State 180, snd]
+type = PlaySnd
+trigger1 = animelem = 1
+value = 200, 0
+
+[State 195, 2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+;---------------------------------------------------------------------------
+; 挑発の動作
+[Statedef 196]
+type = S
+ctrl = 0
+anim = 196
+velset = 0,0
+movetype = I
+physics = S
+sprpriority = 2
+
+[State 180, snd]
+type = PlaySnd
+trigger1 = animelem = 1
+value = 200, 0
+
+[State 195, 2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+;---------------------------------------------------------------------------
+; 挑発の動作
+[Statedef 197]
+type = S
+ctrl = 0
+anim = 175
+velset = 0,0
+movetype = I
+physics = S
+sprpriority = 1
+
+[State 195, 2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+

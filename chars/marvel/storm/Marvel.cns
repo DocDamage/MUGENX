@@ -1,0 +1,4817 @@
+;---------------------------------------------------------------------------
+; Initialize (at the start of the round)
+[Statedef 5900]
+type = S
+
+[State 5900, 1] ;Clear all int variables
+type = VarRangeSet
+trigger1 = roundno = 1
+value = 0
+
+[State 5900, 2] ;Clear all float variables
+type = VarRangeSet
+trigger1 = roundno = 1
+fvalue = 0
+
+[State 5900, VarSet]
+type = VarSet
+trigger1 = roundno = 1
+var(36) = IfElse(facing,1,-1)
+
+[State 5900, 3] ;Intro
+type = ChangeState
+trigger1 = roundno = 1
+value = 190
+
+;---------------------------------------------------------------------------
+; Push Guard
+[Statedef 10150]
+movetype = I
+physics = N
+anim = 10150
+ctrl = 0
+
+[State 10150, PlaySnd]
+type = PlaySnd
+trigger1 = Time = 1
+value = 202,0
+volume = 255
+
+[State 10150, VelSet]
+type = VelSet
+trigger1 = Time >= 0
+x = 30 - Time
+y = 0
+
+[State 10150, PlayerPush]
+type = PlayerPush
+trigger1 = Time >= 0
+value = 1
+
+[State 10150, NotHitBy]
+type = NotHitBy
+trigger1 = Time >= 0
+time = 2
+value = SCA, AA, AT, AP
+
+[State 10150, DestroySelf]
+type = DestroySelf
+trigger1 = !AnimTime
+
+[Statedef 10151]
+movetype = I
+physics = N
+anim = 10150
+ctrl = 0
+
+[State 10151, VelSet]
+type = VelSet
+trigger1 = Time >= 0
+x = -30 + Time
+y = 0
+
+[State 10151, PlayerPush]
+type = PlayerPush
+trigger1 = Time >= 0
+value = 1
+
+[State 10151, NotHitBy]
+type = NotHitBy
+trigger1 = Time >= 0
+time = 2
+value = SCA, AA, AT, AP
+
+[State 10151, DestroySelf]
+type = DestroySelf
+trigger1 = !AnimTime
+
+;---------------------------------------------------------------------------
+; OTG'd
+[Statedef 15080]
+type = L
+movetype = H
+physics = N
+anim = 5080
+facep2 = 1
+ctrl = 0
+
+[State 15080, StateTypeSet]
+type = StateTypeSet
+trigger1 = Pos Y < 0
+statetype = A
+
+[State 15080, VelSet]
+type = VelSet
+trigger1 = !Time
+x = GetHitVar(xvel) * facing
+y = GetHitVar(yvel)
+
+[State 15080, VelSet]
+type = VelSet
+trigger1 = !Alive
+x = -7.5
+y = -5
+
+[State 15080, PosSet]
+type = PosSet
+trigger1 = Pos Y > 0
+y = 0
+
+[State 15080, LifeAdd]
+type = LifeAdd
+trigger1 = !Time
+value = -(GetHitVar(damage))
+
+[State 15080, ChangeAnim]
+type = ChangeAnim
+trigger1 = Vel Y != 0
+trigger1 = Anim != 5090
+value = 5090
+
+[State 15080, Gravity]
+type = Gravity
+trigger1 = Pos Y < 0
+
+[State 15080, PosSet]
+type = PosSet
+trigger1 = Time > 2
+trigger1 = Pos Y >= 0
+y = 0
+
+[State 15080, VelSet]
+type = VelSet
+trigger1 = Time > 2
+trigger1 = Pos Y >= 0
+trigger1 = Vel Y >= 0
+y = 0
+
+[State 15080, ChangeState]
+type = ChangeState
+trigger1 = !Vel Y && !Pos Y
+trigger1 = Time >= 20
+value = 25110
+
+[State 15080, SelfState]
+type = SelfState
+trigger1 = !Alive
+value = 5050
+
+;---------------------------------------------------------------------------
+; HIT_LIEDOWN
+[Statedef 25110]
+type    = L
+movetype= H
+physics = N
+
+[State 5110, PosSet]
+type = PosSet
+trigger1 = PrevStateNo = 15080
+y = 0
+
+[State 5110, VelSet]
+type = VelSet
+trigger1 = PrevStateNo = 15080
+y = 0
+
+[State 5110, EnvShake]
+type = FallEnvShake
+trigger1 = !Time
+
+[State 5110, 1] ;For hit up/up-diag type (from state 5081)
+type = ChangeAnim
+persistent = 0
+trigger1 = SelfAnimExist(5110 + (anim % 10))
+trigger1 = anim = [5081,5089]
+value = 5110 + (anim % 10)
+
+[State 5110, 2] ;Hit ground anim (normal)
+type = ChangeAnim
+triggerall = !Time
+triggerall = anim != [5110,5119] ;Not already changed anim
+trigger1 = anim != [5161,5169]
+trigger2 = !SelfAnimExist(5170 + (anim % 10))
+value = 5170
+
+[State 5110, 3] ;Hit ground anim (for hit up)
+type = ChangeAnim
+triggerall = !Time
+triggerall = anim != [5110,5119] ;Not already changed anim
+trigger1 = anim = [5161,5169]
+trigger1 = SelfAnimExist(5170 + (anim % 10))
+value = 5170 + (anim % 10)
+
+[State 5110, 4]
+type = HitFallDamage
+trigger1 = !Time
+
+[State 5110, 5]
+type = PosSet
+trigger1 = !Time
+y = 0
+
+[State 5110, 5]
+type = PosSet
+trigger1 = Pos Y > 0
+y = 0
+
+[State 5110, Var] ;Get fall velocity
+type = VarSet
+trigger1 = !Time
+trigger1 = GetHitVar(fall.yvel) != 0
+sysvar(1) = floor(vel y)
+
+[State 5110, 6]
+type = PlaySnd
+trigger1 = !Time
+trigger1 = !SysVar(0)
+;value = F7, 0 ;Hit ground
+value = F7, (sysvar(1) > 5) + (sysvar(1) > 14)
+
+[State 5110, 7]
+type = GameMakeAnim
+trigger1 = !Time
+trigger1 = !SysVar(0)
+value = 60 + (sysvar(1) > 5) + (sysvar(1) > 14)
+pos = 0, 0
+under = sysvar(1) <= 10
+
+[State 5110, 8]
+type = VelSet
+trigger1 = !Time
+y = 0
+
+[State 5110, 9] ;For hit up type
+type = ChangeAnim
+persistent = 0
+triggerall = anim = [5171,5179]
+triggerall = SelfAnimExist(5110 + (anim % 10))
+trigger1 = !AnimTime
+trigger2 = SysVar(0) ;SysVar(0) = 1 avoids hit ground anim
+value = 5110 + (anim % 10)
+
+[State 5110, 10] ;For normal
+type = ChangeAnim
+persistent = 0
+triggerall = Anim != [5111,5119]
+trigger1 = !AnimTime
+trigger2 = SysVar(0) ;SysVar(0) = 1 avoids hit ground frame
+value = 5110
+
+[State 5110, 11] ;If just died
+type = SelfState
+triggerall = !alive
+trigger1 = !AnimTime
+trigger2 = SysVar(0) ;SysVar(0) = 1 avoids hit ground frame
+trigger3 = Anim = [5110,5119]
+value = 5150
+
+[State 5110, 12]
+type = VarSet
+trigger1 = SysVar(0)
+trigger1 = !Time
+sysvar(0) = 0
+
+[State 5110, 13] ;Friction
+type = VelMul
+trigger1 = 1
+x = 0.85
+
+[State 5110, 14]
+type = ForceFeedback
+trigger1 = Alive
+trigger1 = !Time
+time = 8
+ampl = 240
+waveform = sine
+
+[State 5110, 15]
+type = ForceFeedback
+trigger1 = !Alive
+trigger1 = !Time
+ampl = 200, 7, -.467
+time = 30
+waveform = sine
+
+[State 5110, SelfState]
+type = SelfState
+trigger1 = Alive && Time = 9 ;Const(data.liedown.time)
+value = 5120
+
+;---------------------------------------------------------------------------
+; HITA_FALL (knocked up, falling)
+[Statedef 5050]
+type    = A
+movetype= H
+physics = N
+
+[State 5050, 1] ;Change anim when done with transition
+type = ChangeAnim
+trigger1 = !AnimTime
+trigger1 = Anim = 5035
+trigger2 = !Time     ;If no transition anim
+trigger2 = Anim != 5035
+trigger2 = (Anim != [5051, 5059]) && (Anim != [5061, 5069])
+trigger2 = Anim != 5090 ;Not if hit off ground anim
+value = 5050
+
+[State 5050, 2] ;Coming down anim
+type = ChangeAnim
+trigger1 = anim = [5050,5059]
+trigger1 = Vel Y >= ifelse(anim = 5050, 1, -2)
+trigger1 = SelfAnimExist(anim+10)
+value = anim+10
+persistent = 0
+
+[State 5050, 3] ;Gravity
+type = VelAdd
+trigger1 = 1
+y = GetHitVar(yaccel)
+
+[State 5050, 4]
+type = ChangeState
+triggerall = Alive
+triggerall = Pos Y < 0
+trigger1 = CanRecover
+value = 5040
+
+[State 5050, 6]
+type = ChangeState
+trigger1 = Vel Y > 0
+trigger1 = Pos Y >= ifelse((anim = [5051,5059]) || (anim = [5061,5069]), 0, 25)
+value = 5100 ;HIT_BOUNCE
+
+;---------------------------------------------------------------------------
+; Recovery Roll
+[Statedef 15120]
+type = S
+movetype = I
+physics = N
+anim = 15120
+velset = 0,0
+facep2 = 1
+ctrl = 0
+
+[State 15120, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 0
+
+[State 15120, PosSet]
+type = PosSet
+trigger1 = 1
+y = 0
+
+[State 15120, VelSet]
+type = VelSet
+trigger1 = AnimElem = 2
+x = 10
+
+[State 15120, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, AA, AP
+
+[State 15120, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 11
+value = SCA, AT
+
+[State 15120, ChangeState]
+type = ChangeState
+trigger1 = !AnimTime
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+; HIT_LIEDEAD
+[Statedef 5150]
+type    = L
+movetype= H
+physics = N
+sprpriority = -3
+
+[State 5150, 1] ;Normal anim
+type = ChangeAnim
+triggerall = !Time
+triggerall = SelfAnimExist(5140)
+trigger1 = (anim != [5111,5119]) && (anim != [5171,5179])
+trigger2 = !SelfAnimExist(5140 + (anim % 10))
+value = 5140
+
+[State 5150, 3] ;Hit up type anim
+type = ChangeAnim
+trigger1 = !Time
+trigger1 = (anim = [5111,5119]) || (anim = [5171,5179])
+trigger1 = SelfAnimExist(5140 + (anim % 10))
+value = 5140 + (anim % 10)
+
+[State 5150, 4] ;Match over anim
+type = ChangeAnim
+persistent = 0
+;trigger1 = !Time
+trigger1 = MatchOver = 1
+trigger1 = Anim = [5140,5149]
+trigger1 = SelfAnimExist(anim+10)
+value = anim+10
+
+[State 5150, 5] ;Switch to 5110 if liedead anim does not exist
+type = ChangeAnim
+trigger1 = !Time
+trigger1 = Anim != [5140,5159]
+trigger1 = Anim != [5110,5119]
+value = 5110
+
+[State 5150, 6] ;Friction
+type = VelMul
+trigger1 = 1
+x = 0.85
+
+[State 5150, 7] ;Friction
+type = VelSet
+trigger1 = Vel X < .05
+persistent = 0
+x = 0
+
+[State 5150, 8]
+type = NotHitBy
+trigger1 = 0
+value = SCA
+time = 1
+
+;---------------------------------------------------------------------------
+; Knocked Down
+[Statedef 10240]
+type = A
+movetype = H
+physics = N
+anim = 5012
+sprpriority = -1
+velset = 0,0
+ctrl = 0
+
+[State 10240, Turn]
+type = Turn
+trigger1 = !Time && !(p2dist X < 0 && facing != enemyNear, facing) && (facing = enemyNear, facing)
+value = 1
+
+[State 10240, PosFreeze]
+type = PosFreeze
+trigger1 = 1
+
+[State 10240, ChangeState]
+type = ChangeState
+trigger1 = Time = 9
+value = 10241
+
+[Statedef 10241]
+type = A
+movetype = H
+physics = N
+anim = 5050
+sprpriority = -1
+velset = -6,-6
+ctrl = 0
+
+[State 10241, VelSet]
+type = VelSet
+trigger1 = !Alive
+x = -4
+y = -5
+
+[State 10241, SelfState]
+type = SelfState
+trigger1 = !Alive
+value = 5050
+
+[State 10241, VelAdd]
+type = VelAdd
+trigger1 = Vel Y < 0
+y = .6
+
+[State 10241, Gravity]
+type = Gravity
+trigger1 = Vel Y >= 0
+
+[State 10241, EnvShake]
+type = EnvShake
+trigger1 = Pos Y > 0
+time = 5
+ampl = -5
+
+[State 10241, VelSet]
+type = VelSet
+trigger1 = Pos Y > 0
+x = -5
+y = -3
+
+[State 10241, PosSet]
+type = PosSet
+trigger1 = Pos Y > 0
+y = 0
+
+[State 10241, PlaySnd]
+type = PlaySnd
+trigger1 = Vel X = -5 && Vel Y = -3
+value = F7, 1
+
+[State 10241, SelfState]
+type = SelfState
+trigger1 = Vel X = -5 && Vel Y = -3
+value = 5040
+
+;---------------------------------------------------------------------------
+; Hyper Combo Finish!
+[Statedef 13100]
+movetype = I
+anim = 2301
+ctrl = 0
+
+[State 13100, PalFX]
+type = PalFX
+trigger1 = !Time
+time = 4;2
+sinadd = 0,0,0,8;4
+color = 0
+[State 13100, PalFX]
+type = PalFX
+trigger1 = Time = 4
+time = 4;2
+sinadd = 100,0,0,8;4
+color = 0
+[State 13100, PalFX]
+type = PalFX
+trigger1 = Time = 8
+time = 4;2
+sinadd = 100,100,0,8;4
+color = 0
+[State 13100, PalFX]
+type = PalFX
+trigger1 = Time = 12
+time = 4;2
+sinadd = 100,0,100,8;4
+color = 0
+[State 13100, PalFX]
+type = PalFX
+trigger1 = Time = 16
+time = 4;2
+sinadd = 0,100,0,8;4
+color = 0
+[State 13100, PalFX]
+type = PalFX
+trigger1 = Time = 20
+time = 4;2
+sinadd = 0,100,100,8;4
+color = 0
+[State 13100, PalFX]
+type = PalFX
+trigger1 = Time = 24
+time = 4;2
+sinadd = 100,100,100,8;4
+color = 0
+
+[State 13100, Explod]
+type = Explod
+trigger1 = PrevStateNo != 13100
+trigger1 = Time = 1
+anim = 13100
+sprpriority = -1
+postype = left
+pos = 0,0
+bindtime = -1
+removetime = 120
+ownpal = 0
+id = 13100
+name = "Hyper Combo Finish!! Radial"
+persistent = 0
+ignorehitpause = 1
+
+[State 13100, ChangeState]
+type = ChangeState
+trigger1 = Time = 24
+value = 13100
+
+[State 13100, RemoveExplod]
+type = RemoveExplod
+trigger1 = RoundState = 4
+id = 13100
+ignorehitpause = 1
+
+[State 13100, DestroySelf]
+type = DestroySelf
+trigger1 = Time > 0
+trigger1 = NumExplod(13100) = 0
+
+;---------------------------------------------------------------------------
+; Hyper Combo!! 1/8
+[Statedef 23000]
+movetype = I
+physics = N
+anim = 23000
+sprpriority = 3
+ctrl = 0
+
+[State 23000, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 23000, PalFX]
+type = PalFX
+trigger1 = parent, StateNo != [8000,8050]
+trigger1 = !Time
+time = 45
+sinadd = 150,150,150,5
+color = 0
+
+[State 23000, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8000
+trigger1 = !Time
+time = 45
+add = 128,80,192
+color = 0
+
+[State 23000, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8010
+trigger1 = !Time
+time = 45
+add = 160,0,96
+color = 0
+
+[State 23000, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8020
+trigger1 = !Time
+time = 45
+add = 208,64,48
+color = 0
+
+[State 23000, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8030
+trigger1 = !Time
+time = 45
+add = 0,96,0
+color = 0
+
+[State 23000, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8040
+trigger1 = !Time
+time = 45
+add = 128,0,192
+color = 0
+
+[State 23000, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8050
+trigger1 = !Time
+time = 45
+add = 192,0,0
+color = 0
+
+[State 23000, VarSet]
+type = VarSet
+trigger1 = !Time
+var(0) = 0
+
+[State 23000, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 0
+var(0) = 7
+[State 23000, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 1
+var(0) = 8
+
+[State 23000, VarSet]
+type = VarSet
+trigger1 = var(0) = 360
+var(0) = 0
+
+[State 23000, AngleSet]
+type = AngleSet
+trigger1 = 1
+value = var(0)
+
+[State 23000, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+
+[State 23000, DestroySelf]
+type = DestroySelf
+trigger1 = Time >= 45
+
+;---------------------------------------------------------------------------
+; Hyper Combo!! 2/8
+[Statedef 23001]
+movetype = I
+physics = N
+anim = 23000
+sprpriority = 3
+ctrl = 0
+
+[State 23001, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 23001, PalFX]
+type = PalFX
+trigger1 = parent, StateNo != [8000,8050]
+trigger1 = !Time
+time = 45
+sinadd = 150,150,150,5
+color = 0
+
+[State 23001, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8000
+trigger1 = !Time
+time = 45
+add = 128,80,192
+color = 0
+
+[State 23001, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8010
+trigger1 = !Time
+time = 45
+add = 160,0,96
+color = 0
+
+[State 23001, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8020
+trigger1 = !Time
+time = 45
+add = 208,64,48
+color = 0
+
+[State 23001, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8030
+trigger1 = !Time
+time = 45
+add = 0,96,0
+color = 0
+
+[State 23001, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8040
+trigger1 = !Time
+time = 45
+add = 128,0,192
+color = 0
+
+[State 23001, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8050
+trigger1 = !Time
+time = 45
+add = 192,0,0
+color = 0
+
+[State 23001, VarSet]
+type = VarSet
+trigger1 = !Time
+var(0) = 45
+
+[State 23001, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 0
+var(0) = 7
+[State 23001, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 1
+var(0) = 8
+
+[State 23001, VarSet]
+type = VarSet
+trigger1 = var(0) = 360
+var(0) = 0
+
+[State 23001, AngleSet]
+type = AngleSet
+trigger1 = 1
+value = var(0)
+
+[State 23001, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+
+[State 23001, DestroySelf]
+type = DestroySelf
+trigger1 = Time >= 45
+
+;---------------------------------------------------------------------------
+; Hyper Combo!! 3/8
+[Statedef 23002]
+movetype = I
+physics = N
+anim = 23000
+sprpriority = 3
+ctrl = 0
+
+[State 23002, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 23002, PalFX]
+type = PalFX
+trigger1 = parent, StateNo != [8000,8050]
+trigger1 = !Time
+time = 45
+sinadd = 150,150,150,5
+color = 0
+
+[State 23002, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8000
+trigger1 = !Time
+time = 45
+add = 128,80,192
+color = 0
+
+[State 23002, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8010
+trigger1 = !Time
+time = 45
+add = 160,0,96
+color = 0
+
+[State 23002, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8020
+trigger1 = !Time
+time = 45
+add = 208,64,48
+color = 0
+
+[State 23002, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8030
+trigger1 = !Time
+time = 45
+add = 0,96,0
+color = 0
+
+[State 23002, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8040
+trigger1 = !Time
+time = 45
+add = 128,0,192
+color = 0
+
+[State 23002, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8050
+trigger1 = !Time
+time = 45
+add = 192,0,0
+color = 0
+
+[State 23002, VarSet]
+type = VarSet
+trigger1 = !Time
+var(0) = 90
+
+[State 23002, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 0
+var(0) = 7
+[State 23002, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 1
+var(0) = 8
+
+[State 23002, VarSet]
+type = VarSet
+trigger1 = var(0) = 360
+var(0) = 0
+
+[State 23002, AngleSet]
+type = AngleSet
+trigger1 = 1
+value = var(0)
+
+[State 23002, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+
+[State 23002, DestroySelf]
+type = DestroySelf
+trigger1 = Time >= 45
+
+;---------------------------------------------------------------------------
+; Hyper Combo!! 4/8
+[Statedef 23003]
+movetype = I
+physics = N
+anim = 23000
+sprpriority = 3
+ctrl = 0
+
+[State 23003, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 23003, PalFX]
+type = PalFX
+trigger1 = parent, StateNo != [8000,8050]
+trigger1 = !Time
+time = 45
+sinadd = 150,150,150,5
+color = 0
+
+[State 23003, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8000
+trigger1 = !Time
+time = 45
+add = 128,80,192
+color = 0
+
+[State 23003, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8010
+trigger1 = !Time
+time = 45
+add = 160,0,96
+color = 0
+
+[State 23003, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8020
+trigger1 = !Time
+time = 45
+add = 208,64,48
+color = 0
+
+[State 23003, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8030
+trigger1 = !Time
+time = 45
+add = 0,96,0
+color = 0
+
+[State 23003, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8040
+trigger1 = !Time
+time = 45
+add = 128,0,192
+color = 0
+
+[State 23003, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8050
+trigger1 = !Time
+time = 45
+add = 192,0,0
+color = 0
+
+[State 23003, VarSet]
+type = VarSet
+trigger1 = !Time
+var(0) = 135
+
+[State 23003, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 0
+var(0) = 7
+[State 23003, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 1
+var(0) = 8
+
+[State 23003, VarSet]
+type = VarSet
+trigger1 = var(0) = 360
+var(0) = 0
+
+[State 23003, AngleSet]
+type = AngleSet
+trigger1 = 1
+value = var(0)
+
+[State 23003, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+
+[State 23003, DestroySelf]
+type = DestroySelf
+trigger1 = Time >= 45
+
+;---------------------------------------------------------------------------
+; Hyper Combo!! 5/8
+[Statedef 23004]
+movetype = I
+physics = N
+anim = 23000
+sprpriority = 3
+ctrl = 0
+
+[State 23004, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 23004, PalFX]
+type = PalFX
+trigger1 = parent, StateNo != [8000,8050]
+trigger1 = !Time
+time = 45
+sinadd = 150,150,150,5
+color = 0
+
+[State 23004, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8000
+trigger1 = !Time
+time = 45
+add = 128,80,192
+color = 0
+
+[State 23004, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8010
+trigger1 = !Time
+time = 45
+add = 160,0,96
+color = 0
+
+[State 23004, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8020
+trigger1 = !Time
+time = 45
+add = 208,64,48
+color = 0
+
+[State 23004, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8030
+trigger1 = !Time
+time = 45
+add = 0,96,0
+color = 0
+
+[State 23004, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8040
+trigger1 = !Time
+time = 45
+add = 128,0,192
+color = 0
+
+[State 23004, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8050
+trigger1 = !Time
+time = 45
+add = 192,0,0
+color = 0
+
+[State 23004, VarSet]
+type = VarSet
+trigger1 = !Time
+var(0) = 180
+
+[State 23004, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 0
+var(0) = 7
+[State 23004, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 1
+var(0) = 8
+
+[State 23004, VarSet]
+type = VarSet
+trigger1 = var(0) = 360
+var(0) = 0
+
+[State 23004, AngleSet]
+type = AngleSet
+trigger1 = 1
+value = var(0)
+
+[State 23004, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+
+[State 23004, DestroySelf]
+type = DestroySelf
+trigger1 = Time >= 45
+
+;---------------------------------------------------------------------------
+; Hyper Combo!! 6/8
+[Statedef 23005]
+movetype = I
+physics = N
+anim = 23000
+sprpriority = 3
+ctrl = 0
+
+[State 23005, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 23005, PalFX]
+type = PalFX
+trigger1 = parent, StateNo != [8000,8050]
+trigger1 = !Time
+time = 45
+sinadd = 150,150,150,5
+color = 0
+
+[State 23005, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8000
+trigger1 = !Time
+time = 45
+add = 128,80,192
+color = 0
+
+[State 23005, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8010
+trigger1 = !Time
+time = 45
+add = 160,0,96
+color = 0
+
+[State 23005, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8020
+trigger1 = !Time
+time = 45
+add = 208,64,48
+color = 0
+
+[State 23005, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8030
+trigger1 = !Time
+time = 45
+add = 0,96,0
+color = 0
+
+[State 23005, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8040
+trigger1 = !Time
+time = 45
+add = 128,0,192
+color = 0
+
+[State 23005, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8050
+trigger1 = !Time
+time = 45
+add = 192,0,0
+color = 0
+
+[State 23005, VarSet]
+type = VarSet
+trigger1 = !Time
+var(0) = 225
+
+[State 23005, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 0
+var(0) = 7
+[State 23005, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 1
+var(0) = 8
+
+[State 23005, VarSet]
+type = VarSet
+trigger1 = var(0) = 360
+var(0) = 0
+
+[State 23005, AngleSet]
+type = AngleSet
+trigger1 = 1
+value = var(0)
+
+[State 23005, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+
+[State 23005, DestroySelf]
+type = DestroySelf
+trigger1 = Time >= 45
+
+;---------------------------------------------------------------------------
+; Hyper Combo!! 7/8
+[Statedef 23006]
+movetype = I
+physics = N
+anim = 23000
+sprpriority = 3
+ctrl = 0
+
+[State 23006, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 23006, PalFX]
+type = PalFX
+trigger1 = parent, StateNo != [8000,8050]
+trigger1 = !Time
+time = 45
+sinadd = 150,150,150,5
+color = 0
+
+[State 23006, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8000
+trigger1 = !Time
+time = 45
+add = 128,80,192
+color = 0
+
+[State 23006, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8010
+trigger1 = !Time
+time = 45
+add = 160,0,96
+color = 0
+
+[State 23006, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8020
+trigger1 = !Time
+time = 45
+add = 208,64,48
+color = 0
+
+[State 23006, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8030
+trigger1 = !Time
+time = 45
+add = 0,96,0
+color = 0
+
+[State 23006, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8040
+trigger1 = !Time
+time = 45
+add = 128,0,192
+color = 0
+
+[State 23006, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8050
+trigger1 = !Time
+time = 45
+add = 192,0,0
+color = 0
+
+[State 23006, VarSet]
+type = VarSet
+trigger1 = !Time
+var(0) = 270
+
+[State 23006, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 0
+var(0) = 7
+[State 23006, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 1
+var(0) = 8
+
+[State 23006, VarSet]
+type = VarSet
+trigger1 = var(0) = 360
+var(0) = 0
+
+[State 23006, AngleSet]
+type = AngleSet
+trigger1 = 1
+value = var(0)
+
+[State 23006, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+
+[State 23006, DestroySelf]
+type = DestroySelf
+trigger1 = Time >= 45
+
+;---------------------------------------------------------------------------
+; Hyper Combo!! 8/8
+[Statedef 23007]
+movetype = I
+physics = N
+anim = 23000
+sprpriority = 3
+ctrl = 0
+
+[State 23007, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 23007, PalFX]
+type = PalFX
+trigger1 = parent, StateNo != [8000,8050]
+trigger1 = !Time
+time = 45
+sinadd = 150,150,150,5
+color = 0
+
+[State 23007, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8000
+trigger1 = !Time
+time = 45
+add = 128,80,192
+color = 0
+
+[State 23007, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8010
+trigger1 = !Time
+time = 45
+add = 160,0,96
+color = 0
+
+[State 23007, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8020
+trigger1 = !Time
+time = 45
+add = 208,64,48
+color = 0
+
+[State 23007, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8030
+trigger1 = !Time
+time = 45
+add = 0,96,0
+color = 0
+
+[State 23007, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8040
+trigger1 = !Time
+time = 45
+add = 128,0,192
+color = 0
+
+[State 23007, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8050
+trigger1 = !Time
+time = 45
+add = 192,0,0
+color = 0
+
+[State 23007, VarSet]
+type = VarSet
+trigger1 = !Time
+var(0) = 315
+
+[State 23007, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 0
+var(0) = 7
+[State 23007, VarAdd]
+type = VarAdd
+trigger1 = Time > 0
+trigger1 = var(0) < 360
+trigger1 = Time%2 = 1
+var(0) = 8
+
+[State 23007, VarSet]
+type = VarSet
+trigger1 = var(0) = 360
+var(0) = 0
+
+[State 23007, AngleSet]
+type = AngleSet
+trigger1 = 1
+value = var(0)
+
+[State 23007, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+
+[State 23007, DestroySelf]
+type = DestroySelf
+trigger1 = Time >= 45
+
+;---------------------------------------------------------------------------
+; Hyper Combo!! Focus
+[Statedef 23008]
+movetype = I
+physics = N
+anim = 23008
+sprpriority = 3
+ctrl = 0
+
+[State 23008, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+flag2 = NoFG
+flag3 = NoBarDisplay
+
+[State 23008, PalFX]
+type = PalFX
+trigger1 = parent, StateNo != [8000,8050]
+trigger1 = !Time
+time = 45
+sinadd = 150,150,150,5
+color = 0
+
+[State 23008, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8000
+trigger1 = !Time
+time = 45
+add = 128,80,192
+color = 0
+
+[State 23008, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8010
+trigger1 = !Time
+time = 45
+add = 160,0,96
+color = 0
+
+[State 23008, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8020
+trigger1 = !Time
+time = 45
+add = 208,64,48
+color = 0
+
+[State 23008, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8030
+trigger1 = !Time
+time = 45
+add = 0,96,0
+color = 0
+
+[State 23008, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8040
+trigger1 = !Time
+time = 45
+add = 128,0,192
+color = 0
+
+[State 23008, PalFX]
+type = PalFX
+trigger1 = parent, StateNo = 8050
+trigger1 = !Time
+time = 45
+add = 192,0,0
+color = 0
+
+[State 23008, DestroySelf]
+type = DestroySelf
+trigger1 = Time >= 45
+
+;---------------------------------------------------------------------------
+; Mind Gem Pop
+[Statedef 7000]
+movetype = I
+physics = N
+velset = 2.5,-9.25
+anim = 6100
+sprpriority = 5
+ctrl = 0
+
+[State 7000, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 1
+movecamera = 0,0
+ignorehitpause = 1
+
+[State 7000, ParentVarSet]
+type = ParentVarSet
+trigger1 = !Time
+;trigger1 = !var(30) [add "parent," ?]  This does nothing.
+var(30) = -1
+
+[State 7000, EnvColor]
+type = EnvColor
+trigger1 = !Time
+value = 64,224,240
+time = 3
+ignorehitpause = 1
+
+[State 7000, Gravity]
+type = Gravity
+trigger1 = Pos Y < -5
+
+[State 7000, PosSet]
+type = PosSet
+trigger1 = Pos Y > -5
+y = -5
+
+[State 7000, VelSet]
+type = VelSet
+trigger1 = Pos Y > -5
+x = 0
+y = 0
+
+[State 7000, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -15 && RootDist X <= 15 && RootDist Y >= -5 && RootDist Y <= 5
+var(30) = 1
+
+[State 7000, ChangeState]
+type = ChangeState
+trigger1 = Pos Y = -5
+value = 7001
+
+[State 7000, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(30) = 0
+
+[State 7000, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(30) = 1
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Mind Gem Float
+[Statedef 7001]
+movetype = I
+physics = N
+velset = 0,0
+anim = 6000
+sprpriority = 5
+ctrl = 0
+
+[State 7001, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 7001, VelSet]
+type = VelSet
+trigger1 = 1
+x = 0
+y = 0
+
+[State 7001, PosSet]
+type = PosSet
+trigger1 = !Time
+y = -5
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 3
+y = -4
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 6
+y = -3
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 9
+y = -2
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 12
+y = -1
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 15
+y = 0
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 18
+y = -1
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 21
+y = -2
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 24
+y = -3
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 27
+y = -4
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 30
+y = -5
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 33
+y = -6
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 36
+y = -7
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 39
+y = -8
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 42
+y = -9
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 45
+y = -10
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 48
+y = -9
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 51
+y = -8
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 54
+y = -7
+[State 7001, PosSet]
+type = PosSet
+trigger1 = Time = 57
+y = -6
+
+[State 7001, PosAdd]
+type = PosAdd
+trigger1 = BackEdgeBodyDist < 15
+x = 15
+[State 7001, PosAdd]
+type = PosAdd
+trigger1 = FrontEdgeBodyDist < 15
+x = -15
+
+[State 7001, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -30 && RootDist X <= 30 && RootDist Y >= -15 && RootDist Y <= 15
+var(30) = 1
+
+[State 7001, ChangeState]
+type = ChangeState
+trigger1 = Time = 60
+value = 7001
+
+[State 7001, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(30) = 0
+
+[State 7001, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(30) = 1
+trigger2 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Power Gem Pop
+[Statedef 7010]
+movetype = I
+physics = N
+velset = 2.5,-9.25
+anim = 6110
+sprpriority = 5
+ctrl = 0
+
+[State 7010, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 1
+movecamera = 0,0
+ignorehitpause = 1
+
+[State 7010, ParentVarSet]
+type = ParentVarSet
+trigger1 = !Time
+;trigger1 = !var(31) [add "parent," ?]  This does nothing.
+var(31) = -1
+
+[State 7010, EnvColor]
+type = EnvColor
+trigger1 = !Time
+value = 240,128,244
+time = 3
+ignorehitpause = 1
+
+[State 7010, Gravity]
+type = Gravity
+trigger1 = Pos Y < -5
+
+[State 7010, PosSet]
+type = PosSet
+trigger1 = Pos Y > -5
+y = -5
+
+[State 7010, VelSet]
+type = VelSet
+trigger1 = Pos Y > -5
+x = 0
+y = 0
+
+[State 7010, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -15 && RootDist X <= 15 && RootDist Y >= -5 && RootDist Y <= 5
+var(31) = 1
+
+[State 7010, ChangeState]
+type = ChangeState
+trigger1 = Pos Y = -5
+value = 7011
+
+[State 7010, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(31) = 0
+
+[State 7010, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(31) = 1
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Power Gem Float
+[Statedef 7011]
+movetype = I
+physics = N
+velset = 0,0
+anim = 6010
+sprpriority = 5
+ctrl = 0
+
+[State 7011, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 7011, VelSet]
+type = VelSet
+trigger1 = 1
+x = 0
+y = 0
+
+[State 7011, PosSet]
+type = PosSet
+trigger1 = !Time
+y = -5
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 3
+y = -4
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 6
+y = -3
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 9
+y = -2
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 12
+y = -1
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 15
+y = 0
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 18
+y = -1
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 21
+y = -2
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 24
+y = -3
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 27
+y = -4
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 30
+y = -5
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 33
+y = -6
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 36
+y = -7
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 39
+y = -8
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 42
+y = -9
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 45
+y = -10
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 48
+y = -9
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 51
+y = -8
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 54
+y = -7
+[State 7011, PosSet]
+type = PosSet
+trigger1 = Time = 57
+y = -6
+
+[State 7011, PosAdd]
+type = PosAdd
+trigger1 = BackEdgeBodyDist < 15
+x = 15
+[State 7011, PosAdd]
+type = PosAdd
+trigger1 = FrontEdgeBodyDist < 15
+x = -15
+
+[State 7011, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -30 && RootDist X <= 30 && RootDist Y >= -15 && RootDist Y <= 15
+var(31) = 1
+
+[State 7011, ChangeState]
+type = ChangeState
+trigger1 = Time = 60
+value = 7011
+
+[State 7011, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(31) = 0
+
+[State 7011, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(31) = 1
+trigger2 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Reality Gem Pop
+[Statedef 7020]
+movetype = I
+physics = N
+velset = 2.5,-9.25
+anim = 6120
+sprpriority = 5
+ctrl = 0
+
+[State 7020, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 1
+movecamera = 0,0
+ignorehitpause = 1
+
+[State 7020, ParentVarSet]
+type = ParentVarSet
+trigger1 = !Time
+;trigger1 = !var(32) [add "parent," ?]  This does nothing.
+var(32) = -1
+
+[State 7020, EnvColor]
+type = EnvColor
+trigger1 = !Time
+value = 224,192,48
+time = 3
+ignorehitpause = 1
+
+[State 7020, Gravity]
+type = Gravity
+trigger1 = Pos Y < -5
+
+[State 7020, PosSet]
+type = PosSet
+trigger1 = Pos Y > -5
+y = -5
+
+[State 7020, VelSet]
+type = VelSet
+trigger1 = Pos Y > -5
+x = 0
+y = 0
+
+[State 7020, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -15 && RootDist X <= 15 && RootDist Y >= -5 && RootDist Y <= 5
+var(32) = 1
+
+[State 7020, ChangeState]
+type = ChangeState
+trigger1 = Pos Y = -5
+value = 7021
+
+[State 7020, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(32) = 0
+
+[State 7020, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(32) = 1
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Reality Gem Float
+[Statedef 7021]
+movetype = I
+physics = N
+velset = 0,0
+anim = 6020
+sprpriority = 5
+ctrl = 0
+
+[State 7021, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 7021, VelSet]
+type = VelSet
+trigger1 = 1
+x = 0
+y = 0
+
+[State 7021, PosSet]
+type = PosSet
+trigger1 = !Time
+y = -5
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 3
+y = -4
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 6
+y = -3
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 9
+y = -2
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 12
+y = -1
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 15
+y = 0
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 18
+y = -1
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 21
+y = -2
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 24
+y = -3
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 27
+y = -4
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 30
+y = -5
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 33
+y = -6
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 36
+y = -7
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 39
+y = -8
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 42
+y = -9
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 45
+y = -10
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 48
+y = -9
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 51
+y = -8
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 54
+y = -7
+[State 7021, PosSet]
+type = PosSet
+trigger1 = Time = 57
+y = -6
+
+[State 7021, PosAdd]
+type = PosAdd
+trigger1 = BackEdgeBodyDist < 15
+x = 15
+[State 7021, PosAdd]
+type = PosAdd
+trigger1 = FrontEdgeBodyDist < 15
+x = -15
+
+[State 7021, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -30 && RootDist X <= 30 && RootDist Y >= -15 && RootDist Y <= 15
+var(32) = 1
+
+[State 7021, ChangeState]
+type = ChangeState
+trigger1 = Time = 60
+value = 7021
+
+[State 7021, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(32) = 0
+
+[State 7021, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(32) = 1
+trigger2 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Soul Gem Pop
+[Statedef 7030]
+movetype = I
+physics = N
+velset = 2.5,-9.25
+anim = 6130
+sprpriority = 5
+ctrl = 0
+
+[State 7030, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 1
+movecamera = 0,0
+ignorehitpause = 1
+
+[State 7030, ParentVarSet]
+type = ParentVarSet
+trigger1 = !Time
+;trigger1 = !var(33) [add "parent," ?]  This does nothing.
+var(33) = -1
+
+[State 7030, EnvColor]
+type = EnvColor
+trigger1 = !Time
+value = 0,208,128
+time = 3
+ignorehitpause = 1
+
+[State 7030, Gravity]
+type = Gravity
+trigger1 = Pos Y < -5
+
+[State 7030, PosSet]
+type = PosSet
+trigger1 = Pos Y > -5
+y = -5
+
+[State 7030, VelSet]
+type = VelSet
+trigger1 = Pos Y > -5
+x = 0
+y = 0
+
+[State 7030, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -15 && RootDist X <= 15 && RootDist Y >= -5 && RootDist Y <= 5
+var(33) = 1
+
+[State 7030, ChangeState]
+type = ChangeState
+trigger1 = Pos Y = -5
+value = 7031
+
+[State 7030, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(33) = 0
+
+[State 7030, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(33) = 1
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Soul Gem Float
+[Statedef 7031]
+movetype = I
+physics = N
+velset = 0,0
+anim = 6030
+sprpriority = 5
+ctrl = 0
+
+[State 7031, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 7031, VelSet]
+type = VelSet
+trigger1 = 1
+x = 0
+y = 0
+
+[State 7031, PosSet]
+type = PosSet
+trigger1 = !Time
+y = -5
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 3
+y = -4
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 6
+y = -3
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 9
+y = -2
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 12
+y = -1
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 15
+y = 0
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 18
+y = -1
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 21
+y = -2
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 24
+y = -3
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 27
+y = -4
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 30
+y = -5
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 33
+y = -6
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 36
+y = -7
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 39
+y = -8
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 42
+y = -9
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 45
+y = -10
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 48
+y = -9
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 51
+y = -8
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 54
+y = -7
+[State 7031, PosSet]
+type = PosSet
+trigger1 = Time = 57
+y = -6
+
+[State 7031, PosAdd]
+type = PosAdd
+trigger1 = BackEdgeBodyDist < 15
+x = 15
+[State 7031, PosAdd]
+type = PosAdd
+trigger1 = FrontEdgeBodyDist < 15
+x = -15
+
+[State 7031, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -30 && RootDist X <= 30 && RootDist Y >= -15 && RootDist Y <= 15
+var(33) = 1
+
+[State 7031, ChangeState]
+type = ChangeState
+trigger1 = Time = 60
+value = 7031
+
+[State 7031, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(33) = 0
+
+[State 7031, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(33) = 1
+trigger2 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Space Gem Pop
+[Statedef 7040]
+movetype = I
+physics = N
+velset = 2.5,-9.25
+anim = 6140
+sprpriority = 5
+ctrl = 0
+
+[State 7040, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 1
+movecamera = 0,0
+ignorehitpause = 1
+
+[State 7040, ParentVarSet]
+type = ParentVarSet
+trigger1 = !Time
+;trigger1 = !var(34) [add "parent," ?]  This does nothing.
+var(34) = -1
+
+[State 7040, EnvColor]
+type = EnvColor
+trigger1 = !Time
+value = 192,160,240
+time = 3
+ignorehitpause = 1
+
+[State 7040, Gravity]
+type = Gravity
+trigger1 = Pos Y < -5
+
+[State 7040, PosSet]
+type = PosSet
+trigger1 = Pos Y > -5
+y = -5
+
+[State 7040, VelSet]
+type = VelSet
+trigger1 = Pos Y > -5
+x = 0
+y = 0
+
+[State 7040, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -15 && RootDist X <= 15 && RootDist Y >= -5 && RootDist Y <= 5
+var(34) = 1
+
+[State 7040, ChangeState]
+type = ChangeState
+trigger1 = Pos Y = -5
+value = 7041
+
+[State 7040, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(34) = 0
+
+[State 7040, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(34) = 1
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Space Gem Float
+[Statedef 7041]
+movetype = I
+physics = N
+velset = 0,0
+anim = 6040
+sprpriority = 5
+ctrl = 0
+
+[State 7041, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 7041, VelSet]
+type = VelSet
+trigger1 = 1
+x = 0
+y = 0
+
+[State 7041, PosSet]
+type = PosSet
+trigger1 = !Time
+y = -5
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 3
+y = -4
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 6
+y = -3
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 9
+y = -2
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 12
+y = -1
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 15
+y = 0
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 18
+y = -1
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 21
+y = -2
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 24
+y = -3
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 27
+y = -4
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 30
+y = -5
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 33
+y = -6
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 36
+y = -7
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 39
+y = -8
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 42
+y = -9
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 45
+y = -10
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 48
+y = -9
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 51
+y = -8
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 54
+y = -7
+[State 7041, PosSet]
+type = PosSet
+trigger1 = Time = 57
+y = -6
+
+[State 7041, PosAdd]
+type = PosAdd
+trigger1 = BackEdgeBodyDist < 15
+x = 15
+[State 7041, PosAdd]
+type = PosAdd
+trigger1 = FrontEdgeBodyDist < 15
+x = -15
+
+[State 7041, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -30 && RootDist X <= 30 && RootDist Y >= -15 && RootDist Y <= 15
+var(34) = 1
+
+[State 7041, ChangeState]
+type = ChangeState
+trigger1 = Time = 60
+value = 7041
+
+[State 7041, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(34) = 0
+
+[State 7041, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(34) = 1
+trigger2 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Time Gem Pop
+[Statedef 7050]
+movetype = I
+physics = N
+velset = 2.5,-9.25
+anim = 6150
+sprpriority = 5
+ctrl = 0
+
+[State 7050, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 1
+movecamera = 0,0
+ignorehitpause = 1
+
+[State 7050, ParentVarSet]
+type = ParentVarSet
+trigger1 = !Time
+;trigger1 = !var(35) [add "parent," ?]  This does nothing.
+var(35) = -1
+
+[State 7050, EnvColor]
+type = EnvColor
+trigger1 = !Time
+value = 240,160,176
+time = 3
+ignorehitpause = 1
+
+[State 7050, Gravity]
+type = Gravity
+trigger1 = Pos Y < -5
+
+[State 7050, PosSet]
+type = PosSet
+trigger1 = Pos Y > -5
+y = -5
+
+[State 7050, VelSet]
+type = VelSet
+trigger1 = Pos Y > -5
+x = 0
+y = 0
+
+[State 7050, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -15 && RootDist X <= 15 && RootDist Y >= -5 && RootDist Y <= 5
+var(35) = 1
+
+[State 7050, ChangeState]
+type = ChangeState
+trigger1 = Pos Y = -5
+value = 7051
+
+[State 7050, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(35) = 0
+
+[State 7050, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(35) = 1
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Time Gem Float
+[Statedef 7051]
+movetype = I
+physics = N
+velset = 0,0
+anim = 6050
+sprpriority = 5
+ctrl = 0
+
+[State 7051, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 7051, VelSet]
+type = VelSet
+trigger1 = 1
+x = 0
+y = 0
+
+[State 7051, PosSet]
+type = PosSet
+trigger1 = !Time
+y = -5
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 3
+y = -4
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 6
+y = -3
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 9
+y = -2
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 12
+y = -1
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 15
+y = 0
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 18
+y = -1
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 21
+y = -2
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 24
+y = -3
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 27
+y = -4
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 30
+y = -5
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 33
+y = -6
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 36
+y = -7
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 39
+y = -8
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 42
+y = -9
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 45
+y = -10
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 48
+y = -9
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 51
+y = -8
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 54
+y = -7
+[State 7051, PosSet]
+type = PosSet
+trigger1 = Time = 57
+y = -6
+
+[State 7051, PosAdd]
+type = PosAdd
+trigger1 = BackEdgeBodyDist < 15
+x = 15
+[State 7051, PosAdd]
+type = PosAdd
+trigger1 = FrontEdgeBodyDist < 15
+x = -15
+
+[State 7051, ParentVarSet]
+type = ParentVarSet
+trigger1 = RootDist X >= -30 && RootDist X <= 30 && RootDist Y >= -15 && RootDist Y <= 15
+var(35) = 1
+
+[State 7051, ChangeState]
+type = ChangeState
+trigger1 = Time = 60
+value = 7051
+
+[State 7051, ParentVarSet]
+type = ParentVarSet
+trigger1 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+var(35) = 0
+
+[State 7051, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(35) = 1
+trigger2 = p2dist X >= -30 && p2dist X <= 30 && p2dist Y >= -80 && p2dist Y <= 15
+ignorehitpause = 1
+
+;---------------------------------------------------------------------------
+; Mind Gem Countdown
+[Statedef 8100]
+movetype = I
+physics = N
+anim = 6200
+sprpriority = 7
+ctrl = 0
+
+[State 8100, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+ignorehitpause = 1
+
+[State 8100, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 8100, ParentVarAdd]
+type = ParentVarAdd
+trigger1 = 1
+var(40) = -1
+
+[State 8100, PowerAdd]
+type = PowerAdd
+trigger1 = 1
+value = 5
+
+[State 8100, PalFX]
+type = PalFX
+trigger1 = 1
+time = 1
+add = floor((255 - parent, var(41))/2) * -1, floor((255 - parent, var(41))/2) * -1, floor((255 - parent, var(41))/2) * -1
+
+[State 8100, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 150
+x = 6
+
+[State 8100, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 50 && RootDist X < 150
+x = 3
+
+[State 8100, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 1 && RootDist X < 50
+x = 1
+
+[State 8100, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -150
+x = -6
+
+[State 8100, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -50 && RootDist X > -150
+x = -3
+
+[State 8100, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -1 && RootDist X > -50
+x = -1
+
+[State 8100, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 50
+y = 6
+
+[State 8100, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 40 && RootDist Y < 50
+y = 3
+
+[State 8100, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 31 && RootDist Y < 40
+y = 1
+
+[State 8100, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 10
+y = -6
+
+[State 8100, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 20 && RootDist Y > 10
+y = -3
+
+[State 8100, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 29 && RootDist Y > 20
+y = -1
+
+[State 8100, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(40) <= 0
+
+;---------------------------------------------------------------------------
+; Power Gem Countdown
+[Statedef 8110]
+movetype = I
+physics = N
+anim = 6210
+sprpriority = 7
+ctrl = 0
+
+[State 8110, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+ignorehitpause = 1
+
+[State 8110, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 8110, ParentVarAdd]
+type = ParentVarAdd
+trigger1 = 1
+var(41) = -1
+
+[State 8110, PalFX]
+type = PalFX
+trigger1 = 1
+time = 1
+add = floor((255 - parent, var(41))/1.5) * -1, floor((255 - parent, var(41))/1.5) * -1, floor((255 - parent, var(41))/1.5) * -1
+
+[State 8110, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 150
+x = 6
+
+[State 8110, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 50 && RootDist X < 150
+x = 3
+
+[State 8110, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 1 && RootDist X < 50
+x = 1
+
+[State 8110, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -150
+x = -6
+
+[State 8110, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -50 && RootDist X > -150
+x = -3
+
+[State 8110, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -1 && RootDist X > -50
+x = -1
+
+[State 8110, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 50
+y = 6
+
+[State 8110, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 40 && RootDist Y < 50
+y = 3
+
+[State 8110, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 31 && RootDist Y < 40
+y = 1
+
+[State 8110, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 10
+y = -6
+
+[State 8110, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 20 && RootDist Y > 10
+y = -3
+
+[State 8110, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 29 && RootDist Y > 20
+y = -1
+
+[State 8110, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(41) <= 0
+
+;---------------------------------------------------------------------------
+; Reality countdown
+[Statedef 8120]
+movetype = I
+physics = N
+anim = 6220
+sprpriority = 7
+ctrl = 0
+
+[State 8120, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+ignorehitpause = 1
+
+[State 8120, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 8120, ParentVarAdd]
+type = ParentVarAdd
+trigger1 = 1
+var(42) = -1
+
+[State 8120, PalFX]
+type = PalFX
+trigger1 = 1
+time = 1
+add = floor((255 - parent, var(42))/1.25) * -1, floor((255 - parent, var(42))/1.25) * -1, floor((255 - parent, var(42))/1.25) * -1
+
+[State 8120, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 150
+x = 6
+
+[State 8120, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 50 && RootDist X < 150
+x = 3
+
+[State 8120, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 1 && RootDist X < 50
+x = 1
+
+[State 8120, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -150
+x = -6
+
+[State 8120, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -50 && RootDist X > -150
+x = -3
+
+[State 8120, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -1 && RootDist X > -50
+x = -1
+
+[State 8120, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 50
+y = 6
+
+[State 8120, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 40 && RootDist Y < 50
+y = 3
+
+[State 8120, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 31 && RootDist Y < 40
+y = 1
+
+[State 8120, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 10
+y = -6
+
+[State 8120, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 20 && RootDist Y > 10
+y = -3
+
+[State 8120, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 29 && RootDist Y > 20
+y = -1
+
+[State 8120, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(42) <= 0
+
+;---------------------------------------------------------------------------
+; Soul Gem Countdown
+[Statedef 8130]
+movetype = I
+physics = N
+anim = 6230
+sprpriority = 7
+ctrl = 0
+
+[State 8130, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+ignorehitpause = 1
+
+[State 8130, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 8130, ParentVarAdd]
+type = ParentVarAdd
+trigger1 = 1
+var(43) = -1
+
+[State 8130, PalFX]
+type = PalFX
+trigger1 = 1
+time = 1
+add = floor((255 - parent, var(43))/1.75) * -1, floor((255 - parent, var(43))/1.75) * -1, floor((255 - parent, var(43))/1.75) * -1
+
+[State 8130, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 150
+x = 6
+
+[State 8130, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 50 && RootDist X < 150
+x = 3
+
+[State 8130, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 1 && RootDist X < 50
+x = 1
+
+[State 8130, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -150
+x = -6
+
+[State 8130, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -50 && RootDist X > -150
+x = -3
+
+[State 8130, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -1 && RootDist X > -50
+x = -1
+
+[State 8130, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 50
+y = 6
+
+[State 8130, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 40 && RootDist Y < 50
+y = 3
+
+[State 8130, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 31 && RootDist Y < 40
+y = 1
+
+[State 8130, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 10
+y = -6
+
+[State 8130, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 20 && RootDist Y > 10
+y = -3
+
+[State 8130, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 29 && RootDist Y > 20
+y = -1
+
+[State 8130, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(43) <= 0
+
+;---------------------------------------------------------------------------
+; Space Gem Countdown
+[Statedef 8140]
+movetype = I
+physics = N
+anim = 6240
+sprpriority = 7
+ctrl = 0
+
+[State 8140, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+ignorehitpause = 1
+
+[State 8140, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 8140, ParentVarAdd]
+type = ParentVarAdd
+trigger1 = 1
+var(44) = -1
+
+[State 8140, PalFX]
+type = PalFX
+trigger1 = 1
+time = 1
+add = floor((255 - parent, var(44))/2) * -1, floor((255 - parent, var(44))/2) * -1, floor((255 - parent, var(44))/2) * -1
+
+[State 8140, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 150
+x = 6
+
+[State 8140, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 50 && RootDist X < 150
+x = 3
+
+[State 8140, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 1 && RootDist X < 50
+x = 1
+
+[State 8140, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -150
+x = -6
+
+[State 8140, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -50 && RootDist X > -150
+x = -3
+
+[State 8140, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -1 && RootDist X > -50
+x = -1
+
+[State 8140, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 50
+y = 6
+
+[State 8140, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 40 && RootDist Y < 50
+y = 3
+
+[State 8140, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 31 && RootDist Y < 40
+y = 1
+
+[State 8140, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 10
+y = -6
+
+[State 8140, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 20 && RootDist Y > 10
+y = -3
+
+[State 8140, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 29 && RootDist Y > 20
+y = -1
+
+[State 8140, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(44) <= 0
+
+;---------------------------------------------------------------------------
+; Time Gem Countdown
+[Statedef 8150]
+movetype = I
+physics = N
+anim = 6250
+sprpriority = 7
+ctrl = 0
+
+[State 8150, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+ignorehitpause = 1
+
+[State 8150, Turn]
+type = Turn
+trigger1 = Facing = -1
+
+[State 8150, ParentVarAdd]
+type = ParentVarAdd
+trigger1 = 1
+var(45) = -1
+
+[State 8150, PalFX]
+type = PalFX
+trigger1 = 1
+time = 1
+add = floor((255 - parent, var(45))/1.5) * -1, floor((255 - parent, var(45))/1.5) * -1, floor((255 - parent, var(45))/1.5) * -1
+
+[State 8150, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 150
+x = 6
+
+[State 8150, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 50 && RootDist X < 150
+x = 3
+
+[State 8150, PosAdd]
+type = PosAdd
+trigger1 = RootDist X >= 1 && RootDist X < 50
+x = 1
+
+[State 8150, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -150
+x = -6
+
+[State 8150, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -50 && RootDist X > -150
+x = -3
+
+[State 8150, PosAdd]
+type = PosAdd
+trigger1 = RootDist X <= -1 && RootDist X > -50
+x = -1
+
+[State 8150, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 50
+y = 6
+
+[State 8150, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 40 && RootDist Y < 50
+y = 3
+
+[State 8150, VelSet]
+type = PosAdd
+trigger1 = RootDist Y >= 31 && RootDist Y < 40
+y = 1
+
+[State 8150, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 10
+y = -6
+
+[State 8150, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 20 && RootDist Y > 10
+y = -3
+
+[State 8150, VelSet]
+type = PosAdd
+trigger1 = RootDist Y <= 29 && RootDist Y > 20
+y = -1
+
+[State 8150, DestroySelf]
+type = DestroySelf
+trigger1 = parent, var(45) <= 0
+
+;---------------------------------------------------------------------------
+; Super Armor
+[Statedef 9000]
+type = U
+movetype = H  
+physics = U
+
+[State 9000, PalFX]
+type = PalFX
+trigger1 = Alive
+trigger1 = !Time
+time = 5
+mul = 256,256,0
+add = 130,30,10
+color = 128
+ignorehitpause = 1
+
+[State 9000, PosFreeze]
+type = PosFreeze
+trigger1 = Alive
+trigger1 = 1
+value = 1
+
+[State 9000, CtrlSet]
+type = CtrlSet
+triggerall = Time < floor(gethitvar(hittime) * 0.8)
+trigger1 = var(46) <= 106
+value = 1
+
+[State 9000, ChangeAnim]
+type = ChangeAnim
+trigger1 = Time < floor(gethitvar(hittime) * 0.8)
+value = Anim
+elem  = AnimElemNo(0)
+
+[State 9000, End]
+type = ChangeState
+trigger1 = Alive
+trigger1 = Time >= floor(gethitvar(hittime) * 0.8)
+value = var(46)
+
+[State 9000, VelSet]
+type = VelSet
+trigger1 = !Alive
+x = gethitvar(xvel)
+y = gethitvar(yvel)
+
+[State 9000, End]
+type = ChangeState
+trigger1 = !Alive
+value = 5050
+
+;---------------------------------------------------------------------------
+; Reality Effect X/A
+[Statedef 8500]
+movetype = A
+physics = N
+anim = 8500
+velset = 0,0
+sprpriority = 2
+ctrl = 0
+
+[State 8500, PlaySnd]
+type = PlaySnd
+trigger1 = Time = 1
+value = 8500,0
+volume = 50
+
+[State 8500, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 8500, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 8500
+trigger1 = !AnimTime
+value = 8510
+
+[State 8500, VelAdd]
+type = VelAdd
+trigger1 = Anim = 8510
+x = .5
+
+[State 8500, VelSet]
+type = VelSet
+trigger1 = Anim != 8510
+x = 0
+
+[State 8500, HitDef]
+type = HitDef
+trigger1 = Anim = 8510
+trigger1 = IsHelper(8500) = 1
+trigger1 = !MoveContact
+attr = S, SP
+animtype = Medium
+damage = 76
+hitflag = MAFDP
+guardflag = MA
+pausetime = 0,0
+sparkno = -1
+hitsound = S8500,1
+guardsound = S202,0
+ground.type = High
+ground.slidetime = 9
+ground.hittime = 11
+ground.velocity = -4
+guard.velocity = -2
+air.velocity = -4,-2
+airguard.velocity = -2,-1
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff = 0
+down.cornerpush.veloff = 0
+guard.cornerpush.veloff = 0
+airguard.cornerpush.veloff = 0
+palfx.time = 11
+palfx.add = 40,-70,-200
+palfx.sinadd = 40,30,0,22
+palfx.color = 0
+palfx.invertall = 1
+[State 8500, HitDef]
+type = HitDef
+trigger1 = Anim = 8510
+trigger1 = IsHelper(8501) = 1
+trigger1 = !MoveContact
+attr = A, SP
+animtype = Medium
+damage = 76,14
+hitflag = MAFDP
+guardflag = MA
+pausetime = 0,0
+sparkno = -1
+hitsound = S8500,1
+guardsound = S202,0
+ground.type = Low
+ground.slidetime = 9
+ground.hittime = 11
+ground.velocity = -4
+guard.velocity = -2
+air.velocity = -4,-2
+airguard.velocity = -2,-1
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff = 0
+down.cornerpush.veloff = 0
+guard.cornerpush.veloff = 0
+airguard.cornerpush.veloff = 0
+palfx.time = 11
+palfx.add = 40,-70,-200
+palfx.sinadd = 40,30,0,22
+palfx.color = 0
+palfx.invertall = 1
+
+[State 8500, ChangeAnim]
+type = ChangeAnim
+trigger1 = movehit
+value = 8520
+persistent = 0
+
+[State 8500, ChangeAnim]
+type = ChangeAnim
+trigger1 = moveguarded
+value = 8530
+persistent = 0
+
+[State 8500, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19001
+ontop = 1
+ownpal = 1
+facing = IfElse((Facing = -1),-1,1)
+postype = p2
+pos = 0,floor(Pos Y + 20)
+random = 60,0
+bindtime = -1
+removetime = -2
+id = 19001
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Baby Fire"
+ignorehitpause = 1
+persistent = 0
+[State 8500, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19001
+ontop = 1
+ownpal = 1
+facing = IfElse((Facing = -1),1,-1)
+postype = p2
+pos = 0,floor(Pos Y - 5)
+random = 60,0
+bindtime = -1
+removetime = -2
+id = 19001
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Baby Fire"
+ignorehitpause = 1
+persistent = 0
+
+[State 8500, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, NA, SA, HA, NT, ST, HT
+
+[State 8500, HitOverride]
+type = HitOverride
+trigger1 = Time >= 0
+slot = 1
+time = 1
+attr = SCA, NP, SP, HP
+
+[State 8500, DestroySelf]
+type = DestroySelf
+trigger1 = Anim = 8520 || Anim = 8530
+trigger1 = !AnimTime
+trigger2 = FrontEdgeBodyDist < -30
+
+;---------------------------------------------------------------------------
+; Reality Effect Y Spawner
+[Statedef 8600]
+movetype = I
+physics = N
+anim = 2301
+velset = 0,0
+ctrl = 0
+
+[State 8600, PlaySnd]
+type = PlaySnd
+trigger1 = Time = 1
+value = 8600,0
+volume = 50
+
+[State 8600, Helper]
+type = Helper
+trigger1 = Time = 1
+stateno = 8602
+postype = p1
+pos = 48,0
+ownpal = 1
+bindtime = 1
+name = "Icicle"
+id = 8602
+[State 8600, Helper]
+type = Helper
+trigger1 = Time = 8
+stateno = 8602
+postype = p1
+pos = 96,0
+ownpal = 1
+bindtime = 1
+name = "Icicle"
+id = 8602
+[State 8600, Helper]
+type = Helper
+trigger1 = Time = 15
+stateno = 8602
+postype = p1
+pos = 144,0
+ownpal = 1
+bindtime = 1
+name = "Icicle"
+id = 8602
+[State 8600, Helper]
+type = Helper
+trigger1 = Time = 22
+stateno = 8602
+postype = p1
+pos = 192,0
+ownpal = 1
+bindtime = 1
+name = "Icicle"
+id = 8602
+[State 8600, Helper]
+type = Helper
+trigger1 = Time = 29
+stateno = 8602
+postype = p1
+pos = 240,0
+ownpal = 1
+bindtime = 1
+name = "Icicle"
+id = 8602
+
+[State 8600, DestroySelf]
+type = DestroySelf
+trigger1 = Time > 1
+trigger1 = NumHelper(8602) = 0
+
+;---------------------------------------------------------------------------
+; Reality Effect Y
+[Statedef 8602]
+movetype = A
+physics = N
+anim = 8600
+velset = 0,0
+sprpriority = 2
+ctrl = 0
+
+[State 8602, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 8602, VelSet]
+type = VelSet
+trigger1 = Anim = 8610
+y = 4
+
+[State 8602, VelSet]
+type = VelSet
+trigger1 = Anim != 8610
+y = 0
+
+[State 8602, HitDef]
+type = HitDef
+trigger1 = !MoveContact
+attr = A, SP
+animtype = Up
+damage = 48,14
+hitflag = MADP
+guardflag = MA
+pausetime = 0,0
+sparkno = 1
+sparkxy = 0,-50
+hitsound = S1,1
+guardsound = S202,0
+ground.type = High
+ground.slidetime = 21
+ground.hittime = 23
+ground.velocity = -.5,-6
+guard.velocity = -.25
+air.velocity = -.5,-6
+airguard.velocity = -2.5,-3
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff = 0
+down.cornerpush.veloff = 0
+guard.cornerpush.veloff = 0
+airguard.cornerpush.veloff = 0
+palfx.time = 22
+palfx.add = -100,-100,7
+palfx.sinadd = 30,30,0,44
+palfx.color = 0
+palfx.invertall = 1
+fall = 1
+fall.recovertime = 23
+
+[State 8602, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 8600
+trigger1 = !AnimTime
+value = 8610
+
+[State 8602, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim != 8620
+trigger1 = Pos Y > -100
+value = 8620
+
+[State 8602, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19005
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 60,100
+bindtime = -1
+removetime = -2
+id = 19005
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Ice Bice"
+ignorehitpause = 1
+persistent = 0
+[State 8602, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19005
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 60,100
+bindtime = -1
+removetime = -2
+id = 19005
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Ice Bice"
+ignorehitpause = 1
+persistent = 0
+[State 8602, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19005
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 60,100
+bindtime = -1
+removetime = -2
+id = 19005
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Ice Bice"
+ignorehitpause = 1
+persistent = 0
+[State 8602, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19005
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 60,100
+bindtime = -1
+removetime = -2
+id = 19005
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Ice Bice"
+ignorehitpause = 1
+persistent = 0
+
+[State 8602, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, NA, SA, HA, NT, ST, HT, NP, SP, HP
+
+[State 8602, DestroySelf]
+type = DestroySelf
+trigger1 = Anim = 8620
+trigger1 = !AnimTime
+
+;---------------------------------------------------------------------------
+; Reality Effect B Spawner
+[Statedef 8601]
+movetype = I
+physics = N
+anim = 2301
+velset = 0,0
+ctrl = 0
+
+[State 8601, PlaySnd]
+type = PlaySnd
+trigger1 = Time = 1
+value = 8600,0
+volume = 50
+
+[State 8601, Helper]
+type = Helper
+trigger1 = Time = 1
+stateno = 8603
+postype = p1
+pos = 48,0
+ownpal = 1
+bindtime = 1
+name = "Icicle"
+id = 8603
+[State 8601, Helper]
+type = Helper
+trigger1 = Time = 8
+stateno = 8603
+postype = p1
+pos = 96,0
+ownpal = 1
+bindtime = 1
+name = "Icicle"
+id = 8603
+[State 8601, Helper]
+type = Helper
+trigger1 = Time = 15
+stateno = 8603
+postype = p1
+pos = 144,0
+ownpal = 1
+bindtime = 1
+name = "Icicle"
+id = 8603
+[State 8601, Helper]
+type = Helper
+trigger1 = Time = 22
+stateno = 8603
+postype = p1
+pos = 192,0
+ownpal = 1
+bindtime = 1
+name = "Icicle"
+id = 8603
+[State 8601, Helper]
+type = Helper
+trigger1 = Time = 29
+stateno = 8603
+postype = p1
+pos = 240,0
+ownpal = 1
+bindtime = 1
+name = "Icicle"
+id = 8603
+
+[State 8601, DestroySelf]
+type = DestroySelf
+trigger1 = Time > 1
+trigger1 = NumHelper(8603) = 0
+
+;---------------------------------------------------------------------------
+; Reality Effect B
+[Statedef 8603]
+movetype = A
+physics = N
+anim = 8601
+velset = 0,0
+sprpriority = 2
+ctrl = 0
+
+[State 8603, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 8603, VelSet]
+type = VelSet
+trigger1 = Anim = 8611
+y = -4
+
+[State 8603, VelSet]
+type = VelSet
+trigger1 = Anim != 8611
+y = 0
+
+[State 8603, HitDef]
+type = HitDef
+trigger1 = !MoveContact
+attr = A, SP
+animtype = Up
+damage = 48,14
+hitflag = MADP
+guardflag = MA
+pausetime = 0,0
+sparkno = 1
+sparkxy = 0,-50
+hitsound = S1,1
+guardsound = S202,0
+ground.type = High
+ground.slidetime = 21
+ground.hittime = 23
+ground.velocity = -.5,-6
+guard.velocity = -.25
+air.velocity = -.5,-6
+airguard.velocity = -2.5,-3
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff = 0
+down.cornerpush.veloff = 0
+guard.cornerpush.veloff = 0
+airguard.cornerpush.veloff = 0
+palfx.time = 22
+palfx.add = -100,-100,7
+palfx.sinadd = 30,30,0,44
+palfx.color = 0
+palfx.invertall = 1
+fall = 1
+fall.recovertime = 23
+
+[State 8603, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 8601
+trigger1 = !AnimTime
+value = 8611
+
+[State 8603, ChangeAnim]
+type = ChangeAnim
+trigger1 = time = 50
+value = 8621
+
+[State 8603, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19005
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 60,100
+bindtime = -1
+removetime = -2
+id = 19005
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Ice Bice"
+ignorehitpause = 1
+persistent = 0
+[State 8603, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19005
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 60,100
+bindtime = -1
+removetime = -2
+id = 19005
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Ice Bice"
+ignorehitpause = 1
+persistent = 0
+[State 8603, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19005
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 60,100
+bindtime = -1
+removetime = -2
+id = 19005
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Ice Bice"
+ignorehitpause = 1
+persistent = 0
+[State 8603, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19005
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 60,100
+bindtime = -1
+removetime = -2
+id = 19005
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Ice Bice"
+ignorehitpause = 1
+persistent = 0
+
+[State 8603, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, NA, SA, HA, NT, ST, HT, NP, SP, HP
+
+[State 8603, DestroySelf]
+type = DestroySelf
+trigger1 = Anim = 8621
+trigger1 = !AnimTime
+
+;---------------------------------------------------------------------------
+; Reality Effect Z Spawner
+[Statedef 8700]
+movetype = I
+physics = N
+anim = 2301
+velset = 0,0
+ctrl = 0
+
+[State 8700, PlaySnd]
+type = PlaySnd
+trigger1 = Time = 1
+value = 8700,0
+volume = 50
+
+[State 8700, Helper]
+type = Helper
+trigger1 = Time = 1
+stateno = 8701
+postype = p1
+pos = 50,0
+ownpal = 1
+bindtime = 1
+name = "Static"
+id = 8701
+[State 8700, Helper]
+type = Helper
+trigger1 = Time = 1
+stateno = 8701
+postype = p1
+pos = 50,0
+ownpal = 1
+bindtime = 1
+name = "Static"
+id = 8702
+[State 8700, Helper]
+type = Helper
+trigger1 = Time = 1
+stateno = 8701
+postype = p1
+pos = 50,0
+ownpal = 1
+bindtime = 1
+name = "Static"
+id = 8703
+
+[State 8600, DestroySelf]
+type = DestroySelf
+trigger1 = Time > 1
+trigger1 = NumHelper(8701) = 0
+trigger1 = NumHelper(8702) = 0
+trigger1 = NumHelper(8703) = 0
+
+;---------------------------------------------------------------------------
+; Reality Effect Z
+[Statedef 8701]
+movetype = A
+physics = N
+anim = 8700
+velset = 0,0
+sprpriority = 2
+ctrl = 0
+
+[State 8701, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 8701, PosAdd]
+type = PosAdd
+trigger1 = Anim = 8710
+x = 2.5
+
+[State 8701, PosAdd]
+type = PosAdd
+trigger1 = Time < 60
+trigger1 = IsHelper(8701) = 1
+trigger1 = Anim = 8710
+y = -2.5
+[State 8701, PosAdd]
+type = PosAdd
+trigger1 = Time < 60
+trigger1 = IsHelper(8702) = 1
+trigger1 = Anim = 8710
+y = 0
+[State 8701, PosAdd]
+type = PosAdd
+trigger1 = Time < 60
+trigger1 = IsHelper(8703) = 1
+trigger1 = Anim = 8710
+y = 2.5
+
+[State 8701, PosAdd]
+type = PosAdd
+trigger1 = Time >= 60
+trigger1 = p2dist Y > 60
+y = 2.5
+[State 8701, PosAdd]
+type = PosAdd
+trigger1 = Time >= 60
+trigger1 = p2dist Y < 40
+y = -2.5
+
+[State 8701, HitDef]
+type = HitDef
+trigger1 = !MoveContact
+attr = A, SP
+animtype = Medium
+damage = 62,14
+hitflag = MADP
+guardflag = MA
+pausetime = 0,0
+sparkno = -1
+hitsound = S8700,1
+guardsound = S202,0
+ground.type = High
+ground.slidetime = 15
+ground.hittime = 19
+ground.velocity = -4
+guard.velocity = -2
+air.velocity = -4,-2
+airguard.velocity = -2,-1
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff = 0
+down.cornerpush.veloff = 0
+guard.cornerpush.veloff = 0
+airguard.cornerpush.veloff = 0
+palfx.time = 18
+palfx.sinadd = 35,35,35,36
+palfx.color = 0
+palfx.invertall = 1
+
+[State 8701, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 8700
+trigger1 = !AnimTime
+value = 8710
+
+[State 8701, ChangeAnim]
+type = ChangeAnim
+trigger1 = movehit
+trigger1 = Anim != 8720
+value = 8720
+
+[State 8701, ChangeAnim]
+type = ChangeAnim
+trigger1 = moveguarded
+trigger1 = Anim != 8730
+value = 8730
+
+[State 8701, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19010
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 80,100
+bindtime = -1
+removetime = 66
+id = 19010
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Eewektwik"
+ignorehitpause = 1
+persistent = 0
+[State 8701, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19010
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 80,100
+bindtime = -1
+removetime = 66
+id = 19010
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Eewektwik"
+ignorehitpause = 1
+persistent = 0
+[State 8701, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19010
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 80,100
+bindtime = -1
+removetime = 66
+id = 19010
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Eewektwik"
+ignorehitpause = 1
+persistent = 0
+[State 8701, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19010
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 80,100
+bindtime = -1
+removetime = 66
+id = 19010
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Eewektwik"
+ignorehitpause = 1
+persistent = 0
+[State 8701, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19010
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 80,100
+bindtime = -1
+removetime = 66
+id = 19010
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Eewektwik"
+ignorehitpause = 1
+persistent = 0
+
+[State 8701, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, NA, SA, HA, NT, ST, HT, NP, SP, HP
+
+[State 8701, DestroySelf]
+type = DestroySelf
+trigger1 = Anim = 8720 || Anim = 8730
+trigger1 = !AnimTime
+trigger2 = FrontEdgeBodyDist < -50
+
+;---------------------------------------------------------------------------
+; Reality Effect C Spawner
+[Statedef 8704]
+movetype = I
+physics = N
+anim = 2301
+velset = 0,0
+ctrl = 0
+
+[State 8704, PlaySnd]
+type = PlaySnd
+trigger1 = Time = 1
+value = 8700,0
+volume = 50
+
+[State 8704, Helper]
+type = Helper
+trigger1 = Time = 1
+stateno = 8705
+postype = p1
+pos = 50,0
+ownpal = 1
+bindtime = 1
+name = "Static"
+id = 8705
+[State 8704, Helper]
+type = Helper
+trigger1 = Time = 1
+stateno = 8705
+postype = p1
+pos = 50,0
+ownpal = 1
+bindtime = 1
+name = "Static"
+id = 8706
+[State 8704, Helper]
+type = Helper
+trigger1 = Time = 1
+stateno = 8705
+postype = p1
+pos = 50,0
+ownpal = 1
+bindtime = 1
+name = "Static"
+id = 8706
+[State 8704, Helper]
+type = Helper
+trigger1 = Time = 1
+stateno = 8705
+postype = p1
+pos = 50,0
+ownpal = 1
+bindtime = 1
+name = "Static"
+id = 8707
+[State 8704, Helper]
+type = Helper
+trigger1 = Time = 1
+stateno = 8705
+postype = p1
+pos = 50,0
+ownpal = 1
+bindtime = 1
+name = "Static"
+id = 8709
+
+[State 8604, DestroySelf]
+type = DestroySelf
+trigger1 = Time > 1
+trigger1 = NumHelper(8705) = 0
+trigger1 = NumHelper(8706) = 0
+trigger1 = NumHelper(8707) = 0
+trigger1 = NumHelper(8708) = 0
+trigger1 = NumHelper(8709) = 0
+
+;---------------------------------------------------------------------------
+; Reality Effect C
+[Statedef 8705]
+movetype = A
+physics = N
+anim = 8700
+velset = 0,0
+sprpriority = 2
+ctrl = 0
+
+[State 8705, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = NoShadow
+
+[State 8705, VelAdd]
+type = VelAdd
+trigger1 = Anim = 8710
+trigger1 = IsHelper(8705) = 1
+y = -.55
+[State 8705, VelAdd]
+type = VelAdd
+trigger1 = Anim = 8710
+trigger1 = IsHelper(8706) = 1
+x = .425
+y = -.425
+[State 8705, VelAdd]
+type = VelAdd
+trigger1 = Anim = 8710
+trigger1 = IsHelper(8707) = 1
+x = .55
+[State 8705, VelAdd]
+type = VelAdd
+trigger1 = Anim = 8710
+trigger1 = IsHelper(8708) = 1
+x = .425
+y = .425
+[State 8705, VelAdd]
+type = VelAdd
+trigger1 = Anim = 8710
+trigger1 = IsHelper(8709) = 1
+y = .55
+
+[State 8705, VelSet]
+type = VelSet
+trigger1 = Anim = 8720
+trigger2 = Anim = 8730
+x = 0
+y = 0
+
+[State 8705, HitDef]
+type = HitDef
+triggerall = UniqHitCount = 0
+trigger1 = IsHelper(8705) && Time > 10
+trigger2 = IsHelper(8706) && Time > 11
+trigger3 = IsHelper(8707) && Time > 12
+trigger4 = IsHelper(8708) && Time > 13
+trigger5 = IsHelper(8709) && Time > 14
+attr = A, SP
+animtype = Medium
+damage = 62,14
+hitflag = MADP
+guardflag = MA
+pausetime = 0,0
+sparkno = -1
+hitsound = S8700,1
+guardsound = S202,0
+ground.type = High
+ground.slidetime = 15
+ground.hittime = 19
+ground.velocity = -4
+guard.velocity = -2
+air.velocity = -4,-2
+airguard.velocity = -2,-1
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff = 0
+down.cornerpush.veloff = 0
+guard.cornerpush.veloff = 0
+airguard.cornerpush.veloff = 0
+palfx.time = 18
+palfx.sinadd = 35,35,35,36
+palfx.color = 0
+palfx.invertall = 1
+
+[State 8705, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 8700
+trigger1 = !AnimTime
+value = 8710
+
+[State 8705, ChangeAnim]
+type = ChangeAnim
+trigger1 = movehit
+trigger1 = Anim != 8720
+value = 8720
+
+[State 8705, ChangeAnim]
+type = ChangeAnim
+trigger1 = moveguarded
+trigger1 = Anim != 8730
+value = 8730
+
+[State 8705, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19010
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 80,100
+bindtime = -1
+removetime = 66
+id = 19010
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Eewektwik"
+ignorehitpause = 1
+persistent = 0
+[State 8705, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19010
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 80,100
+bindtime = -1
+removetime = 66
+id = 19010
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Eewektwik"
+ignorehitpause = 1
+persistent = 0
+[State 8705, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19010
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 80,100
+bindtime = -1
+removetime = 66
+id = 19010
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Eewektwik"
+ignorehitpause = 1
+persistent = 0
+[State 8705, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19010
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 80,100
+bindtime = -1
+removetime = 66
+id = 19010
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Eewektwik"
+ignorehitpause = 1
+persistent = 0
+[State 8705, Explod]
+type = Explod
+trigger1 = movehit
+anim = 19010
+ontop = 1
+ownpal = 1
+postype = p2
+pos = 0,-50
+random = 80,100
+bindtime = -1
+removetime = 66
+id = 19010
+pausemovetime = 100000000
+supermovetime = 100000000
+name = "Eewektwik"
+ignorehitpause = 1
+persistent = 0
+
+[State 8705, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, NA, SA, HA, NT, ST, HT, NP, SP, HP
+
+[State 8705, DestroySelf]
+type = DestroySelf
+trigger1 = Anim = 8720 || Anim = 8730
+trigger1 = !AnimTime
+trigger2 = FrontEdgeBodyDist < -50
+trigger3 = Time >= 75
+
+;---------------------------------------------------------------------------
+; Reality Effect Pumpkin
+[Statedef 8800]
+movetype = A
+physics = N
+anim = 8800
+velset = 0,0
+sprpriority = 2
+ctrl = 0
+
+[State 8800, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 8800
+trigger1 = !AnimTime
+value = 8810
+
+[State 8800, Gravity]
+type = Gravity
+trigger1 = Anim = 8810
+
+[State 8800, VelSet]
+type = VelSet
+trigger1 = Anim = 8810
+x = 4
+y = -6
+persistent = 0
+
+[State 8800, VelSet]
+type = VelSet
+trigger1 = Anim != 8810
+x = 0
+y = 0
+
+[State 8800, HitDef]
+type = HitDef
+trigger1 = !MoveContact
+attr = A, SP
+animtype = Medium
+damage = 62,14
+hitflag = MAFDP
+guardflag = MA
+pausetime = 0,0
+sparkno = -1
+hitsound = S1,1
+guardsound = S202,0
+ground.type = Low
+ground.slidetime = 27
+ground.hittime = 14
+ground.velocity = -5
+guard.velocity = -2.5
+air.velocity = -5,-3.25
+airguard.velocity = -2.5,-2.125
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff = 0
+down.cornerpush.veloff = 0
+guard.cornerpush.veloff = 0
+airguard.cornerpush.veloff = 0
+
+[State 8800, ChangeAnim]
+type = ChangeAnim
+trigger1 = movecontact
+trigger2 = Pos Y = 0
+value = 8820
+persistent = 0
+
+[State 8800, PosSet]
+type = PosSet
+trigger1 = Pos Y >= 0
+y = 0
+
+[State 8800, VelSet]
+type = VelSet
+trigger1 = Pos Y >= 0
+x = 0
+y = 0
+
+[State 8800, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, NA, SA, HA, NT, ST, HT
+
+[State 8800, HitOverride]
+type = HitOverride
+trigger1 = Time >= 0
+slot = 1
+time = 1
+attr = SCA, NP, SP, HP
+
+[State 8800, DestroySelf]
+type = DestroySelf
+trigger1 = Anim = 8820
+trigger1 = !AnimTime
+trigger2 = FrontEdgeBodyDist < -30
+
+;---------------------------------------------------------------------------
+; Reality Effect Gouki
+[Statedef 8900]
+movetype = A
+physics = N
+anim = 8800
+velset = 0,0
+sprpriority = 2
+ctrl = 0
+
+[State 8800, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 8800
+trigger1 = AnimElem = 8, >= 0
+value = 8900
+
+[State 8900, Gravity]
+type = Gravity
+trigger1 = Anim = 8900
+
+[State 8900, VelSet]
+type = VelSet
+trigger1 = Anim = 8900
+x = 4
+y = -6
+persistent = 0
+
+[State 8900, VelSet]
+type = VelSet
+trigger1 = Anim != 8900
+x = 0
+y = 0
+
+[State 8900, HitDef]
+type = HitDef
+trigger1 = !MoveContact
+attr = A, SP
+animtype = Medium
+damage = 62,14
+hitflag = MAFDP
+guardflag = MA
+pausetime = 0,0
+sparkno = -1
+hitsound = S1,1
+guardsound = S202,0
+ground.type = Low
+ground.slidetime = 27
+ground.hittime = 14
+ground.velocity = -5
+guard.velocity = -2.5
+air.velocity = -5,-3.25
+airguard.velocity = -2.5,-2.125
+ground.cornerpush.veloff = 0
+air.cornerpush.veloff = 0
+down.cornerpush.veloff = 0
+guard.cornerpush.veloff = 0
+airguard.cornerpush.veloff = 0
+
+[State 8900, ChangeAnim]
+type = ChangeAnim
+trigger1 = movecontact
+trigger2 = Pos Y = 0
+value = 8820
+elem = 2
+persistent = 0
+
+[State 8900, PosSet]
+type = PosSet
+trigger1 = Pos Y >= 0
+y = 0
+
+[State 8900, VelSet]
+type = VelSet
+trigger1 = Pos Y >= 0
+x = 0
+y = 0
+
+[State 8900, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, NA, SA, HA, NT, ST, HT
+
+[State 8900, HitOverride]
+type = HitOverride
+trigger1 = Time >= 0
+slot = 1
+time = 1
+attr = SCA, NP, SP, HP
+
+[State 8900, DestroySelf]
+type = DestroySelf
+trigger1 = Anim = 8820
+trigger1 = !AnimTime
+trigger2 = FrontEdgeBodyDist < -30
+
+;---------------------------------------------------------------------------
+; Dizzy Up
+[Statedef 9001]
+type = A
+movetype = H
+physics = N
+velset = -2,-15
+anim = 9001
+facep2 = 1
+ctrl = 0
+
+[State 9001, VarSet]
+type = VarSet
+trigger1 = !Time
+var(53) = 0
+
+[State 9001, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, AA, AT, AP
+
+[State 9001, Gravity]
+type = Gravity
+trigger1 = 1
+
+[State 9001, ChangeState]
+type = ChangeState
+trigger1 = Vel Y > 0
+value = 9002
+
+;---------------------------------------------------------------------------
+; Dizzy Down
+[Statedef 9002]
+type = A
+movetype = H
+physics = N
+anim = 9002
+ctrl = 0
+
+[State 9002, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, AA, AT, AP
+
+[State 9002, Gravity]
+type = Gravity
+trigger1 = Pos Y < 0
+
+[State 9002, PosSet]
+type = PosSet
+trigger1 = Pos Y >= 0
+y = 0
+
+[State 9002, VelSet]
+type = VelSet
+trigger1 = Pos Y >= 0
+x = 0
+y = 0
+
+[State 9002, ChangeState]
+type = ChangeState
+trigger1 = Pos Y = 0
+trigger1 = Vel Y = 0
+value = 9003
+
+;---------------------------------------------------------------------------
+; Dizzy Land
+[Statedef 9003]
+type = A
+movetype = H
+physics = N
+anim = 5100
+velset = 0,0
+ctrl = 0
+
+[State 9003, PlaySnd]
+type = PlaySnd
+trigger1 = !Time
+value = F7,1
+
+[State 9003, EnvShake]
+type = EnvShake
+trigger1 = !Time
+time = 10
+ampl = -6
+
+[State 9003, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+time = 1
+value = SCA, AA, AT, AP
+
+[State 9003, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 5100
+trigger1 = !AnimTime
+value = 5170
+
+[State 9003, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 5170
+trigger1 = !AnimTime
+value = 5110
+
+[State 9003, ChangeState]
+type = ChangeState
+trigger1 = Time = 60
+value = 9004
+
+;---------------------------------------------------------------------------
+; Dizzy Get-up
+[Statedef 9004]
+type = S
+movetype = I
+physics = S
+anim = 5120
+velset = 0,0
+ctrl = 0
+
+[State 9004, VarSet]
+type = VarSet
+trigger1 = 1
+var(54) = 1
+ignorehitpause = 1
+
+[State 9004, NotHitBy]
+type = NotHitBy
+trigger1 = Anim = 5120
+time = 1
+value = SCA, AA, AT, AP
+
+[State 9004, ChangeAnim]
+type = ChangeAnim
+trigger1 = Anim = 5120 && !AnimTime
+value = 5300
+
+[State 9004, Explod]
+type = Explod
+trigger1 = Anim = 5300
+anim = 15300
+sprpriority = 2
+postype = p1
+pos = 0,-90
+bindtime = -1
+removetime = 120
+ownpal = 1
+removeongethit = 1
+name = "Dizzy"
+id = 15300
+pausemovetime = 999999
+supermovetime = 999999
+persistent = 0
+
+[State 9004, PlaySnd]
+type = PlaySnd
+trigger1 = Anim = 5300
+value = 5300,0
+volume = 50
+persistent = 0
+
+[State 9004, ChangeState]
+type = ChangeState
+trigger1 = Time = 148
+value = 0
+ctrl = 1

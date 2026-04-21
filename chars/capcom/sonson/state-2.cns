@@ -1,0 +1,216 @@
+; Quem_sou_eu [Var(39)]: 0-Morto, 1-Primeiro, 2-Segundo
+; Colaboração [Var(38)]: 1-Lutar só, 2-Duplo Especial, 3-Um Ataque, 4-Counter
+; Vez na luta [Var(37)]: 1-Primeiro, 2-Segundo
+; Verificação [Var(36)]: vago
+;             [Var(35)]: 0-Proíbe sair de tela, 1-Permite sair de tela
+; P3 life     [Var(34)]: Memoriza a vida
+; Recuperação [Var(33)]: Memoriza a vida
+
+
+;---------------------------------------------------------------------------
+; States that are always executed (use statedef -2)
+;---------------------------------------------------------------------------
+[Statedef -2]
+
+[State -2, 1] ; debug
+type = DisplayToClipboard
+trigger1 = roundstate > 0
+;text="eu39 %d, vez37 %d, Id %d, sair? %d";bake %d";
+;params = Var(39), var(37),var(36),Var(35);floor(backedgedist);
+;text="Q_s_e Var(49) %d, proj Var(6) %d, V_n_l Var(5) %d, pos y %d var(3) %d"
+;params = Var(49), Var(6), Var(5), floor(pos y),var(3)
+;text="39=37? %d, Colab %d, p3life %d, sair? %d";bake %d";
+;params = (Var(39)=Var(37)), var(38),var(34),Var(35);floor(backedgedist);
+text="p2bodydist x %d, p2bodydist y %d, var(20) %d, var(4) %d"
+params = floor(p2bodydist x), floor(p2bodydist y), (var(20)),var(4)
+
+;------------------ linha
+[State -2, 1]
+type = AttackMulSet;DefenceMulSet
+trigger1 = 1;stateno=9000
+value = 1 + 1 * (var(9)>0)
+
+[State -2]
+type = Varadd
+triggerall = stateno!=2700;3500
+trigger1 = var(9)>0
+v=9
+value = -2
+
+[State -2]
+type = removeexplod
+trigger1 = var(9)>=0 && numexplod(3520)=1
+id = 3520
+
+[State -2]
+type = removeexplod
+trigger1 = var(9)>=0 && numexplod(3521)=1
+id = 3521
+
+[State -2]
+type = explod
+trigger1 = var(9)>0
+pos = 36+141*(id>(enemy, id)),227
+postype = left 
+bindtime = -1
+sprpriority = 1
+anim = 3521
+removetime = -1
+ownpal = 1
+id = 3521
+ontop = 1
+
+[State -2]
+type = explod
+trigger1 = var(9)>0
+pos = 37+141*(id>(enemy, id)),234  
+postype = left 
+bindtime = -1
+sprpriority = 2
+anim = 3520
+removetime = -1
+scale = var(9)/10,1
+ownpal = 1
+id = 3520
+ontop = 1
+
+;------------------ fim da linha
+
+[State -2];cancela Power Up
+type = projectile
+projanim = 1100
+triggerall = numpartner!=0
+trigger1 = var(9)=2; && (partner,facing=1)
+postype = back;left
+pos = 0,0;ceil(partner, ScreenPos y);0,0;(partner, pos y)
+bindtime = 1
+ID = 1105
+attr = S, ST
+damage = 0
+getpower = 0,00
+givepower = 0
+hitflag = MAFD
+numhits = 0
+AffectTeam = F
+p2stateno = 1105
+sparkno = -1
+hitonce = 1
+projremovetime = 5
+velocity=40
+accel = 20, 0
+
+
+[State -2];cancela Power Up
+type = null;projectile
+projanim = 4400
+triggerall = numpartner!=0
+trigger1 = var(9)=2 && (partner,facing=-1)
+postype = right
+pos = (partner, pos x),(partner, pos y);0,0;(partner, pos y)
+bindtime = 1
+ID = 1105
+attr = S, ST
+damage = 0
+getpower = 0,00
+givepower = 0
+hitflag = MAFD
+numhits = 0
+AffectTeam = F
+p2stateno = 1105
+sparkno = -1
+hitonce = 1
+projremovetime = 5
+velocity=40
+accel = 20, 0
+
+;------------------ Aviso de AI
+
+[State -2, pressstart]
+type = Explod
+triggerall = var(20) != 0 && roundstate < 3
+trigger1 = (gametime%60)= id && life != 0
+id = 9600
+anim = 9600
+pos = ((enemy, id)<id)*160, (id - 32)*2
+postype = Left
+removetime = 30;-2
+bindtime = -1
+sprpriority = -1
+ownpal = 1
+ontop = 1
+
+[State -2, acertou a parede]
+type = Explod
+triggerall = numtarget!=0
+trigger1 = target, statetype = A && target, movetype= H;
+trigger1 = target, backedgedist < 2
+trigger1 = target, anim= 5030 || target, anim= 5035
+trigger1 = numexplod(950)=0
+trigger1 = target, vel x < 0;movehit && 
+id = 950
+anim = 950
+pos = -(target,const(size.air.back))/2,(target,const(size.mid.pos.y))
+postype = P2
+removetime = -2
+bindtime = 1
+;sprpriority = 1
+ownpal = 1
+ontop = 1
+persistent = 0
+ignorehitpause=1
+
+[State -2, bastão defende]
+type = Explod
+triggerall = numexplod(135)=0; && numexplod(145)=0
+trigger1 = anim = [130,162]
+trigger1 = anim != [140,144]
+anim = 135 + (statetype=C) + 2*(statetype=A)
+id = 135; + 10 * (numexplod(135)!=0)
+pos = -10,0
+postype = P1
+removetime = -2;(1 + (numexplod(135)!=0)
+bindtime = -1
+sprpriority = 1
+ownpal = 1
+;ontop = 1
+persistent = 0
+ignorehitpause=1
+supermovetime = -2
+
+[State -2, bastão defende-rastro]
+type = Explod
+triggerall = numexplod(135)=1 && numexplod(145)=0
+trigger1 = anim = [130,162]
+trigger1 = anim != [140,144]
+anim = 145 + (statetype=C) + 2*(statetype=A)
+id = 145; + 10 * (numexplod(135)!=0)
+pos = 0,0
+postype = P1
+removetime = -2;(1 + (numexplod(135)!=0)
+bindtime = -1
+sprpriority = 1
+ownpal = 1
+;ontop = 1
+persistent = 0
+ignorehitpause=1
+supermovetime = 66
+
+[State -2, remove bastão defende]
+type = RemoveExplod
+triggerall = numexplod(135)!=0; && numexplod(145)=0
+trigger1 = anim != [130,162]
+trigger2 = anim = [140,144]
+id = 135
+
+[State -2];sou DOS ou Win?
+type = Varset
+trigger1 = (movecontact) > (movecontact=1)
+v=17
+value = 1
+
+;;teste
+;[State -2, gethits]
+;type = varset
+;trigger1 = 1
+;var(20)=1
+

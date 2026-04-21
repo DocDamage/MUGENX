@@ -1,0 +1,1324 @@
+;GetHit state 2004/2/11
+;ほとんどの通常技は293に飛ばす
+;sysvar 0~2 (予約)  3 hittime(down time)  4(down limitter) 1:on
+;=========================================================================
+
+; HITG_SHAKE
+
+[Statedef 293];通常(hitrecover　しないで着地するとバウンド)
+type    = U
+movetype= H
+physics = N
+velset = 0,0
+face2p = 1
+
+[State 0]
+type = changestate
+trigger1 = statetype = L
+trigger2 = pos y >= 0
+trigger2 = sysvar(4) = 1
+trigger3 = anim = 5080
+trigger3 = time = -1
+value = 499
+
+[state down]
+type = varset
+trigger1 = (statetype != L) && (statetype != A)
+sysvar(4) = 0
+
+[State ground]
+type = selfstate
+trigger1 = (statetype != L) && (statetype != A)
+trigger1 = GetHitVar(yvel) >= 0
+trigger1 = gethitvar(type) != 3
+value = 5000
+
+[State lose]
+type = selfState
+trigger1 = lose
+value = 5000
+
+[State 0]
+type = changestate
+trigger1 = statetype = A
+value = 298
+
+[State 6]
+type = ChangeState
+trigger1 = time = 0
+value = 299
+
+;====================================================
+
+[Statedef 299];地上でのhitshake
+type    = u
+movetype= H
+physics = N
+velset = 0,0
+
+[State 1]
+type = varset
+trigger1 = Time = 0
+sysvar(3) = gethitvar(hittime)
+
+[State 1]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) != [3,5]
+value = ifelse((GetHitVar(airtype) = 1),5000,5010) + GetHitVar(animtype)
+
+[State 5020, 2] ;Anim for HIT_BACK
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) = [3,5]
+value = 5030
+
+[State 3]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = (GetHitVar(animtype) = [4,5]) && (SelfAnimExist(5047 + GetHitVar(animtype)))
+value = 5047 + GetHitVar(animtype) ;5051 - 4 + type
+
+[State 4]
+type = ChangeAnim
+trigger1 = Time > 0
+value = anim
+
+[State 4]
+type = StateTypeSet
+trigger1 = Time = 0
+trigger1 = GetHitVar(yvel) != 0
+trigger2 = Pos Y != 0
+type = a
+
+[State 2]
+type = HitVelSet
+trigger1 = HitShakeOver
+x = 1
+y = 1
+
+[State 2]
+type = VelSet
+trigger1 = HitShakeOver
+x = vel x / (0.54+const(movement.yaccel))
+y = vel y / (0.54+const(movement.yaccel))
+
+[State 5]
+type = ChangeState
+trigger1 = HitShakeOver
+value = 287
+
+; HITA_SHAKE
+[Statedef 298]
+type    = A
+movetype= H
+physics = N
+velset = 0,0
+
+[State 1]
+type = varset
+trigger1 = Time = 0
+sysvar(3) = gethitvar(hittime)
+
+[State 1]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) != [3,5]
+value = ifelse((GetHitVar(airtype) = 1),5000,5010) + GetHitVar(animtype)
+
+[State 5020, 2] ;Anim for HIT_BACK
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) = [3,5]
+value = 5030
+
+[State 3]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = (GetHitVar(animtype) = [4,5]) && (SelfAnimExist(5047 + GetHitVar(animtype)))
+value = 5047 + GetHitVar(animtype) ;5051 - 4 + type
+
+[State 4]
+type = ChangeAnim
+trigger1 = Time > 0
+value = anim
+
+[State 2]
+type = HitVelSet
+trigger1 = HitShakeOver
+x = 1
+y = 1
+
+[State 2]
+type = VelSet
+trigger1 = HitShakeOver
+x = vel x / (0.54+const(movement.yaccel))
+y = vel y / (0.54+const(movement.yaccel))
+
+[State 5]
+type = ChangeState
+trigger1 = HitShakeOver
+value = 287
+
+[State Debug Display]
+type = DisplayToClipboard
+trigger1 = 1
+text = "hittime:%d,sysv3:%d"
+params = gethitvar(hittime),sysvar(3)
+ignorehitpause = 1
+;============================================
+
+;通常吹き飛び
+
+; HITA_UP_T (transition)
+[Statedef 287]
+type    = A
+movetype= H
+physics = N
+
+[State 2]
+type = VelAdd
+trigger1 = 1
+y = GetHitVar(yaccel)
+
+[State 2]
+type = changeanim
+trigger1 = vel y > -3.0 || time > 4
+trigger1 = selfanimexist(5060)
+trigger1 = anim != [5060,5061]
+value = 5060
+
+[State 2]
+type = changeanim
+trigger1 = animtime = 0
+trigger1 = !selfanimexist(5060)
+trigger1 = anim != [5030,5050]
+value = 5030
+
+[State 2]
+type = changeanim
+trigger1 = animtime = 0
+trigger1 = anim = 5030
+trigger1 = !selfanimexist(5060)
+value = 5050
+
+[State 3]
+type = selfState
+triggerall = Life <= 0
+trigger1 = Vel Y > 0    ;Hit ground
+trigger1 = Pos Y >= 0  ;.
+value = 5100 ;HITA_RECOV
+
+[state down]
+type = varset
+trigger1 = time >= sysvar(3)
+sysvar(4) = 0
+
+[State 3]
+type = selfState
+trigger1 = time >= sysvar(3);hitover
+value = 5040 ;HITA_RECOV
+
+[State 3]
+type = changeState
+triggerall = Life > 0
+trigger1 = time < sysvar(3);hitover
+trigger1 = Pos Y >= 0
+trigger1 = vel y > 0
+value = 296
+
+;[State 0]
+;type = ChangeState
+;trigger1 = vel x < 0
+;trigger1 = backedgedist <= 2
+;trigger1 = time >= 5
+;trigger1 = prevstateno != 289
+;value = 289
+
+[State 0]
+type = explod
+trigger1 = vel x < 0
+trigger1 = backedgedist <= 2
+persistent = 0
+anim = f72
+
+[State 0]
+type = changeanim
+trigger1 = gethitvar(hittime) < 4
+trigger1 = !selfanimexist(5061)
+trigger1 = selfanimexist(5060)
+value = 5060
+
+[State Debug Display]
+type = DisplayToClipboard
+trigger1 = 1
+text = "hittime:%d,sysv3:%d"
+params = gethitvar(hittime),sysvar(3)
+ignorehitpause = 1
+
+[Statedef 289];壁にぶつかる
+type = U
+movetype = H
+ctrl = 0
+physics = N
+
+[State 0]
+type = explod
+trigger1 = time = 0
+anim = f72
+
+[State 0]
+type = velset
+trigger1 = time = 0
+x = 0
+
+[State 0]
+type = changestate
+trigger1 = time = 0
+value = prevstateno
+
+;------------------------------------------
+
+;バウンド
+[Statedef 296]
+type    = A
+movetype= H
+physics = N
+
+[State EnvShake]
+type = FallEnvShake
+trigger1 = Time = 0
+
+[State Var]
+type = VarSet
+trigger1 = Time = 0
+sysvar(1) = floor(vel y)
+
+[State 2]
+type = ChangeAnim
+triggerall = time = 0
+trigger1 = (anim != [5051,5059]) && (anim != [5061,5069])
+trigger2 = !SelfAnimExist(5100 + (anim % 10))
+value = 5100
+
+[State 3]
+type = ChangeAnim
+trigger1 = time = 0
+trigger1 = (anim = [5051,5059]) || (anim = [5061,5069])
+trigger1 = SelfAnimExist(5100 + (anim % 10))
+value = 5100 + (anim % 10)
+
+[State 4]
+type = PosSet
+trigger1 = Time = 0
+y = 0
+
+[State 6]
+type = VelMul
+trigger1 = Time = 0
+x = 0.55
+y = -0.5
+
+[State 6]
+type = Veladd
+trigger1 = Time = 0
+y = -3
+
+[State 12]
+type = ChangeState
+trigger1 = Time = 0
+value = 295
+
+; HIT_BOUNCE (bounce into air)
+[Statedef 295]
+type    = A
+movetype= H
+physics = N
+ctrl = 0
+
+[state down]
+type = varset
+trigger1 = time = 0
+sysvar(4) = 0
+
+[State 0]
+type = HitBy
+trigger1 = time = 0
+value = SCA,NT,ST,HT
+time = 10
+
+[State 0]
+type = NotHitBy
+trigger1 = time = 0
+value = SCA,NA,SA,HA,NP,SP,HP
+time = 2
+
+[State 0]
+type = turn
+trigger1 = time = 0
+trigger1 = p2dist X < 0
+
+[State 2]
+type = ChangeAnim
+trigger1 = time = 0
+value = 5210
+
+[State 2]
+type = statetypeset
+trigger1 = time = 0
+movetype = I
+statetype = A
+
+[State 5]
+type = Gravity
+trigger1 = 1
+
+[State 2]
+type = selfstate
+trigger1 = time = 1
+value = 5040
+
+;============================================
+;転倒中にヒット
+
+[statedef 499];hitshake
+type = L
+movetype = H
+ctrl = 0
+physics = N
+velset = 0,0
+
+[state down]
+type = varset
+trigger1 = 1
+sysvar(4) = 1
+
+[State 0]
+type = turn
+trigger1 = Time = 0
+trigger1 = p2dist X < -5
+
+[State 5]
+type = ChangeAnim
+trigger1 = 1
+value = 5080
+
+[State 5]
+type = ChangeState
+trigger1 = HitShakeOver
+value = 498
+
+[Statedef 498];23フレで着地
+type = A
+movetype = H
+physics = N
+anim = 5090
+ctrl = 0
+
+[State 0]
+type = posset
+trigger1 = time = 2
+y = 20
+
+[state down]
+type = varset
+trigger1 = time = 0
+sysvar(4) = 2
+
+[State 1]
+type = changeanim
+trigger1 = time = 2
+value = 5050
+
+[State 1]
+type = veladd
+trigger1 = time >= 1
+y = 0.69
+
+[State 2]
+type = VelSet
+trigger1 = Time = 0
+x = -4.
+y = -8.5
+
+[State 0]
+type = width
+trigger1 = time = [5,25]
+value = time*3,0
+
+
+[State 3]
+type = selfState
+triggerall = Life <= 0
+trigger1 = Vel Y > 0    ;Hit ground
+trigger1 = Pos Y >= 20  ;.
+value = 5100 
+
+[State 0]
+type = changestate
+triggerall = Life > 0
+trigger1 = Vel Y > 0
+trigger1 = Pos Y >= 16
+value = 497
+
+[Statedef 497];転がるアニメ無いからスライドで誤魔化し
+type = A
+movetype = H
+physics = N
+ctrl = 0
+
+[State 0]
+type = Statetypeset
+trigger1 = time = 1
+statetype = L
+
+[State 0]
+type = Changeanim
+trigger1 = time = 1
+value = 5110
+
+[State 0]
+type = Nothitby
+trigger1 = time >= 1
+time = 2
+value = SCA
+
+[state down]
+type = varset
+trigger1 = time = 1
+sysvar(4) = 0
+
+[State 0]
+type = Changeanim
+trigger1 = Animexist(497) = 1
+trigger1 = time = 2
+value = 497
+
+[State 0]
+type = posset
+trigger1 = time >= 1
+y = 0
+
+[State 0]
+type = velset
+trigger1 = time = 1
+x = ifelse(p2bodydist x >= 0,-4,4)
+y = 0
+
+[State 0]
+type = width
+trigger1 = time = [5,25]
+value = time,0
+
+[State F]
+type = selfstate
+trigger1 = time = 26
+trigger1 = anim != 497
+value = 5120
+
+[State F]
+type = selfstate
+trigger1 = anim = 497
+trigger1 = animtime = 0
+value = 0
+ctrl = 1
+
+;495通常ダウン		494　ダウン動作hitshake	493	ダウン動作吹き飛び&横転	492ダウン動作
+
+[statedef 495];追撃以後、転倒時間が1になる。498に転ぶ攻撃でヒットでこのステートに移行
+type = U
+movetype = H
+ctrl = 0
+physics = N
+face2p = 1
+
+[State 0]
+type = playerpush
+trigger1 = 1
+value = 0
+
+[State 0]
+type = velset
+trigger1 = 1
+x = 0
+y = 0
+
+[State 0]
+type = changestate
+trigger1 = statetype = L
+value = 499
+
+[State 5]
+type = ChangeState
+trigger1 = 1
+value = 494
+
+[Statedef 494]
+type = U
+movetype = H
+physics = N
+
+[State 0]
+type = playerpush
+trigger1 = 1
+value = 0
+
+[State 2]
+type = HitVelSet
+trigger1 = Time = 0
+x = 1
+y = 1
+
+[State 2]
+type = VelSet
+trigger1 = HitShakeOver
+x = vel x / (0.54+const(movement.yaccel))
+y = vel y / (0.54+const(movement.yaccel))
+
+[State 1]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) != [3,5]
+value = ifelse((GetHitVar(airtype) = 1),5000,5010) + GetHitVar(animtype)
+
+[State 0] ;Anim for HIT_BACK
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) = [3,5]
+value = 5030
+
+[State 3]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = (GetHitVar(animtype) = [4,5]) && (SelfAnimExist(5047 + GetHitVar(animtype)))
+value = 5047 + GetHitVar(animtype) ;5051 - 4 + type
+
+[State 4]
+type = ChangeAnim
+trigger1 = Time > 0
+value = anim
+
+[State 4]
+type = posfreeze
+trigger1 = 1
+
+[State 0]
+type = changestate
+trigger1 = hitshakeover
+value = 493
+
+; HIT_down (in air or triped)
+[Statedef 493]
+type    = A
+movetype= H
+physics = N
+
+[State vel]
+type = veladd
+trigger1 = 1
+y = 0.4
+
+[State vel]
+type = gravity
+trigger1 = 1
+
+[State 2]
+type = changeanim
+trigger1 = vel y > -3.0 || time > 6
+trigger1 = selfanimexist(5060)
+trigger1 = anim != [5060,5061]
+value = 5060
+
+[State 2]
+type = changeanim
+trigger1 = animtime = 0
+trigger1 = !selfanimexist(5060)
+trigger1 = anim != [5030,5050]
+value = 5030
+
+[State 2]
+type = changeanim
+trigger1 = animtime = 0
+trigger1 = anim = 5030
+trigger1 = !selfanimexist(5060)
+value = 5050
+
+[State 0]
+type = changestate
+trigger1 = Vel Y > 0
+trigger1 = Pos Y >= 30
+value = 492
+
+;---------------------------------------------------------------------------
+; HIT_LIEDOWN
+
+[Statedef 492];ダウン
+type    = L
+movetype= H
+physics = N
+velset = 0,0
+
+[State 5]
+type = FallEnvShake
+trigger1 = Time = 0
+
+[State downtime];trip 20  other(Shockwave,K throw,Mtempest)
+type = varset
+trigger1 = Time = 0
+sysvar(3) = ifelse(gethitvar(groundtype)=3,20,26)
+
+[State 1] ;Hit ground anim (normal)
+type = ChangeAnim
+trigger1 = time = 0
+value = 5100
+
+[State 1] ;Hit ground anim (normal)
+type = ChangeAnim
+trigger1 = animtime = 0
+trigger1 = anim = 5100
+value = 5110
+
+[State 5]
+type = PosSet
+trigger1 = Time = 0
+y = 0
+
+[State 6]
+type = PlaySnd
+trigger1 = Time = 0
+trigger1 = !SysVar(0)
+;value = F7, 0 ;Hit ground
+value = F7, (sysvar(1) > 5) + (sysvar(1) > 14)
+
+[State 7]
+type = GameMakeAnim
+trigger1 = Time = 0
+trigger1 = !SysVar(0)
+value = 60 + (sysvar(1) > 5) + (sysvar(1) > 14)
+pos = 0, 0
+under = sysvar(1) <= 10
+
+[State 1] ;If just died
+type = selfState
+triggerall = !alive
+trigger1 = time = 0
+value = 5150
+
+[state down]
+type = varset
+trigger1 = time >= sysvar(3)
+sysvar(4) = 0
+
+[State 1]
+type = selfState
+triggerall = alive
+trigger1 = time >= sysvar(3)
+trigger2 = sysvar(4)
+trigger2 = time >= 1
+value = 5120
+
+[State resetdown];reset down lim
+type = ChangeState
+triggerall = alive
+trigger1 = sysvar(4)
+trigger1 = time >= 0
+value = 491
+
+[State 2]
+type = VarSet
+trigger1 = SysVar(0)
+trigger1 = Time = 0
+sysvar(0) = 0
+
+[Statedef 491];
+type    = L
+movetype= H
+physics = N
+
+[State 2]
+type = VarSet
+trigger1 = 1
+sysvar(4) = 0
+
+[State 1]
+type = selfState
+trigger1 = time = 1
+value = 5120
+
+
+[Statedef 489];tripped
+type = U
+movetype= H
+physics = N
+ctrl = 0
+velset = 0,0
+anim = 5012
+
+[State freeze]
+type = posfreeze
+trigger1 = 1
+
+[State freeze]
+type = changeanim
+trigger1 = 1
+value = anim
+
+[State 0]
+type = changestate
+trigger1 = statetype = L
+trigger1 = pos y = 0
+value = 499
+
+[State 0]
+type = changestate
+trigger1 = statetype = A
+value = 495
+
+[State vel]
+type = changeanim
+trigger1 = HitShakeOver
+value = 5070
+
+[State 5]
+type = ChangeState
+trigger1 = HitShakeOver
+value = 488
+
+[Statedef 488]
+type    = A
+movetype= H
+physics = N
+
+[State muteki]
+type = nothitby
+trigger1 = time = 0
+trigger1 = anim = 5070
+value = SCA,AA,AP,AT
+time = 17
+
+[State vel]
+type = velset
+trigger1 = time = 0
+x = 0
+y = -5
+
+[State 2]
+type = VelAdd
+trigger1 = anim = 5070
+y = 0.555
+
+[State F]
+type = ChangeState
+trigger1 = time > 1
+trigger1 = pos y > 0
+trigger1 = vel y > 0
+value = 492
+
+
+;=====================================================
+
+;Fall中でもfall = 0の攻撃を食らうとfallが切れるようにします。デフォルトだと一度　fall　 状態になるとrecoverしなくなります。
+
+[Statedef 691]
+type = U
+physics = N
+movetype = H
+ctrl = 0
+velset = 0,0
+face2p = 1
+
+[State 0]
+type = changestate
+trigger1 = statetype = L
+trigger1 = pos y = 0
+value = 499
+
+[State 0]
+type = selfstate
+trigger1 = time = 0
+trigger1 = statetype != A
+value = ifelse(statetype = C,5010,5000)
+
+[State 1]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) != [3,5]
+value = ifelse((GetHitVar(airtype) = 1),5000,5010) + GetHitVar(animtype)
+
+[State 2]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) = [3,5]
+value = 5030
+
+[State 3]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = (GetHitVar(animtype) = [4,5]) && (SelfAnimExist(5047 + GetHitVar(animtype)))
+value = 5047 + GetHitVar(animtype)
+
+[State 4]
+type = ChangeAnim
+trigger1 = Time > 0
+value = anim
+
+[State 2]
+type = HitVelSet
+trigger1 = HitShakeOver
+x = 1
+y = 1
+
+[State 5]
+type = ChangeState
+trigger1 = HitShakeOver
+value = 692
+
+; fall切れる
+[Statedef 692]
+type    = A
+movetype= H
+physics = N
+
+[State Debug Display]
+type = DisplayToClipboard
+trigger1 = 1
+text = "hittime:%d,yaccel:%f"
+params = gethitvar(hittime),GetHitVar(yaccel)
+ignorehitpause = 1
+
+[State 2]
+type = VelAdd
+trigger1 = time > 0
+y = GetHitVar(yaccel)
+
+[State 0]
+type = changeanim
+trigger1 = gethitvar(hittime) = 9
+trigger1 = selfanimexist(5051)
+value = 5051
+
+[State 0]
+type = changeanim
+trigger1 = gethitvar(hittime) < 4
+trigger1 = selfanimexist(5061)
+value = 5061
+
+[State 0]
+type = changeanim
+trigger1 = gethitvar(hittime) < 4
+trigger1 = !selfanimexist(5061)
+trigger1 = selfanimexist(5060)
+value = 5060
+
+[State 3]
+type = changeState
+trigger1 = Life > 0
+trigger1 = !(hitover)
+trigger1 = Pos Y >= 10
+value = 296
+
+[State 3]
+type = selfState
+triggerall = Life <= 0
+trigger1 = Vel Y > 0    ;Hit ground
+trigger1 = Pos Y >= 10  ;.
+value = 5150 ;HITA_RECOV
+
+[state down]
+type = varset
+trigger1 = hitover
+sysvar(4) = 0
+
+[State 3]
+type = selfState
+trigger1 = hitover
+value = 5040
+
+[State 0]
+type = explod
+trigger1 = vel x < 0
+trigger1 = backedgedist <= 2
+persistent = 0
+anim = f72
+
+;===============================================================
+;打ち上げられ
+[Statedef 5429]
+type = A
+physics = N
+movetype = H
+anim = 5012
+velset = 0,0
+face2p = 1
+
+[State 3]
+type = ChangeAnim
+trigger1 = Time > 0
+value = anim
+
+[State 1]
+type = varset
+trigger1 = Time = 0
+sysvar(3) = gethitvar(hittime)
+
+[State 6]
+type = ChangeState
+trigger1 = HitShakeOver
+value = 5430
+
+[Statedef 5430]
+type = A
+physics = N
+movetype = H
+anim = 5051
+
+[State 2]
+type = HitVelSet
+trigger1 = Time = 0
+x = 1
+y = 1
+
+[State 0]
+type = NotHitBy
+trigger1 = time = 0
+value = SCA,NT,ST,HT
+time = 25
+
+[State 0]
+type = HitBy
+trigger1 = time = 0
+value = SCA,NA,SA,HA,NP,SP,HP
+time = 25
+
+[State 0]
+type = veladd
+trigger1 = 1
+y = 0.75
+
+[State 0]
+type = changeanim
+trigger1 = time = 28
+trigger1 = selfanimexist(5061)
+value = 5061
+
+[State 0]
+type = changeanim
+trigger1 = time = 28
+trigger1 = !selfanimexist(5061)
+trigger1 = selfanimexist(5060)
+value = 5060
+
+[state down]
+type = varset
+trigger1 = time >= 30
+sysvar(4) = 0
+
+[State 0]
+type = selfstate
+trigger1 = time >= sysvar(3)
+value = 5040
+
+[State Debug Display]
+type = DisplayToClipboard
+trigger1 = 1
+text = "hittime:%d,vel y:%f"
+params = gethitvar(hittime),vel y
+ignorehitpause = 1
+
+
+[Statedef 5435];ふっとび(エリアルリミッタ-on
+type = A
+physics = N
+movetype = H
+
+[State 0]
+type = posset
+trigger1 = 1
+y = -1
+
+[State 0]
+type = changestate
+trigger1 = 1
+value = 5431
+
+[Statedef 5431];エリアルの叩きつけられ
+type = U
+physics = N
+movetype = H
+velset = 0,0
+
+[State 0]
+type = changestate
+trigger1 = pos y = 0
+trigger2 = statetype != A
+value = ifelse(statetype = L,499,299)
+
+[State 1]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) != [3,5]
+value = ifelse((GetHitVar(airtype) = 1),5000,5010) + GetHitVar(animtype)
+
+[State 0] ;Anim for HIT_BACK
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) = [3,5]
+value = 5030
+
+[State 3]
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = (GetHitVar(animtype) = [4,5]) && (SelfAnimExist(5047 + GetHitVar(animtype)))
+value = 5047 + GetHitVar(animtype) ;5051 - 4 + type
+
+[State 4]
+type = ChangeAnim
+trigger1 = Time > 0
+value = anim
+
+[State 4]
+type = posfreeze
+trigger1 = 1
+
+[State 6]
+type = ChangeState
+trigger1 = HitShakeOver
+value = 5432
+
+[Statedef 5432];
+type = U
+physics = N
+movetype = H
+
+[State 1]
+type = statetypeset
+trigger1 = Time = 0
+trigger1 = pos y < 0
+trigger2 =  vel y < 0
+statetype = A
+
+[State 4]
+type = hitvelset
+trigger1 = time = 0
+trigger1 = prevstateno != 289
+x = 1
+y = 1
+
+[State 2]
+type = VelSet
+trigger1 = time = 0
+trigger1 = prevstateno != 289
+x = vel x / (0.54+const(movement.yaccel))
+y = vel y / (0.54+const(movement.yaccel))
+
+[State 2]
+type = VelAdd
+trigger1 = time > 0
+y = GetHitVar(yaccel)
+
+[State 2]
+type = changeanim
+trigger1 = vel y < -3.0
+trigger1 = anim != 5030
+value = 5030
+
+[State 2]
+type = changeanim
+trigger1 = vel y = [-3.0,-0.3)
+trigger1 = anim != 5050
+trigger1 = selfanimexist(5060)
+value = 5050
+
+[State 2]
+type = changeanim
+trigger1 = vel y > -0.3
+trigger1 = selfanimexist(5060)
+trigger1 = anim != [5060,5061]
+value = 5060
+
+[State 2]
+type = changeanim
+trigger1 = vel y > -0.3
+trigger1 = selfanimexist(5061)
+trigger1 = anim != [5060,5061]
+value = 5061
+
+[State F]
+type = Changestate
+trigger1 = pos y >= 0
+trigger1 = vel y >= 0
+value = 5433
+
+[Statedef 5433];hit ground
+type = L
+physics = N
+movetype = H
+ctrl = 0
+
+[State 0]
+type = VelSet
+trigger1 = Time = 0
+x = 0
+y = 0
+
+[State 0]
+type = FallEnvShake
+trigger1 = Time = 0
+
+[State 0]
+type = ChangeAnim
+trigger1 = time = 0
+value = 5100
+
+[State 0]
+type = ChangeAnim
+trigger1 = animtime = 0
+trigger1 = anim = 5100
+value = 5110
+
+[State 0]
+type = PosSet
+trigger1 = Time >= 0
+y = 0
+
+[state down]
+type = varset
+trigger1 = time >= 12
+sysvar(4) = 0
+
+[State 0];起きあがりへ
+type = selfState
+trigger1 = Time = 12
+value = 5120
+
+[State 0]
+type = GameMakeAnim
+trigger1 = Time = 1
+;value = 61
+;pos = 0, 0
+;under = 1
+value = 60 + (sysvar(1) > 5) + (sysvar(1) > 14)
+pos = 0, 0
+under = sysvar(1) <= 10
+
+[State 0]
+type = PosFreeze
+trigger1 = 1
+
+[State 0]
+type = ForceFeedback
+trigger1 = Time = 0
+waveform = sinesquare
+ampl = 128,-3,-.2,.005
+time = 20
+
+[State 0] ;If just died
+type = selfState
+triggerall = !alive
+trigger1 = AnimTime = 0
+trigger2 = SysVar(0) ;SysVar(0) = 1 avoids hit ground frame
+trigger3 = Anim = [5110,5119]
+value = 5150
+
+;-----------------------------------------------------
+;ピヨリ
+[Statedef 161616]
+type = A
+physics = N
+movetype = H
+ctrl = 0
+
+[State 0,anim]
+type = ChangeAnim
+trigger1 = time = 0
+value = 5050
+
+[State 0,vel]
+type = velset
+trigger1 = time = 0
+y  = -15
+
+[State 0,type]
+type = statetypeset
+trigger1 = time = 3
+physics = A
+
+[State 0,type]
+type = NotHitBy
+trigger1 = time >= 0
+value = SCA,AP,AA,AT,HP,HA,HT,NT,NA,NP,SA,SP,ST
+time = 20
+
+[State 0,vel]
+type = selfstate
+trigger1 =pos y >= 0
+trigger1 = vel y >= -3
+value  = 0
+ctrl = 1
+
+
+;=========================================
+;死体遊戯(出来てない
+
+;---------------------------------------------------------------------------
+; HIT_LIEDEAD
+[Statedef 5150]
+type    = L
+movetype= H
+physics = N
+sprpriority = -3
+
+[State 5150, 1] ;Normal anim
+type = ChangeAnim
+triggerall = Time = 0
+triggerall = SelfAnimExist(5140)
+trigger1 = (anim != [5111,5119]) && (anim != [5171,5179])
+trigger2 = !SelfAnimExist(5140 + (anim % 10))
+value = 5140
+
+[State 5150, 3] ;Hit up type anim
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = (anim = [5111,5119]) || (anim = [5171,5179])
+trigger1 = SelfAnimExist(5140 + (anim % 10))
+value = 5140 + (anim % 10)
+
+[State 5150, 4] ;Match over anim
+type = ChangeAnim
+persistent = 0
+;trigger1 = Time = 0
+trigger1 = MatchOver = 1
+trigger1 = Anim = [5140,5149]
+trigger1 = SelfAnimExist(anim+10)
+value = anim+10
+
+[State 5150, 5] ;Switch to 5110 if liedead anim does not exist
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = Anim != [5140,5159]
+trigger1 = Anim != [5110,5119]
+value = 5110
+
+[State 5150, 6] ;Friction
+type = VelMul
+trigger1 = 1
+x = 0.85
+
+[State 5150, 7] ;Friction
+type = VelSet
+trigger1 = Vel x < .05
+persistent = 0
+x = 0
+
+[Statedef 15150]
+anim = 5110
+type = L
+movetype = H
+ctrl = 0
+
+[State 0]
+type = HitBy
+trigger1 = time >= 0
+value = SCA
+time = 1
+

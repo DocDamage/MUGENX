@@ -1,0 +1,277 @@
+; Jedah's AI routines
+; Written by Deuce (deucemugen@hotmail.com),  2001 Deuce
+; Updated with permission by Baby Bonnie Hood (bbhood21@yahoo.com)
+; Not for copying or redistribution.  Do not modify unless you know what you're doing.
+
+;===========================================================================
+; Jump Start
+[Statedef 340]
+type    = S
+physics = S
+anim = 40
+ctrl = 0
+sprpriority = 1
+
+[State 340, 1]
+type = VarSet
+triggerall = var(7) = 0
+trigger1 = Time = 0
+sysvar(1) = 0
+
+[State 340, 2]
+type = VarSet
+trigger1 = var(7) = 0
+;trigger1 = command = "holdfwd"
+sysvar(1) = 1
+
+[State 340, 3]
+type = null;VarSet
+triggerall = var(7) = 0
+trigger1 = command = "holdback"
+sysvar(1) = -1
+
+[State 340, 4]
+type = VelSet
+triggerall = var(7) = 0
+trigger1 = AnimTime = 0
+x = ifelse(sysvar(1)=0, const(velocity.jump.neu.x), ifelse(sysvar(1)=1, const(velocity.jump.fwd.x), const(velocity.jump.back.x)))
+y = const(velocity.jump.y)
+
+[State 340, 5]
+type = VelSet
+triggerall = var(7) = 0
+trigger1 = AnimTime = 0
+trigger1 = prevstateno = 100 ;RUN_FWD
+trigger1 = sysvar(1) = 1
+x = const(velocity.runjump.fwd.x)
+
+[State 340, 6]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = IfElse((var(7)>0),510,50)
+ctrl = 1
+
+
+;===========================================================================
+;AI COMMANDS
+;===========================================================================
+[Statedef -3]
+
+; CPU Activation
+[State -3]
+type = VarSet
+var(50) = 1
+triggerall = var(50) = 0
+trigger1 = command = "cpu1" || command = "cpu2" || command = "cpu3" || command = "cpu4" || command = "cpu5" || command = "cpu6" || command = "cpu7" || command = "cpu8" || command = "cpu9" || command = "cpu10" || command = "cpu11"
+trigger2 = command = "cpu12" || command = "cpu13" || command = "cpu14" || command = "cpu15" || command = "cpu16" || command = "cpu17" || command = "cpu18" || command = "cpu19" || command = "cpu20" || command = "cpu21" || command = "cpu22"
+trigger3 = command = "cpu23" || command = "cpu24" || command = "cpu25" || command = "cpu26" || command = "cpu27" || command = "cpu28" || command = "cpu29" || command = "cpu30" || command = "cpu31" || command = "cpu32" || command = "cpu33"
+trigger4 = command = "cpu34" || command = "cpu35" || command = "cpu36" || command = "cpu37" || command = "cpu38" || command = "cpu39" || command = "cpu40" || command = "cpu41" || command = "cpu42" || command = "cpu43" || command = "cpu44"
+trigger5 = command = "cpu45" || command = "cpu46" || command = "cpu47" || command = "cpu48" || command = "cpu49" || command = "cpu50" || command = "cpu51" || command = "cpu52" || command = "cpu53" || command = "cpu54" || command = "cpu55"
+;trigger6 = command = "cpu56" || command = "cpu57" || command = "cpu58" || command = "cpu59" || command = "cpu60" || command = "cpu61" || command = "cpu62" || command = "cpu63" || command = "cpu64" || command = "cpu65" || command = "cpu66"
+;trigger7 = command = "cpu67" || command = "cpu68" || command = "cpu69" || command = "cpu70"
+
+;-| Defense |-----------------------
+[State -3, Crouch Guard]
+type = ChangeState
+value = 131
+triggerall = RoundState = 2 && alive = 1 && Var(50) = 1
+triggerall = statetype != A && ctrl = 1
+trigger1 = p2movetype = A && p2statetype = C
+trigger2 = enemynear, numproj > 0
+
+[State -3, Stand Guard]
+type = ChangeState
+value = 120
+triggerall = RoundState = 2 && alive = 1 && Var(50) = 1
+triggerall = p2movetype = A && p2statetype != C
+trigger1 = statetype != A && ctrl = 1 && p2bodydist x < 70
+
+[State -3, Guard Cancel]
+type = ChangeState
+value = 1300
+triggerall = RoundState = 2 && alive = 1 && Var(50) = 1
+trigger1 = random < 50 && var(8) < 12 && p2bodydist x < 70 && stateno = [150,153]
+
+;-| Offense |-----------------------
+
+[State -3, FinaleRosso]
+type = ChangeState
+value = 3100
+triggerall = power >= 1000 && ctrl = 1 && statetype != A
+triggerall = statetype != A && Var(50) = 1 && roundstate = 2 && alive = 1
+trigger1 = NumHelper(1000) = 1
+trigger1 = helper(1000), stateno = 1020 && p2bodydist x > 60 && ctrl = 1 && p2stateno = [120,130]
+trigger2 = p2bodydist x > 100 && p2movetype = A && p2statetype != A
+
+[State -3, FinaleRosso]
+type = ChangeState
+value = 3000
+triggerall = power >= 1000 && ctrl = 1 && statetype != A && statetype != A && Var(50) = 1 && roundstate = 2 && alive = 1
+triggerall = NumHelper(3010) = 0 && p2statetype != L
+trigger1 = NumHelper(1000) = 1
+trigger1 = helper(1000), stateno = 1020 && p2bodydist x < 60 && ctrl = 1 && p2stateno = [120,130]
+trigger2 = p2bodydist x > 100 && p2statetype != A && random < 100
+
+[State -3, Pursuit]
+type = ChangeState
+value = 1400 + (1000 * (power >= 1000))
+triggerall = statetype != A && roundstate = 2 && Var(50) = 1 && random < 100
+trigger1 = p2statetype = L && ctrl = 1 && p2stateno != 5120
+
+[State -3, Jab]
+type = ChangeState
+value = 200
+triggerall = statetype != A && roundstate = 2 && Var(50) = 1 && random < 300 && ctrl = 1
+trigger1 = p2bodydist x < 20 && p2statetype != A
+
+[State -3, Jump]
+type = ChangeState
+value = 340
+triggerall = statetype != A && Var(50) = 1 && roundstate = 2 && alive = 1 && ctrl = 1
+trigger1 = random < 100 && p2bodydist x > 100
+
+[State -3, ProjectileKill]
+type = ChangeState
+value = 1200
+triggerall = RoundState = 2 && alive = 1 && Var(50) = 1
+triggerall = statetype != A && ctrl = 1
+trigger1 = enemynear, numproj > 0 && random < 200
+
+[State -3, Aerial Dio=Sega]
+type = ChangeState
+value = IfElse(random<300, 1051 + ((power>=1000&&random<200)*999), 1052 + ((power>=1000&&random<200)*998))
+triggerall = numhelper(1000) = 0 && p2bodydist x > 50
+triggerall = statetype = A && Var(50) = 1 && roundstate = 2 && alive = 1 && ctrl = 1 && pos y < -40
+;trigger1 = helper(1000), stateno = 1020 && p2bodydist x > 60 && p2stateno = [120,130]
+trigger1 = random < 100 && pos y < -30
+
+[State -3, Ira=Spinta]
+type = ChangeState
+value = IfElse(random<300, 1101 + (power>=1000*999), 1102 + (power>=1000*998))
+triggerall = statetype = A && Var(50) = 1 && roundstate = 2 && alive = 1 && ctrl = 1 && pos y < -40
+trigger1 = random < 100 && NumHelper(1000) = 1
+trigger1 = helper(1000), stateno = 1020 && p2bodydist x > 60 && p2stateno = [120,130]
+trigger2 = random < 100 && p2statetype != A && p2bodydist x = [60,100]
+
+[State -3, Sangue Passare]
+type = ChangeState
+value = 1500
+triggerall = statetype != A && roundstate = 2 && Var(50) = 1 && random < 500
+trigger1 = statetype != A && ctrl = 1 && p2statetype != A && p2movetype != H && p2bodydist x < 20 && p2statetype != L
+
+[State -3, Nero=Fatica]
+type = ChangeState
+value = 1200 + (1000 * (power >= 1000))
+triggerall = statetype != A && Var(50) = 1 && roundstate = 2 && alive = 1 && ctrl = 1 && p2bodydist x < 40
+trigger1 = enemynear, vel x > 0 && enemynear, vel y > 0 && p2statetype = A
+trigger2 = numhelper(1000) && ctrl = 1 && p2statetype = S
+trigger2 = helper(1000), movehit && p2bodydist x < 30
+trigger3 = p2statetype = S
+
+[State -3, Dio=Sega]
+type = ChangeState
+value = IfElse(random<334,1000, IfElse(random<500,1001,1002))
+triggerall = numhelper(1000) = 0
+triggerall = statetype != A && Var(50) = 1 && roundstate = 2 && alive = 1
+trigger1 = statetype != A && ctrl = 1 && p2bodydist x > 40 && prevstateno != 3150
+
+[State -3, Short]
+type = ChangeState
+value = 230 + (200 * random < 500)
+triggerall = statetype != A && roundstate = 2 && Var(50) = 1
+trigger1 = stateno = 200 && movecontact && random < 800
+
+[State -3, Strong]
+type = ChangeState
+value = 210 + (200 * random < 500)
+triggerall = statetype != A && roundstate = 2 && Var(50) = 1
+trigger1 = stateno = 200 && movecontact && random < 700
+trigger2 = stateno = 400 && movecontact && random < 800
+trigger3 = stateno = 230 && movecontact && random < 900
+trigger4 = stateno = 430 && movecontact ;&& random < 500
+
+[State -3, Forward]
+type = ChangeState
+value = 240 + (200 * random < 500)
+triggerall = statetype != A && roundstate = 2 && Var(50) = 1
+trigger1 = stateno = 200 && movecontact && random < 700
+trigger2 = stateno = 400 && movecontact && random < 800
+trigger3 = stateno = 230 && movecontact && random < 900
+trigger4 = stateno = 430 && movecontact ;&& random < 500
+
+[State -3, Fierce]
+type = ChangeState
+value = 220 + (200 * random < 500)
+triggerall = statetype != A && roundstate = 2 && Var(50) = 1
+trigger1 = stateno = 200 && movecontact && random < 700
+trigger2 = stateno = 400 && movecontact && random < 500
+trigger3 = stateno = 230 && movecontact && random < 500
+trigger4 = stateno = 430 && movecontact && random < 500
+trigger5 = stateno = 210 && movecontact && random < 500
+trigger6 = stateno = 410 && movecontact && random < 500
+trigger7 = stateno = 240 && movecontact && random < 500
+trigger8 = stateno = 440 && movecontact && random < 500
+
+[State -3, Roundhouse]
+type = ChangeState
+value = 450 ; + (200 * random < 500)
+triggerall = statetype != A && roundstate = 2 && Var(50) = 1
+trigger1 = stateno = 200 && movecontact && random < 500
+trigger2 = stateno = 400 && movecontact && random < 500
+trigger3 = stateno = 230 && movecontact && random < 500
+trigger4 = stateno = 430 && movecontact && random < 500
+trigger5 = stateno = 210 && movecontact && random < 500
+trigger6 = stateno = 410 && movecontact && random < 500
+trigger7 = stateno = 240 && movecontact && random < 500
+trigger8 = stateno = 440 && movecontact && random < 500
+trigger9  = stateno = 220 && movecontact && random < 500
+trigger10 = stateno = 420 && movecontact && random < 500
+
+[State -3, Air Jab]
+type = ChangeState
+value = 600
+triggerall = statetype = A && roundstate = 2 && Var(50) = 1 && random < 300 && ctrl = 1
+trigger1 = p2bodydist x < 20 && ctrl = 1
+
+[State -3, Air Short]
+type = ChangeState
+value = 630
+triggerall = statetype = A && roundstate = 2 && Var(50) = 1
+trigger1 = p2bodydist x < 20 && random < 800 && ctrl = 1
+trigger2 = stateno = 200 && movecontact && random < 800
+
+[State -3, Air Strong]
+type = ChangeState
+value = 610
+triggerall = statetype = A && roundstate = 2 && Var(50) = 1
+trigger1 = stateno = 600 && movecontact && random < 700
+trigger2 = stateno = 630 && movecontact && random < 900
+
+[State -3, Air Forward]
+type = ChangeState
+value = 640
+triggerall = statetype = A && roundstate = 2 && Var(50) = 1
+trigger1 = stateno = 600 && movecontact && random < 700
+trigger2 = stateno = 610 && movecontact && random < 800
+trigger3 = stateno = 630 && movecontact && random < 900
+
+[State -3, Air Fierce]
+type = ChangeState
+value = 620
+triggerall = statetype = A && roundstate = 2 && Var(50) = 1
+trigger1 = stateno = 600 && movecontact && random < 200
+trigger2 = stateno = 610 && movecontact && random < 500
+trigger3 = stateno = 630 && movecontact && random < 200
+trigger4 = stateno = 640 && movecontact && random < 900
+
+[State -3, Air Roundhouse]
+type = ChangeState
+value = 650
+triggerall = statetype = A && roundstate = 2 && Var(50) = 1
+trigger1 = stateno = 600 && movecontact && random < 200
+trigger2 = stateno = 610 && movecontact && random < 300
+trigger3 = stateno = 620 && movecontact && random < 200
+trigger4 = stateno = 630 && movecontact && random < 200
+trigger5 = stateno = 640 && movecontact && random < 300
+
+

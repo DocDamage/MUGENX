@@ -1,0 +1,2028 @@
+; Quem_sou_eu [Var(39)]: 0-Morto, 1-Primeiro, 2-Segundo
+; Colaboração [Var(38)]: 1-Lutar só, 2-Duplo Especial, 3-Um Ataque
+; Vez na luta [Var(37)]: 1-Primeiro, 2-Segundo
+; Verificação [Var(36)]: 0-Checar início de round, 1-Checar durante o round, 2-Parar de checar
+;             [Var(35)]: 0-Proíbe sair de tela, 1-Permite sair de tela
+; 1 Parceiro? [Var(34)]: 0-Não existe, 1-Existe
+; Recuperação [Var(33)]: Memoriza a vida
+; Y=240 / 40	: Chão de quem espera
+; Y=239 		: Chão de quem vai entrar
+; Y=238		: Chão pra saber se é segundo Player
+; Y=227 		: Chão de quem é convocado
+
+;Detect Team Battle, label the first and second player
+[Statedef 4400]
+type = S
+movetype= A
+ctrl = 0
+anim = 4400
+velset = 0,0
+
+[State 4400, 1]
+type = Varset
+trigger1 = var(36)=0; Evita repetir diversas vezes
+v = 36
+value=1
+
+[State 4400, 3]
+type = Varset
+trigger1 = roundstate = 2; primeiro começa Round
+v = 37
+value=1
+
+[State 4400, 4]
+type = Varset
+trigger1 = roundstate = 2; por vias das dúvidas, sou o primeiro
+v = 39
+value=1
+
+[State 4400, 5]
+type = Varset
+trigger1 = 1; memoriza life
+v = 33
+value=life
+
+[State 4400, 6]
+type = HitDef
+trigger1 = time = 0
+attr = S, ST;HA
+damage = 0
+getpower = 0,00
+givepower = 0
+hitflag = MAFD
+numhits = 0
+AffectTeam = F
+p1stateno = 4401
+p2stateno = 4402
+sparkno = -1
+
+[State 4400,7]
+type = ChangeState
+trigger1 = animtime = 0
+value = 0
+
+;----------------------------------------------------
+; Detect P1
+[Statedef 4401]
+type    = S
+movetype= A
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 0
+anim = 4400
+
+[State 4401,1]
+type = PosSet
+trigger1 = p2dist x = 30;P3 (p2) está 30 pixels à frente? Abaixe-o até 238
+y = 238
+
+[State 4401,1]
+type = PosSet
+trigger1 = p2dist x = -30 ;P3 (p2) está 30 pixels atrás? Deixe-o no chão.
+y = 0
+
+[State 4401,5]
+type = ChangeState
+trigger1 = time = 0
+value = 4405
+
+; Detect P3 (p2)
+[Statedef 4402]
+type    = S
+movetype= A
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 0
+anim = 4400
+
+[State 4402,4]
+type = PosSet
+trigger1 = p2dist x = 30;P3 (p2) está 30 pixels à frente? Abaixe-o até 238
+y = 238
+
+[State 4402,5]
+type = PosSet
+trigger1 = p2dist x = -30 ;P3 (p2) está 30 pixels atrás? Deixe-o no chão.
+y = 0
+
+[State 4402,6]
+type = SelfState
+trigger1 = time = 0
+value = 4403
+
+[Statedef 4403]; p2 volta ao "chão"
+type    = S
+movetype= I
+physics = S
+;juggle  = 8
+velset = 0,0
+ctrl = 0
+anim = 0
+
+[State 4403,1]
+type = Posset
+trigger1 = pos y = 238
+y = 0
+
+[State 4403,5]
+type = changeState
+trigger1 = time = 0
+value = 4404
+
+[Statedef 4404]; Define P1 como player 2! Acerta outras variáveis
+type    = S
+movetype= I
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 1
+anim = 0
+
+[State 4404,1]
+type = Varset
+trigger1 = time = 0
+v = 39
+value = 2; Sou o Player 2.
+
+[State 4404,4]
+type = SelfState
+trigger1 = time = 0
+value = 4405
+
+[Statedef 4405]; Acerta outras variáveis
+type    = S
+movetype= I
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 0
+anim = 0
+
+[State 4405,1]
+type = posset
+trigger1 = time = 0
+Y = 0; volta ao chão pra animação de saída
+
+[State 4405,2]
+type = Varset
+trigger1 = time = 0
+v = 35
+value = 1;agora já pode sair e esperar na sub-tela
+
+[State 4405, 3]
+type = VarSet
+trigger1 = var(34) = 0
+v = 34
+value=1; Existe um parceiro!
+
+[State 4405,4]
+type = SelfState
+trigger1 = time = 0
+value = 0
+ctrl=0
+
+[Statedef 4410]; Finally! I can change the partner!!
+type = S
+movetype= A
+ctrl = 0
+anim = 4460
+velset = 0,0
+
+[State 4410, 5]
+type = HitDef
+trigger1 = 1;Animelem = 4
+attr = S, ST;HA
+damage = 0
+getpower = 0,00
+givepower = 0
+hitflag = MAFD
+numhits = 0
+AffectTeam = F
+p1stateno = 4411
+p2stateno = 4412
+sparkno = -1
+
+;------ Prevenção de TILT:
+;[State 4410,6]
+;type = changestate
+;trigger1 = AnimTime = 0 && Movecontact=0
+;value=0
+;ctrl=1
+
+; Detect P1
+[Statedef 4411]
+type    = S
+movetype= A
+physics = S
+juggle  = 8
+velset = 0,0
+anim = 180;4410
+
+[State 4411, 1]
+type = ChangeAnim
+trigger1 = time = 0 && SelfAnimExist(4410)
+value = 4410
+
+;[State 4411, 1]
+;type = NotHitBy
+;trigger1 = AnimTime != 0
+;value = SCA
+;time = 5
+
+[State 4411, 3]
+type = PlaySnd
+trigger1 = Time = 0
+value = 4410,0
+
+;[State 4411, 4]
+;type = VarSet
+;trigger1 = Movehit
+;v = 37
+;value=3-var(37)
+
+[State 4411,5]
+type = changeState
+trigger1 = roundstate!=2
+value = 0
+ctrl=1
+
+[State 4411, 1]
+type = NotHitBy
+trigger1 = AnimTime != 0
+value = SCA
+time = 28
+
+[State 4411,1]
+type = TargetBind
+trigger1 = animtime != 0
+pos = -(backedgedist)
+
+[State 4411,4]
+type = Varset
+trigger1 = AnimTime = 0
+trigger2 = time > 50 && animtime > 0
+v = 37
+value=3-(var(37))
+
+[State 4411,5]
+type = ChangeState
+trigger1 = Animtime = 0
+trigger2 = time > 50 && animtime > 0
+value = 0
+
+; Detect P3 (p2)
+[Statedef 4412]
+type    = S
+movetype= A
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 0
+anim = 0
+
+[State 4412,1]
+type = Turn
+trigger1 = Time = 1
+trigger1 = p2dist x < -5
+
+[State 4412,1]
+type = Posset
+trigger1 = time = 1
+y = 227
+
+[State 4412, 1]
+type = ScreenBound
+trigger1 = 1;time < 10
+value = 0
+movecamera = 0; não ande com a tela
+
+[State 4412, 4]
+type = AssertSpecial
+trigger1 = 1
+flag = noshadow
+
+[State 4412,5]
+type = SelfState
+trigger1 = time = 18;1
+value = 4414
+
+[Statedef 4413]; P3 => P1
+type    = S
+movetype= I
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 0
+anim = 0
+
+[State 4413,5]
+type = changeState
+trigger1 = time = 0
+value = 4414
+
+[Statedef 4414]; P1 is calling! FIGHT!
+type    = S
+movetype= I
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 1
+anim = 0
+
+[State 4414,1]
+type = Posadd
+trigger1 = time = 0
+x = -(Backedgedist)
+
+[State 4414,1]
+type = Varset
+trigger1 = time = 0
+v = 37
+value = 3-(var(37))
+
+[State 4414,2]
+type = posset
+trigger1 = time = 0
+y = 0
+
+[State 4414,1]
+type = Varset
+trigger1 = time = 0
+v = 35
+value = 1
+
+[State 4414,5]
+type = SelfState
+trigger1 = time = 0
+value = 4440
+
+; Double Dragon Counter
+[Statedef 4420]
+type = S
+movetype = A
+physics = S
+anim = 4420
+velset = 0,0
+ctrl = 0
+poweradd = -1000
+
+[State 4420, 5]
+type = HitDef
+trigger1 = AnimElem = 1
+attr = S, ST
+;hitflag = MAF
+;guardflag = MA
+priority = 7, Hit
+damage = 0, 0
+pausetime = 0, 35
+;sparkno = 3
+;guard.sparkno = 40
+;sparkxy = -5, -85
+;hitsound = S2, 6
+;guardsound = S2, 10
+;fall = 1
+;air.fall = 1
+p1stateno = 4421
+getpower = 0
+;givepower = 35
+
+[State 4420, 2]
+type = NotHitBy
+trigger1 = 1
+value = SCA
+
+[State 4420, 4]
+type = PlaySnd
+trigger1 = AnimElem = 1
+value = 3, 13
+
+[State 4420, 6]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;reversal.attr = SCA, AA, AP, AT, NA, NP, NT, SA, SP, ST, HA, HP, HT
+
+[Statedef 4421]; "Double Dragon"
+type = S
+movetype= A
+ctrl = 0
+anim = 4460
+velset = 0,0
+
+[State 4421, 0]
+type = NotHitBy
+trigger1 = 1;
+value = SAC, NA, SA, HA
+time = 40
+
+[State 4421, 4]
+type = HitDef
+trigger1 = Animelem = 1
+attr = S, HT;HA
+damage = 0
+getpower = 0,00
+givepower = 0
+hitflag = MAFD
+numhits = 0
+AffectTeam = F
+p1stateno = 4422
+p2stateno = 4423
+sparkno = -1
+
+[State 4421,6]
+type = changestate
+trigger1 = AnimTime = 0 && Movecontact=0
+value=0
+ctrl=1
+
+[Statedef 4422]; Double Dragon P1 attack/ataque Double Dragon deste boneco
+type = S
+movetype= A
+ctrl = 0
+velset = 0,0
+
+[State 4422, 1]
+type = NotHitBy
+trigger1 = 1;
+value = SAC, NA, SA, HA
+time = 1
+
+[State 4422, 1]
+type = VarSet
+trigger1 = var(35) = 1
+v = 35
+value=0
+
+[State 4422, 2]
+type = Varset
+trigger1 = time = 0
+v = 37
+value=3-(var(37))
+
+[State 4422, 1]
+type = SuperPause
+trigger1 = time = 1
+time = 24
+movetime = 24
+anim = -1
+sound = 20, 0
+
+[State 4422, 2]
+type = Explod
+trigger1 = 1
+pos = 0,0
+postype = back
+;facing = 1
+supermovetime=24;32
+removetime=12
+sprpriority = -4
+anim = 4465
+scale = 2,2
+
+[State 4422, 2]
+type = Explod
+trigger1 = 1
+pos = 0,0
+postype = back
+;facing = 1
+supermovetime=24
+removetime=24
+sprpriority = -4
+anim = 4466
+scale = 1.5,1.5
+
+[State 4422,4]
+type = TargetBind
+trigger1 = 1;AnimTime != 0
+pos = -68, 0
+
+[State 4422, 2]
+type = Explod
+trigger1 = 1;time = 0
+pos = 0,0
+postype = back
+;facing = 1
+supermovetime=35
+removetime=36
+sprpriority = -4
+anim = 4467
+scale = 1,1
+
+[State 4422,5]
+type = ChangeState; default attempt of return
+; Tentativa de voltar
+trigger1 = 1
+value = 0
+
+[Statedef 4423]
+type = S
+movetype= A
+ctrl = 0
+velset = 0,0
+
+[State 4423, 1]
+type = Explod
+trigger1 = 1
+sprpriority = -4
+postype = back
+;facing = 1
+removetime=5
+supermovetime=4
+pos = 0,100
+;bindtime = 15
+shadow = 0, 0, 0
+ownpal = 1
+anim = 4465
+scale = 1,1
+
+[State 4423, 1]
+type = AssertSpecial
+trigger1 = 1
+flag = noshadow
+
+[State 4423, 2]
+type = PosSet
+trigger1 = time=0
+y = 217
+
+[State 4423,5]
+type = changestate
+trigger1 = time = 1
+value = 4424
+
+[Statedef 4424]
+type    = A
+movetype= I
+physics = N
+anim=42
+velset = 0,0
+
+;-----Super pausa
+[State 4424, 1]
+type = SuperPause
+trigger1 = time = 0
+time = 24
+movetime = 24
+anim = -1
+sound = 20, 0
+
+[State 4424, 1]
+type = Explod
+trigger1 = time=0
+sprpriority = -3
+postype = left
+removeongethit=1
+pos = 0,-160
+bindtime = -1
+supermove = 1
+shadow = 0, 0, 0
+ownpal = 1
+anim = 4465
+
+[State 4424, 1]
+type = ScreenBound
+trigger1 = 1
+value = 0
+movecamera = 0
+
+[State 4424, 1]
+type = Turn
+triggerall = Time = 0
+trigger1 = p2dist x < -5
+trigger2 = facing = -1
+
+[State 4424,2]
+type = Varset
+trigger1 = roundstate = 2; memoriza life
+v = 33
+value=life
+
+[State 4424,4]
+type = PosSet
+trigger1 = time=0
+y = -160
+
+[State 4424,5]
+type = changestate
+trigger1 = time > 5
+value = 4425
+
+[Statedef 4425]
+type    = A
+movetype= I
+physics = N
+facep2 = 1
+anim=43
+velset = 4,16
+
+[State 4425, 1]
+type = ScreenBound
+trigger1 = 1
+value = 0
+movecamera = 0
+
+[State 4425, 2]
+type = Varset
+trigger1 = time= 0
+v = 37
+value=3-(var(37))
+
+[State 4425,5]
+type = SelfState
+trigger1 =pos y > -10 && vel y > 0
+value = 4426
+
+[Statedef 4426]; Double Dragon partner attack/Ataque Double Dragon do parceiro
+type = S
+movetype= A
+ctrl = 0
+velset = 0,0
+
+[State 4426,1]
+type = PosSet
+trigger1 = time=0
+y = 0
+
+[State 4426,5]
+type = ChangeState
+trigger1 = 1 && SelfAnimExist(1500); default attempt of attack
+trigger1 = Command = "holdback"    ; Tentativa de ataque padrão
+;trigger1 = PalNo = 3 || PalNo = 6
+value = 1500
+ctrl=0
+
+[State 4426,5]
+type = ChangeState
+trigger1 =1 && SelfAnimExist(2020); Cable´s "Beta" attack
+trigger1 = Command = "holdfwd"    ; Ataque "Beta" do Cable
+;trigger1 = PalNo = 2 || PalNo = 8 || PalNo = 5 || PalNo = 11
+value = 2020
+ctrl=0
+
+[State 4426,5]
+type = ChangeState
+trigger1 =1 && SelfAnimExist(1602); Cable´s "Gamma" attack
+trigger1 = Command = "holddown"    ; Ataque "Gamma" do Cable
+;trigger1 = PalNo = 9 || PalNo = 12
+value = 1602
+ctrl=0
+
+[State 4426,5]
+type = ChangeState
+trigger1 = 1 && SelfAnimExist(2000); default attempt of attack
+trigger1 = Command = "holddown"    ; Tentativa de ataque padrão
+;trigger1 = PalNo = 2 || PalNo = 8 || PalNo = 5 || PalNo = 11
+value = 2000
+ctrl=0
+
+[State 4426,5]
+type = ChangeState
+trigger1 =1 && SelfAnimExist(1000); default attempt of "alpha" attack 
+;trigger1 = PalNo = 1 || PalNo = 7 || PalNo = 4 || PalNo = 10
+value = 1000    ; Tentativa de ataque "alfa" padrão
+ctrl=0
+
+[State 4426,5]
+type = ChangeState
+trigger1 = 1 && SelfAnimExist(195); default attempt of taunt
+value = 195    ; Tentativa de provocação padrão
+ctrl=0
+
+[State 4426,5]
+type = ChangeState
+trigger1 = 1; default attempt of return, if all fail
+value = 0    ; Se tudo mais falhar, retorne
+ctrl=0
+
+
+; Partner coming down
+[Statedef 4430]
+type    = A
+movetype= I
+physics = N
+facep2 = 1
+ctrl = 0
+velset = 5.8,-6
+anim = 42 + (selfanimexist(44))*2
+
+[State 4430, 1]
+type = Posadd
+trigger1 = time = 0
+x = - (BackEdgeDist)
+
+;[State 4430, 1]
+;type = PosSet
+;trigger1 = facing = -1
+;trigger1 = time = 0
+;x = 320
+
+;[State 4430, 1]
+;type = PosSet
+;trigger1 = facing = 1
+;trigger1 = time = 0
+;x = 0
+
+[State 4430, 1]
+type = Posset
+trigger1 = time = 0;um pouco acima do chão pra pular
+y = -60
+
+[State 4430, 1]
+type = ScreenBound
+trigger1 = var(39)!=var(37)
+value = 0
+movecamera = 0;não sendo minha vez, não ande com a tela
+
+[State 4430, 1]
+type = NotHitBy
+trigger1 = Time = 0
+value = SCA
+time = 5
+
+[State 4430, Super D]
+type = AfterImage
+trigger1 = Time = 0; enfeite
+time = 20
+
+[State 4430, 13]
+type = veladd
+trigger1 = time > 0
+y = 0.5
+
+[State 4430, 42]
+type = ChangeState
+trigger1 = time >=0; passa pra estado do pulo
+value = 50
+ctrl = 1
+
+; Partner strikes
+[Statedef 4440]
+type    = A
+movetype= A
+physics = N
+facep2 = 1
+ctrl = 0
+velset = 10,4;9,2.5
+anim = 640;4440
+
+[State 4440, 1]
+type = ChangeAnim
+trigger1 = time =0 && SelfAnimExist(600) && !SelfAnimExist(640)
+value = 600
+
+[State 4440, 1]
+type = ChangeAnim
+trigger1 = time =0 && SelfAnimExist(4440)
+value = 4440
+
+[State 4440, 1]
+type = Posadd
+trigger1 = time = 0;um pouco acima do chão pra pular
+y = -100;60
+
+[State 4440, 1]
+type = ScreenBound
+trigger1 = time < 20
+value = 0
+movecamera = 0;não sendo minha vez, não ande com a tela
+
+[State 4440, 1]
+type = NotHitBy
+trigger1 = Time = 0
+value = SCA
+time = 5
+
+[State 4440, Super D]
+type = AfterImage
+trigger1 = Time = 0; enfeite
+time = 20
+
+[State 4440, 2]
+type = HitDef
+trigger1 = AnimElem = 1
+attr = S, ST;NA
+damage   = 23
+animtype = Up
+guardflag = MA
+pausetime = 20,10
+sparkxy =  -10,-50
+hitsound   = 5,2
+guardsound = 6,0
+ground.type = High
+ground.slidetime = 13
+ground.hittime  = 17
+ground.velocity = -2,-14
+air.type = Low
+air.velocity = -2,-14
+airguard.velocity = -3.5,-3
+air.fall = 1
+fall = 1
+
+[State 4440, 3]
+type = Varset
+trigger1 = 1; memoriza life
+v = 33
+value=life
+
+
+[State 4440, 4]
+type = ChangeState
+trigger1 = pos y >=0; passa pra estado do pulo
+value = 4445
+ctrl = 0
+
+[Statedef 4445]
+type = S
+ctrl = 0
+anim = 195;4445
+velset = 0,0
+
+[State 4445, 1]
+type = ChangeAnim
+trigger1 = time =0 && SelfAnimExist(190) && !SelfAnimExist(195)
+value = 190
+
+[State 4445, 1]
+type = ChangeAnim
+trigger1 = time =0 && SelfAnimExist(4445)
+value = 4445
+
+[State 182, 1] 
+type=playsnd
+trigger1=time =0 && SelfAnimExist(4445)
+value=180,1
+
+[State 4445, 1]
+type = ChangeState
+trigger1 = AnimTime = 0
+trigger2 = time > 70
+value = 0
+ctrl = 1
+
+; Partner jump back
+[Statedef 4450]
+type    = A
+movetype= I
+physics = A
+facep2 = 1
+ctrl = 0
+anim = 43
+velset = -7.5,-9
+
+[State 4450, 1]
+type = ScreenBound
+trigger1 = var(39)!=var(37)
+value = 0
+movecamera = 0
+
+[State 4450, 2]
+type = AssertSpecial
+trigger1 = var(39)!=var(37)
+flag = noshadow
+
+;[State 4450, 1]
+;type = Posadd
+;trigger1 = BackEdgeBodyDist < -40
+;x = -250
+
+[State 4450, 5]
+type = ChangeState
+triggerall = var(36) = 1;passando do fim de uma possível tela, vá pra espera
+trigger1 = P2dist x > 320;  mas só se deixar, pra não repetir
+value = 4452
+ctrl = 0
+
+; Partner Wait
+[Statedef 4452]
+type    = S
+physics = S
+ctrl = 0
+anim = 11
+
+[State 4452, 1]
+type = ScreenBound
+trigger1 = var(39)!=var(37)
+value = 0
+movecamera = 0
+
+[State 4452, 2]
+type = VelSet
+trigger1 = Time = 0; parado
+y = 0
+x = 0
+
+[State 4452, 3]
+type = PosSet
+trigger1 = var(36) != 2; Se ainda for necessário esperar pela vez
+y = 240                    ; número pra teste. o correto é 240
+
+[State 4452, 4]
+type = Lifeadd
+trigger1 = var(33) > life && (GameTime%20)=0 && alive = 1; renova life
+value=1;life
+
+[State 4452,4]
+type = varSet
+trigger1 = 1
+var(38) = 1
+
+[State 4452, 4]
+type = ChangeState
+trigger1 = Pos y = 239; 239 é umas das indicações que o outro
+value = 0             ; Player consegue ler
+ctrl = 0
+
+[State 4452, 5]
+type = AssertSpecial
+trigger1 = 1
+flag = noshadow
+
+[State 4452, 5]
+type = VarSet
+trigger1 = var(34) = 0
+v = 34
+value=1
+
+[Statedef 4460]; "Double Dragon"
+type = S
+movetype= A
+ctrl = 0
+anim = 41; 4460
+velset = 0,6
+
+[State 4460, 4]
+type = ChangeAnim
+trigger1 = pos y=0
+value=4460
+
+[State 4460, 4]
+type = Superpause
+trigger1 = pos y>0 && time = 0
+time=20
+movetime=20
+anim=-1
+darken=1
+unhittable=1
+
+[State 4460, 4]
+type = velset
+trigger1 = pos y >= 0
+y=0
+
+[State 4460, 4]
+type = posset
+trigger1 = pos y >= 0
+y=0
+
+[State 4460, 4]
+type = HitDef
+trigger1 = Anim = 4460 && Animelem = 1
+attr = S, HT;HA
+damage = 0
+getpower = 0,00
+givepower = 0
+hitflag = MAFD
+numhits = 0
+AffectTeam = F
+p1stateno = 4461
+p2stateno = 4462
+sparkno = -1
+
+[State 4460,6]
+type = changestate
+trigger1 = AnimTime = 0 && Movecontact=0 && anim=4460
+value=0
+ctrl=1
+
+[Statedef 4461]; Double Dragon P1 attack/ataque Double Dragon deste boneco
+type = S
+movetype= A
+ctrl = 0
+velset = 0,0
+
+[State 4461, 1]
+type = VarSet
+trigger1 = var(35) = 1
+v = 35
+value=0
+
+[State 4461, 2]
+type = Varset
+trigger1 = time = 0
+v = 37
+value=3-(var(37))
+
+[State 4461, 1]
+type = SuperPause
+trigger1 = time = 1
+time = 24
+movetime = 24
+anim = -1
+sound = 20, 0
+
+[State 4461, 2]
+type = Explod
+trigger1 = 1
+pos = 0,0
+postype = back
+;facing = 1
+supermovetime=24;32
+removetime=12
+sprpriority = -4
+anim = 4465
+scale = 2,2
+
+[State 4461, 2]
+type = Explod
+trigger1 = 1
+pos = 0,0
+postype = back
+;facing = 1
+supermovetime=24
+removetime=24
+sprpriority = -4
+anim = 4466
+scale = 1.5,1.5
+
+
+
+[State 4461,4]
+type = TargetBind
+trigger1 = 1;AnimTime != 0
+pos = -68, 0
+
+[State 4461, 2]
+type = Explod
+trigger1 = 1;time = 0
+pos = 0,0
+postype = back
+;facing = 1
+supermovetime=35
+removetime=36
+sprpriority = -4
+anim = 4467
+scale = 1,1
+
+[State 4461,5]
+type = ChangeState
+trigger1 = 1 && SelfAnimExist(3000); default attempt of hyper attack
+; Tentativa de hiper ataque padrão
+value = 3000
+
+[State 4461,5]
+type = ChangeState
+trigger1 = 1 && SelfAnimExist(4000); default attempt of hyper attack
+; Tentativa de hiper ataque padrão
+value = 4000
+
+[State 4461,5]
+type = ChangeState
+trigger1 = 1 && SelfAnimExist(2000); default attempt of hyper attack or special
+; Tentativa de hiper ataque ou especial padrão
+value = 2000
+
+[State 4461,5]
+type = ChangeState
+trigger1 = 1 && SelfAnimExist(1000); default attempt of special attack
+; Tentativa de ataque especial padrão
+value = 1000
+
+[State 4461,5]
+type = ChangeState; default attempt of return
+; Tentativa de voltar
+trigger1 = 1
+value = 0
+
+[Statedef 4462]
+type = S
+movetype= A
+ctrl = 0
+velset = 0,0
+
+[State 4462, 1]
+type = Explod
+trigger1 = 1
+sprpriority = -4
+postype = back
+;facing = 1
+removetime=5
+supermovetime=4
+pos = 0,100
+;bindtime = 15
+shadow = 0, 0, 0
+ownpal = 1
+anim = 4465
+scale = 1,1
+
+[State 4462, 1]
+type = AssertSpecial
+trigger1 = 1
+flag = noshadow
+
+[State 4462, 2]
+type = PosSet
+trigger1 = time=0
+y = 217
+
+[State 4462,5]
+type = changestate
+trigger1 = time = 1
+value = 4463
+
+[Statedef 4463]
+type    = A
+movetype= I
+physics = N
+anim=42 + (selfanimexist(44))*2
+velset = 0,0
+
+;-----Super pausa
+[State 4463, 1]
+type = SuperPause
+trigger1 = time = 0
+time = 24
+movetime = 24
+anim = -1
+sound = 20, 0
+
+[State 4463, 1]
+type = Explod
+trigger1 = time=0
+sprpriority = -3
+postype = left
+removeongethit=1
+pos = 0,-160
+bindtime = -1
+supermove = 1
+shadow = 0, 0, 0
+ownpal = 1
+anim = 4465
+
+[State 4463 1]
+type = ScreenBound
+trigger1 = 1
+value = 0
+movecamera = 0
+
+[State 4463, 1]
+type = Turn
+triggerall = Time = 0
+trigger1 = p2dist x < -5
+trigger2 = facing = -1
+
+[State 4463,2]
+type = Varset
+trigger1 = roundstate = 2; memoriza life
+v = 33
+value=life
+
+[State 4463,4]
+type = PosSet
+trigger1 = time=0
+y = -160
+
+[State 4463,5]
+type = changestate
+trigger1 = time > 5
+value = 4465
+
+[Statedef 4465]
+type    = A
+movetype= I
+physics = N
+facep2 = 1
+anim=43 + (selfanimexist(44))
+velset = 4,16
+
+[State 4465, 1]
+type = ScreenBound
+trigger1 = 1
+value = 0
+movecamera = 0
+
+[State 4465, 2]
+type = Varset
+trigger1 = time= 0
+v = 37
+value=3-(var(37))
+
+[State 4465,5]
+type = SelfState
+trigger1 =pos y > -10 && vel y > 0
+value = 4466
+
+[Statedef 4466]; Double Dragon partner attack/Ataque Double Dragon do parceiro
+type = S
+movetype= A
+ctrl = 0
+velset = 0,0
+
+[State 4466,1]
+type = PosSet
+trigger1 = time=0
+y = 0
+
+[State 4466,5]
+type = ChangeState
+trigger1 = SelfAnimExist(3000); default attempt of hyper attack
+; Tentativa de hiper ataque padrão
+value = 3000
+
+[State 4466,5]
+type = ChangeState
+trigger1 = SelfAnimExist(4000); default attempt of hyper attack
+; Tentativa de hiper ataque padrão
+trigger1 = animtime = 0
+value = 4000
+
+[State 4466,5]
+type = ChangeState
+trigger1 = SelfAnimExist(2000); default attempt of hyper attack or special
+; Tentativa de hiper ataque padrão ou especial
+trigger1 = animtime = 0
+value = 2000
+
+[State 4466,5]
+type = ChangeState
+trigger1 = SelfAnimExist(1000); default attempt of special attack
+; Tentativa de ataque especial padrão
+trigger1 = animtime = 0
+value = 1000
+
+[State 4466,5]
+type = ChangeState
+trigger1 = animtime = 0; default give up
+; Sem padrão, desistindo...
+value = 0
+
+[Statedef 4470]; P1 is die! FIGHT!
+type = S
+movetype= A
+ctrl = 0
+anim = 4470
+velset = 0,0
+
+[State 4470, 5]
+type = HitDef
+trigger1 = 1;Animelem = 1
+attr = S, ST;HA
+damage = 0
+getpower = 0,00
+givepower = 0
+hitflag = MAFD
+numhits = 0
+AffectTeam = F
+p1stateno = 4471
+p2stateno = 4472
+sparkno = -1
+
+[State 4470,6]
+type = ChangeState 
+trigger1 = AnimTime = 0; && movehit
+value = 5150
+
+[Statedef 4471]
+type    = S
+movetype= A
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 0
+anim = 4470
+
+[State 4471, 1]
+type = Varset
+trigger1 = var(36) = 1; já que o outro morreu, não precisa mais checagem
+v = 36
+value=2
+
+[State 4471, 1]
+type = Varset
+trigger1 = var(34) = 1; o outro morreu
+v = 34
+value=0
+
+[State 4471,2]
+type = Varset
+trigger1 = time = 0
+v = 35
+value = 0
+
+[State 4471, 3]
+type = Varset
+trigger1 = roundstate = 2
+v = 37
+value=3-(var(37))
+
+[State 4471,1]
+type = TargetBind
+trigger1 = 1;animtime != 0
+pos = -340;10
+
+[State 4471, 1]
+type = Varset
+trigger1 = time = 0
+v = 37
+value=3 -(var(39))
+
+[State 4471,5]
+type = ChangeState
+trigger1 = Animtime = 0
+value = 5150
+
+; Detect P3 (p2)
+[Statedef 4472]
+type    = S
+movetype= I
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 1
+anim = 0
+
+[State 4472,1]
+type = Turn
+trigger1 = Time = 1
+trigger1 = p2dist x < -5
+
+[State 4472,2]
+type = PosSet
+trigger1 = time = 1;0
+y = 239
+
+[State 4472, 3]
+type = ScreenBound
+trigger1 = 1;time < 10
+value = 0
+movecamera = 0; não ande com a tela
+
+[State 4472, 4]
+type = Varset
+trigger1 = time = 0
+v = 36
+value=2
+
+[State 4472,5]
+type = SelfState
+trigger1 = time = 0
+value = 4473
+
+[Statedef 4473]; P1 is die! FIGHT!
+type    = S
+movetype= A
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 1
+anim = 0
+
+;[State 4473,1]
+;type = Posadd
+;trigger1 = 1;time = 0
+;x = -(Backedgedist)
+
+[State 4473,1]
+type = Varset
+trigger1 = time = 0
+v = 37
+value = 3-(var(37))
+
+[State 4473, 4]
+type = VarSet
+trigger1 = var(34) = 1
+v = 34
+value=0
+
+[State 4473,5]
+type = changeState
+trigger1 = time = 0
+value = 4474
+
+[Statedef 4474]; P1 is die! FIGHT!
+type    = S
+movetype= I
+physics = S
+juggle  = 8
+velset = 0,0
+ctrl = 1
+anim = 0
+
+[State 4474,1]
+type = Varset
+trigger1 = time = 0
+v = 37
+value = 3-(var(37))
+
+[State 4474,2]
+type = posset
+trigger1 = time = 0
+Y = 0
+
+[State 4474,1]
+type = Varset
+trigger1 = time = 0
+v = 35
+value = 1
+
+[State 4474,5]
+type = SelfState
+trigger1 = time = 0
+value = 4430
+
+[Statedef 4480]; "Assist"
+type = S
+movetype= A
+ctrl = 0
+velset = 0,0
+anim = 4460
+
+[State 4480, 1]
+type = VarSet
+trigger1 = 1;var(38) = 1
+v = 38
+value=3
+
+[State 4480, 4]
+type = HitDef
+trigger1 = Animelem = 1
+attr = S, ST;HA
+damage = 0
+getpower = 0,00
+givepower = 0
+hitflag = MAFD
+numhits = 0
+AffectTeam = F
+p1stateno = 4481
+p2stateno = 4482
+sparkno = -1
+
+[State 4480,4]
+type = ChangeState
+trigger1 = animtime = 0 && movecontact = 0
+trigger2 = time > 50 && animtime > 0 && movecontact = 0
+value = 0
+ctrl=1
+
+[Statedef 4481]; P1 call assist
+type = S
+movetype= A
+ctrl = 0
+velset = 0,0
+anim = 190;4480
+
+[State 4481, 1] 
+type=playsnd
+trigger1=time=1 
+value=4480,0
+
+[State 4481, 1]
+type = ChangeAnim
+trigger1 = time =0 && SelfAnimExist(4480)
+value = 4480;190
+
+[State 4481,4]
+type = TargetBind
+trigger1 = AnimTime != 0
+pos = -68, -0
+
+[State 4481,5]
+type = ChangeState
+trigger1 = animtime = 0
+trigger2 = time > 50 && animtime > 0
+value = 0
+ctrl=1
+
+[Statedef 4482]
+type = S
+movetype= A
+ctrl = 0
+velset = 0,0
+
+[State 4482, 2]
+type = PosSet
+trigger1 = time=0
+y = 217
+
+[State 4482,5]
+type = changestate
+trigger1 = time = 0
+value = 4483
+
+[Statedef 4483]
+type    = A
+movetype= I
+physics = N
+anim=42 + (selfanimexist(44))*2
+velset = 0,0
+
+[State 4483, 1]
+type = NotHitBy
+trigger1 = 1
+value = SCA
+time = 35
+
+[State 4483 1]
+type = ScreenBound
+trigger1 = 1
+value = 0
+movecamera = 0
+
+[State 4483, 1]
+type = Turn
+triggerall = Time = 0
+trigger1 = p2dist x < -5
+trigger2 = facing = -1
+
+[State 4483,4]
+type = PosSet
+trigger1 = time=0
+y = -160
+
+[State 4483,5]
+type = changestate
+trigger1 = time > 5
+value = 4485
+
+[Statedef 4485]
+type    = A
+movetype= I
+physics = N
+facep2 = 1
+anim=43 + (selfanimexist(44))
+velset = 4,16
+
+[State 4485, 1]
+type = ScreenBound
+trigger1 = 1
+value = 0
+movecamera = 0
+
+[State 4485,5]
+type = SelfState
+trigger1 =pos y > -10 && vel y > 0
+value = 4486
+
+[Statedef 4486]; Assist partner attack
+type = S
+movetype= A
+ctrl = 0
+velset = 0,0
+
+[State 4486,1]
+type = varSet
+trigger1 = 1
+var(35) = 0
+
+[State 4486,1]
+type = PosSet
+trigger1 = time=0
+y = 0
+
+[State 4486,4]
+type = varSet
+trigger1 = 1
+var(38) = 3
+
+[State 4486,5]
+type = ChangeState
+triggerall = 1 && SelfAnimExist(1500); default attempt of attack
+trigger1 = Command = "holdback"    ; Tentativa de ataque padrão
+trigger2 = PalNo = 6 || PalNo = 12
+value = 1500
+ctrl=0
+
+[State 4486,5]
+type = ChangeState
+triggerall =1 && SelfAnimExist(1602); Cable´s "Gamma" attack
+trigger1 = Command = "holdfwd"    ; Ataque "Gamma" do Cable
+trigger2 = PalNo = 3 || PalNo = 9
+value = 1600
+ctrl=0
+
+[State 4486,5]
+type = ChangeState
+triggerall = 1 && SelfAnimExist(2000); default attempt of attack
+trigger1 = Command = "holddown"    ; Tentativa de ataque padrão
+trigger2 = PalNo = 2 || PalNo = 8 || PalNo = 5 || PalNo = 11
+value = 2000
+ctrl=0
+
+[State 4486,5]
+type = ChangeState
+trigger1 =1 && SelfAnimExist(1000); default attempt of "alpha" attack 
+;trigger1 = PalNo = 1 || PalNo = 7 || PalNo = 4 || PalNo = 10
+value = 1000    ; Tentativa de ataque "alfa" padrão
+ctrl=0
+
+[State 4486,5]
+type = ChangeState
+trigger1 = 1 && SelfAnimExist(195); default attempt of taunt
+value = 195    ; Tentativa de provocação padrão
+ctrl=0
+
+[State 4486,5]
+type = ChangeState
+trigger1 = 1; default attempt of return, if all fail
+value = 0    ; Se tudo mais falhar, retorne
+ctrl=0
+
+[Statedef 4490]; SNAPBACK!
+type    = S
+movetype= A
+physics = S
+juggle  = 8
+ctrl = 0
+anim = 250
+;poweradd=-1000
+
+[State 4490, 1]
+type = SuperPause
+trigger1 = time=0
+time = 24
+sound = S4, 0
+anim = 100
+pos = -24, -28
+darken = 1
+p2defmul = 1
+
+[State 4490, 1] 
+type = PlaySnd 
+trigger1 = animelem = 2 && anim=250
+value = 650, 0 
+
+[State 4490, 4]
+type = HitDef
+trigger1 = movecontact=0
+attr = S, HA
+hitflag = MAF
+p2stateno = 4495
+;AffectTeam = F
+animtype  = Heavy 
+damage    = 90,30 
+guardflag = MA 
+pausetime = 18,18;11,11 
+sparkno=3 
+sparkxy = -10,-100 
+hitsound   = 5,1 
+guardsound = 6,0 
+ground.type = High 
+ground.slidetime = 5 
+ground.hittime  = 11 
+ground.velocity = -17 
+airguard.velocity = -1.9 
+air.velocity = -1.3,-3 
+air.type = Low 
+
+[State 4490, 4]
+type = HitDef
+triggerall = movehit
+trigger1 = animtime = 0 && anim = 4460
+attr = S, HA
+hitflag = MAFD
+AffectTeam = E
+p2stateno = 4495
+pausetime = 1,1;20
+;hitonce = 1
+ground.type = High 
+ground.slidetime = 5 
+ground.hittime  = 11 
+ground.velocity = -17 
+airguard.velocity = -1.9 
+air.velocity = -1.3,-3 
+air.type = Low 
+
+[State 4490,5]
+type = changeState
+triggerall = animtime = 0
+trigger1 = anim=4460
+trigger2 = movehit = 0 && anim=250
+value = 0
+ctrl=1
+
+[State 4490, 1]
+type = ChangeAnim
+trigger1 = animtime = 0 && Anim=250
+value = 4460
+
+[Statedef 4495]; force P2 to change
+ctrl = 0
+
+[State 4495, 1]
+type = ChangeAnim
+trigger1 = SelfAnimExist(5300) && time=0
+value = 5300
+
+[State 4495,1]
+type = Varset
+trigger1 = time = 0
+v = 37
+value = 3-(var(37))
+
+[State 4495,4]
+type = selfState
+trigger1 = anim != 5300 && time = 0
+trigger2 = anim = 5300 && time = 100
+trigger3 = animtime = 0
+value = 50
+ctrl=0
+
+
+;---------------------------------------------------------------------------
+; States that are always checked (use -2) :
+;---------------------------------------------------------------------------
+
+[Statedef -2]
+
+[State -2,13]
+type = VarSet
+trigger1 = Pos Y = 238
+v = 39
+value=2
+
+[State -2,14]
+type = VarSet
+trigger1 = Pos Y = 238
+v=35
+value=0
+
+[State -2, 12] ; momento 6 
+type = ChangeState
+trigger1 = Var(39) != var(37) && alive = 1
+trigger1 = roundstate = 3
+trigger1 = stateNo = 4452
+value= 4430 ; pular para dentro da luta no fim do round
+
+[State -2, 17] ; debug
+type = DisplayToClipboard
+trigger1 = roundstate > 0
+text="Q_s_e Var(39) %d, Col Var(38) %d, V_n_l Var(37) %d, Vrf Var(36) %d PalNo %d"
+params = Var(39), Var(38), Var(37), Var(36), PalNo;var(34);const(size.mid.pos.y)
+
+[State -2, 17]
+type = NotHitBy
+trigger1 = Var(38) = 3 && Var(39) != var(37) && alive = 1
+value = , NT,ST,HT
+time = 1
+
+
+[Statedef -3]
+
+[State -3, 1] ; Find player
+type = ChangeState
+trigger1 = roundstate = 2 && alive = 1
+trigger1 = var(36) = 0
+value = 4400
+
+[State -3,3]
+type = VarSet
+trigger1 = Pos Y = 227 && time=1
+v=37
+value=var(39)
+
+[State -3,4]
+type = Changestate
+trigger1 = Pos Y = 239
+value=4403
+
+[State -3, 5] ; momento 2
+type = ChangeState
+trigger1 = stateNo != 4450 && stateNo != [4400,4405]
+trigger1 = Var(39) != var(37) && var(36) = 1
+trigger1 = roundstate = 2 && var(35)= 1
+trigger1 = P2dist x < 340;BackEdgeBodyDist > -40
+value= 4450 ; sair e esperar na sub tela
+
+[State -3, 14] ; momento 5
+type = ChangeState
+trigger1 = pos y = 227 && time > 5
+value= 4440 ; se meu Y = 227, fui convocado e vou entrar
+
+[State -3, 15] ; momento 5
+type = ChangeState
+trigger1 = Var(39) = var(37) && alive = 0 && roundstate=2
+trigger1 = stateNo = 5150
+trigger1 = var(36) = 1
+value= 4470 ; pular para dentro da luta caso parceiro morra
+
+[State -3, 16] ; momento 5
+type = ChangeState
+trigger1 = pos y = 239
+trigger1 = roundstate = 2
+value= 4473 ; se meu Y = 239, alguém morreu e vou entrar
+
+[State -3, 17]
+type = NotHitBy
+trigger1 = Vel y > 2 && alive = 0
+trigger2 = stateNo > 5030 && alive = 0
+value = SCA
+time = 5
+
+[State -3, 18]
+type = VarSet
+triggerall = var(35) = 0  && time > 5
+trigger1 = stateNo = [0,20]
+trigger2 = stateNo > 5030 && Vel y > 2
+v=35
+value=1
+
+[State -3, 19]
+type = VarSet
+trigger1 = time > 5 && var(35) = 0 && stateNo = [0,20]
+v=37
+value=3-(var(37))
+
+[State -3, 17] ; momento 5
+type = ChangeState
+trigger1 = time = 1 && var(35) = 0 && var(38) = 3
+trigger1 = roundstate = 2 && stateNo = [0,20]
+value= 195
+ctrl = 0
+
+[State -3, 16] 
+type = VarSet
+triggerall = var(38) = 3
+trigger1 = Animtime = 0 && stateNo = [190,199]
+trigger2 = time > 50 && stateNo = [190,199]
+trigger3 = Animtime = 0 && StateType != A && stateNo > 5000
+v = 35
+value= 1
+
+[State -3, 20] ; to zero
+type = VarSet
+trigger1 = roundstate = 4
+v=35
+value = 0
+[State -3, 20] ; to zero
+type = VarSet
+trigger1 = roundstate = 4
+v=36
+value = 0
+[State -3, 20] ; to zero
+type = VarSet
+trigger1 = roundstate = 4
+v=37
+value = 0
+[State -3, 20] ; to zero
+type = VarSet
+trigger1 = roundstate = 4
+v=38
+value = 0
+[State -3, 20] ; to zero
+type = VarSet
+trigger1 = roundstate = 4
+v=39
+value = 0
+
+[State -3, 30]
+type = Posadd;Set
+trigger1 = p2dist x < 250 && var(36) != 2 && P2dist y > 100 ; Afastar se perto
+trigger1 = var(39) != var(37) && P2StateNo != [4450,4452];(backedgedist - const(size.air.front))< 0
+trigger1 = stateNo < 5000
+x = (P2dist x)-250
+
+[State -3, 30]
+type = Posadd;Set
+trigger1 = p2dist x > 340 && var(36) != 2 && P2StateNo != [4450,4452]; Aproximar se longe
+trigger1 = var(39) != var(37) && P2StateNo != [4450,4452];; && (backedgedist - const(size.air.front)) < 0
+trigger1 = stateNo < 5000
+x = (P2dist x)-340
+
+[State -3, 31]
+type = VarSet
+trigger1 = var(35) = 1 && time > 50 
+trigger2 = var(38) = 3 && stateNo = 5000
+v = 38
+value=1
+
+[State -3, 32]
+type = Ctrlset
+trigger1 = var(35) = 0 && roundstate = 2
+value=0
+
+[State -3, Alpha Counter Punch]
+type = ChangeState
+triggerall = Power >= 1000
+triggerall = command = "DoubleDragonCounter"
+trigger1 = StateNo = 150
+trigger2 = StateNo = 151
+trigger3 = StateNo = 152
+;trigger4 = StateNo = 153
+value = 4420
+
+
+
+
+;******** Only for Cable / Apenas para o Cable:
+
+; AUTO AI
+
+[State -3, Activate AI] 
+type = VarSet 
+triggerall = var(20) != 1; && stateno = [0,5300]
+trigger1 = command = "CPU1"
+trigger2 = command = "CPU2"
+trigger3 = command = "CPU3"
+v = 20
+value = 1 
+
+
+[State -3];, 1];seta]
+type = Explod
+trigger1 = var(20)!=0 && alive = 1
+pos = 0,-120
+postype = p1
+bindtime = 1
+sprpriority = 4
+anim = 9999
+facing = 1
+
+;This controller puts a target sign on P2 every time you do a super jump.
+; Põe um símbolo no P2 (O)
+[State -3];, 2]; Põe um símbolo no P2 (O)]
+type = Explod
+;triggerall = NumExplod(981) = 0
+trigger1 = enemy, screenpos y <0
+triggerall = enemy, var(39)=var(37)
+trigger2 = enemy, screenpos y > 220 - (const(size.head.pos.y))
+trigger3 = P2bodyDist y > 200
+anim = 982 - (ishometeam = 1)
+id = 981
+pos = ceil(backedgedist+p2dist x),20+(enemy, screenpos y>0)*200
+postype = back
+sprpriority = 4
+ignorehitpause = 1
+ontop = 1
+bindtime = -1
+persistent = 1
+facing = (facing)
+removetime = 1 
+
+;This controller puts a target sign on P2 every time you do a super jump.
+; Põe um símbolo no P2 (>)
+[State -3];, 3];Põe um símbolo no P2 (>)]
+type = Explod
+;triggerall = NumExplod(983) = 0
+trigger1 = enemy, screenpos y <0 ;P2bodyDist y > 200
+triggerall = enemy, var(39)=var(37)
+trigger2 = enemy, screenpos y > 220 - (const(size.head.pos.y))
+trigger3 = P2bodyDist y > 200
+anim = 984 - (ishometeam = 1)
+id = 983
+pos = ceil(backedgedist+p2dist x),20+(enemy, screenpos y>0)*200
+postype = back
+sprpriority = 4
+ignorehitpause = 1
+ontop = 1
+bindtime = -1
+persistent = 1
+facing = -1
+removetime = 1 
+
+;Põe um símbolo em você
+; Põe um símbolo no P1 (O)
+[State -3];, 4];Põe um símbolo no P1 (O)]
+type = Explod
+;triggerall = NumExplod(981) = 0
+trigger1 = screenpos y <0 ;P2bodyDist y > 200
+triggerall = var(39)=var(37)
+trigger2 = screenpos y > 220 - (const(size.head.pos.y))
+;trigger1 = P2bodyDist y < -200
+trigger1 = var(39)=var(37)
+trigger3 = P2bodyDist y < -200
+anim = 981 + (ishometeam = 1)
+id = 981
+pos = ceil(backedgedist),20+(screenpos y>0)*200
+postype = back
+sprpriority = 4
+ignorehitpause = 1
+ontop = 1
+bindtime = -1
+persistent = 1
+facing = (facing)
+removetime = 1
+
+;Põe um símbolo em você
+; Põe um símbolo no P1 (>)
+[State -3];, 5];Põe um símbolo no P1 (>)]
+type = Explod
+;triggerall = NumExplod(983) = 0
+;trigger1 = P2bodyDist y < -200
+trigger1 = screenpos y <0 ;P2bodyDist y > 200
+triggerall = var(39)=var(37)
+trigger2 = screenpos y > 220 - (const(size.head.pos.y))
+trigger3 = P2bodyDist y < -200
+anim = 983 + (ishometeam = 1)
+id = 983
+pos = ceil(backedgedist),20+(screenpos y>0)*200
+postype = back
+sprpriority = 4
+ignorehitpause = 1
+ontop = 1
+bindtime = -1
+persistent = 1
+facing = 1
+removetime = 1

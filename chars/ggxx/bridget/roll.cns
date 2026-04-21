@@ -1,0 +1,760 @@
+;ローリング移動のしくみ  new roll.cns 1400
+;通常：YYに向かって移動、放物線っぽくみえるけど・・一度跳ねてからだからそう見えるのかも
+;良く見ると跳ねた後は直線っぽい。基本的にveladd、規定点にいくとY=0？か、Yaddを中止、gravity付加状態へ。　
+;高い位置にある場合、YYを頂点としたジャンプみたいなもの？
+;低い位置にある場合、届かず着地することあり。これはこのままで問題ないね
+;真横付近、低い位置にある、またはかさなるぐらいの時はほぼ真上に跳ねる(結果そのように見える？
+;規定点に達するとアニメチェンジでフリーへ（下参照）velＸ 継続ですっとんでく。
+;ここでいうフリーとは…2J,AD,Rm 攻撃,必殺移行OK　実質レバー移動ができないAir ctrl1
+;ちなみにろじゃは通常ではvelX継続（貯めこみ型)で、終了後いきなりすっとんでくけど
+;EXではvel X = 0にされてそのまま落下。どっちにあわせるんだっけ？
+;1.初期スタート：ちょっと跳ねる。Xも多少付加。行動キャンセル不能。
+;2.本移動開始：　目標固定、veladdで突き進む　R移動、攻撃、必殺キャンセルOKあと、バーストもね
+;3.フリー　　：上記参照。
+;ハグ：検証中
+;--地上初開始:1400,空中初開始
+;------------------------------^-------------------------------------ローリング移動
+[Statedef 1400];地上スタート、上にちょっとはねてステートチェンジ
+type = A
+movetype =A
+physics = n
+anim = 1400 
+ctrl = 0
+velset = 0,0
+hitcountpersist = 1
+poweradd  =5 
+
+[state 1400,];保留、
+type = varset
+trigger1 = time = 0
+fvar(14) = helper(0),rootdist x / 10
+
+[state 1400,];保留
+type = varset
+trigger1 = time = 0
+fvar(15) = ABS(pos y / 10)
+
+[state 1400,];墜落へのカウントリセット これー３で
+type = varset
+trigger1 = 0;time = 0
+var(14) = 0
+
+[state 1410,];RMスタート判定
+type = varset
+trigger1 = time = 0
+var(15) =1
+
+[state 1400x,atc efe];きらきらエフェクト
+type = Explod
+triggerall = !numexplod(1400) < 100
+trigger1 = helper(0),rootdist x != [-28,28]
+anim =1410 + random % 7
+ID=1400
+postype = p1
+pos = 0,-55
+random = 25,50
+sprpriority = 2
+bindtime = 1
+removetime = 15
+ownpal=1
+removeongethit = 0
+ignorehitpause=1
+accel = -0.1,0
+scale = 0.4,0.4
+
+[state 1405,];ちょっと跳ねる　Y速度
+type = velset
+trigger1 = time = 0
+;y =  const(velocity.jump.y) 
+y = -10
+persistent = 0
+
+[state 1400,];本格的に移動開始：特殊　重なってると認定した時はねるだけ1445  いっきにフリーへやっちゃえば？
+type = changestate
+;triggerall = numhelper(0)
+trigger1 = helper(0),rootdist x = [-28,28]
+trigger1= helper(0),rootdist y = [-35,95]
+trigger1 = time = 0
+value = 1445
+
+[state 1400,];本格的に移動開始：特殊　重なってると認定した時はねるだけ1445  いっきにフリーへやっちゃえば？hug
+type = changestate
+triggerall = numhelper(1850)
+trigger1 = helper(1850),rootdist x = [-35,35]
+trigger1= helper(1850),rootdist y = [-30,100]
+trigger1 = time = 0
+value = 1445
+
+[state 1400,];本格的に移動開始通常1410、ハグヒット中1430
+type = changestate
+triggerall = numhelper(0)
+trigger1 =time >= 8
+value = ifelse(var(30) = 1,1410,1430)
+
+[state 1400,];ＹＹ位置によりＸも多少付加
+type = velset
+triggerall = numhelper(0)
+triggerall = helper(0),rootdist x != [-28,28]
+trigger1 = time = 0
+trigger1 = helper(0),rootdist X >= 0
+x = -1
+
+[state 1400,];ＹＹ位置によりＸも多少付加
+type = velset
+triggerall = numhelper(0)
+triggerall = helper(0),rootdist x != [-28,28]
+trigger1 = time = 0
+trigger1 = helper(0),rootdist X < 0
+x = 1
+
+[state 1405,];移動中へ移行の時・・０にするかどうか・・保留
+type = velset
+trigger1 =0; time = 10
+y =0
+
+;----------rootdist x が負なら、本体向きより前にある。正なら後ろにある。
+;----------rootdist y が負なら、本体より下にある。正なら上.本体地上(posy0)通常配置でdisty=90
+;----2本格的移動状態  time=0 で特定時、真上はねフリーへ
+[Statedef 1410];ここからヨーヨーにむかってveladd
+type = A
+movetype =A
+physics = N
+ctrl = 0
+hitcountpersist = 1
+
+;-----------------------------------------共通基本
+[state 1410,];墜落カウント＋
+type = varadd
+trigger1 = time = 0
+var(14) = 1
+
+[state 1410,];
+type = velset
+;trigger1 = var(14) >= 2
+trigger1 =0; time = 0
+x = 0
+y = 0
+
+[state 1410,];もしアニメが違えば、変える
+type  =changeanim
+trigger1 = anim !=1400
+trigger1 = time = 0
+persstent = 0
+value = 1400
+
+[State 1100, sound];ぐるぐるこうかおん
+type = PlaySnd
+trigger1 = time = 0
+value = s1400,0
+persistent = 0
+channel = 2
+
+;----------ーーーーーーーーーーーーーーーーーーーーーーーーーー状態変化
+;分岐は、墜落、着地、R移動、空中行動、攻撃系（いくつかはcmdで？
+[state 1400,];着地。
+type = changestate
+trigger1 =1 
+trigger1 = vel y > 0 && pos y >= -10
+value = 52
+ctrl = 0
+
+[state 1400,];たまに目を回して落下->墜落  3回以上はランダムで10回いくと確実に墜落
+type = changestate
+triggerall =1
+trigger1 = var(14) >= 10
+trigger2 = random % var(14) >= 4 
+value = 1450
+ctrl = 0
+
+[state 1410,];２jump  原作ではできないけど・・・どうしよ？いろいろうるさいから遵守に戻す？
+type = changestate
+trigger1 = 0;time >=4
+trigger1 = !var(9) ;&& !var(6) 
+trigger1 = command ="holdup"  
+value = 42
+
+[state 1410,];わけて考えよう、真上跳ね・フリーに移行  YYが低いか　かさなった時 time=0で
+type = changestate
+triggerall = 0;numhelper(0)
+triggerall = time = 0
+trigger1 = helper(0),rootdist x = [-28,28]
+trigger1= helper(0),rootdist y = [-35,95]
+value = 1445
+
+[state 1410,];動いてから（規定点達してから）フリーに移行
+type = changestate
+triggerall = numhelper(0)
+triggerall = time > 0
+trigger1 = helper(0),rootdist x = [-40,40]
+trigger1= helper(0),rootdist y = [0,60]
+trigger2= time >= 70
+value = 1440
+
+;-----------------------------vel　X設定
+[state 1410,];真上に跳ねない時のみ０に初期化？ ↑で先にちぇんすて移行だからこれだけでかくのいいかな
+type = velset
+triggerall = numhelper(0)
+trigger1 = time = 0
+x = 0
+y = 0
+
+;----------------------- 
+;--距離によって加速がかわってしまう・・・？つねに一定値をaddしないといけないので・・
+;---最大値は既定、増加値も一定・・？
+;原作、一定時間ごとに微妙に角度かわってる（再決定？してるように見えるけど・・・
+;--
+[state 1400,x2]
+type = varset
+triggerall = numhelper(0)
+trigger1 =  time =0;% 10 = 0
+fvar(14) = abs(helper(0),rootdist x) 
+;fvar(14) = (abs( helper(0),pos x))
+
+[state 1400,x2]
+type = varset
+triggerall = numhelper(0)
+trigger1 =  time = 0;% 10 = 0
+fvar(15) = abs(helper(0),rootdist y) ;+ ifelse(pos y < helper(0),pos y,-10,10)
+;fvar(15) = (abs( helper(0),pos y))
+
+[state 1400,x2];距離大きい方を基準？
+type = varset
+triggerall = numhelper(0)
+trigger1 =  time = 0
+fvar(16) = (abs(helper(0),rootdist x)  + 10) / (abs( helper(0),rootdist y) + 10)
+;fvar(16) = (abs(pos x)) / (abs( helper(0),pos y))
+
+[state 1400,x2];
+type = varset
+triggerall = numhelper(0)
+trigger1 =  time = 0
+fvar(17) = (abs(helper(0),rootdist y)  + 10) / (abs( helper(0),rootdist x) + 10) 
+;fvar(17) = (abs(pos y)) / (abs( helper(0),pos x))
+
+;----------最大値があるように見えるけど・・・？
+;一定値をたさないと、いけない。distだと近いと小さいし遠いとハヤすぎになる・・
+;pos参照して、vel-addするのはどうか。またはフリー移行直前にdistによって速度を足す・・？いや、攻撃いった時困る・・？
+;初期距離による係数を設定して、増加値を調節？・・・
+[State velx1];dist/ｎは、角度間違いなくいけるが・・早すぎる
+type = veladd
+trigger1 = fvar(14) < fvar(15)
+trigger1 =vel x < (7 * abs(fvar(16)))
+trigger1 =vel x > (-7 * abs(fvar(16)))
+x = ifelse(helper(0),rootdist x > 0,-0.5,0.5) * abs(fvar(16)); / fvar(16)
+[State velx2];
+type = veladd
+trigger1 = fvar(14) >= fvar(15)
+trigger1 =vel x < 7
+trigger1 =vel x > -7
+x = ifelse(helper(0),rootdist x > 0,-0.5,0.5)
+
+[State vely]
+type = veladd
+trigger1 = fvar(14) < fvar(15)
+trigger1 =vel y < 7
+trigger1 =vel y > -7
+y = ifelse(helper(0),rootdist y > 20,-0.5,0.5) 
+[State vel]
+type = veladd
+trigger1 = fvar(14) >= fvar(15)
+trigger1 =vel y < (7 * abs(fvar(17)))
+trigger1 =vel y > (-7 * abs(fvar(17)))
+y = ifelse(helper(0),rootdist y > 20,-0.5,0.5) * abs(fvar(17)) ; * fvar(17);fvar(15) / fvar(17)
+;------ここまで。
+
+;------ここまで。
+
+[state 1400,x2];YY位置が本体より後ろ=本体も後ろに移動
+type = veladd
+;triggerall = numhelper(0)
+trigger1 =0; vel x > -6
+;trigger1 = helper(0),rootdist x != [-40,40]  
+trigger1 = helper(0),rootdist x >= 0  
+x = -0.3
+
+[state 1400,x3];YY位置が本体より前=本体も前に移動
+type = veladd
+;triggerall =0; numhelper(0)
+trigger1 = 0;vel x < 6 
+;trigger1 = helper(0),rootdist x != [-40,40]
+trigger1 = helper(0),rootdist x < 0
+x = 0.3
+
+[state 1400,];相対位置が標準  X
+type = velset
+trigger1 = 0;helper(0),rootdist x = [-10,10]
+;trigger1= helper(0),rootdist y != [20,70]
+x = 0
+
+;-----------------------------vel　Y設定 目標固定ならvelでいい。ハグ移動は動くのでposaddのほうがいいかも
+[state 1400,];YY位置が本体より上=本体も上に移動　
+type = veladd
+triggerall = 0;vel y > -6 
+trigger1= helper(0),rootdist y != [20,70]
+trigger1 = helper(0),rootdist y > 50  
+y = -0.3
+
+[state 1400,];相対位置が標準より上　たぶん地・空
+type = veladd
+triggerall = 0;vel y < 6 
+trigger1= helper(0),rootdist y != [20,70]
+trigger1 = helper(0),rootdist y < 50
+y = 0.3
+
+[state 1400,];YY位置が本体より上=本体も上に移動　
+type = posadd
+trigger1 = 0;helper(0),rootdist y != [47,52] 
+y =-5
+
+[state 1400,];相対位置が標準より上　たぶん地・空
+type = posadd
+trigger1 = 0;helper(0),rootdist y != [47,52] 
+trigger2 = 0;pos y <= -30
+y = 5
+
+[state 1400,];相対位置が標準 Y
+type = velset
+trigger1 = 0
+trigger1 = helper(0),rootdist y = [49,57]  
+y = 0
+
+[state 1400x,atc efe];きらきらエフェクト
+type = Explod
+triggerall = !numexplod(1400) < 15
+trigger1 = 1
+anim =1410 + random % 7
+ID=1400
+postype = p1
+pos = 0,-55
+random = 25,40
+sprpriority = 2
+bindtime = 1
+removetime = 15
+ownpal=1
+removeongethit = 0
+ignorehitpause=1
+accel = -0.1,0
+scale = 0.4,0.4
+
+;---------------------------------ハグ中の敵に向かって移動　helpe(1850)のdistで
+[Statedef 1430];
+type = A
+movetype =A
+physics = N
+ctrl = 0
+hitcountpersist = 1
+
+;-----------------------------------------共通基本
+[state 1410,];墜落カウント＋
+type = varadd
+trigger1 = time = 0
+var(14) = 1
+
+[state 1410,];
+type = velset
+;trigger1 = var(14) >= 2
+trigger1 =0; time = 0
+x = 0
+y = 0
+
+[state 1410,];もしアニメが違えば、変える
+type  =changeanim
+trigger1 = anim !=1400
+trigger1 = time = 0
+persstent = 0
+value = 1400
+
+[State 1100, sound];ぐるぐるこうかおん
+type = PlaySnd
+trigger1 = time = 0
+value = s1400,0
+persistent = 0
+channel = 2
+
+;----------ーーーーーーーーーーーーーーーーーーーーーーーーーー状態変化
+;分岐は、墜落、着地、R移動、空中行動、攻撃系（いくつかはcmdで？
+[state 1410,];ハグの時間切れで、強制フリーに移行
+type = changestate
+trigger1 =!numhelper(1850)
+trigger2 = var(30) != 1830
+value = 1440
+
+[state 1400,];着地。
+type = changestate
+trigger1 =1 
+trigger1 = vel y > 0 && pos y >= -10
+value = 52
+ctrl = 0
+
+[state 1400,];たまに目を回して落下->墜落  3回以上はランダムで10回いくと確実に墜落
+type = changestate
+triggerall =1
+trigger1 = var(14) >= 10
+trigger2 = random % var(14) >= 4 
+value = 1450
+ctrl = 0
+
+[state 1410,];２jump  原作ではできないけど・・・どうしよ？いろいろうるさいから遵守に戻す？
+type = changestate
+trigger1 = 0;time >=4
+trigger1 = !var(9) ;&& !var(6) 
+trigger1 = command ="holdup"  
+value = 42
+
+[state 1410,];わけて考えよう、真上跳ね・フリーに移行  YYが低いか　かさなった時 time=0で
+type = changestate
+triggerall = 0;numhelper(1850)
+triggerall = time = 0
+trigger1 = helper(1850),rootdist x = [-35,35]
+trigger1= helper(1850),rootdist y = [-30,100]
+value = 1445
+
+[state 1410,];動いてから（規定点達してから）フリーに移行 敵は接触判定ありなので範囲を広めにしておく
+type = changestate
+triggerall = numhelper(1850)
+triggerall = time > 0
+trigger1 = helper(1850),rootdist x = [-50,50]
+trigger1= helper(1850),rootdist y = [-10,70]
+trigger2= time >= 70
+value = 1440
+
+
+;-----------------------------vel　X設定
+[state 1410,];真上に跳ねない時のみ０に初期化？ ↑で先にちぇんすて移行だからこれだけでかくのいいかな
+type = velset
+triggerall = numhelper(1850)
+trigger1 = time = 0
+x = 0
+y = 0
+
+;----------------------- 
+;--距離によって加速がかわってしまう・・・？つねに一定値をaddしないといけないので・・
+;---最大値は既定、増加値も一定・・？
+;原作、一定時間ごとに微妙に角度かわってる（再決定？してるように見えるけど・・・
+;--ハグ中は、敵動くから・・・どうしよ？とりあえずてすってみて
+[state 1400,x2]
+type = varset
+triggerall = numhelper(1850)
+trigger1 =  time =0;% 10 = 0
+fvar(14) = abs(helper(1850),rootdist x) 
+;fvar(14) = (abs( helper(1850),pos x))
+
+[state 1430,x2]
+type = varset
+triggerall = numhelper(1850)
+trigger1 =  time = 0;% 10 = 0
+fvar(15) = abs(helper(1850),rootdist y) ;+ ifelse(pos y < helper(1850),pos y,-10,10)
+;fvar(15) = (abs( helper(1850),pos y))
+
+[state 1430,x2];距離大きい方を基準？
+type = varset
+triggerall = numhelper(1850)
+trigger1 =  time = 0
+fvar(16) = (abs(helper(1850),rootdist x)  + 10) / (abs( helper(1850),rootdist y) + 10)
+;fvar(16) = (abs(pos x)) / (abs( helper(1850),pos y))
+
+[state 1430,x2];
+type = varset
+triggerall = numhelper(1850)
+trigger1 =  time = 0
+fvar(17) = (abs(helper(1850),rootdist y)  + 10) / (abs( helper(1850),rootdist x) + 10) 
+;fvar(17) = (abs(pos y)) / (abs( helper(1850),pos x))
+
+;----------最大値があるように見えるけど・・・？
+;一定値をたさないと、いけない。distだと近いと小さいし遠いとハヤすぎになる・・
+;pos参照して、vel-addするのはどうか。またはフリー移行直前にdistによって速度を足す・・？いや、攻撃いった時困る・・？
+;初期距離による係数を設定して、増加値を調節？・・・
+[State velx1];dist/ｎは、角度間違いなくいけるが・・早すぎる
+type = veladd
+trigger1 = fvar(14) < fvar(15)
+trigger1 =vel x < (7 * abs(fvar(16)))
+trigger1 =vel x > (-7 * abs(fvar(16)))
+x = ifelse(helper(1850),rootdist x > 0,-0.5,0.5) * abs(fvar(16)); / fvar(16)
+[State velx2];
+type = veladd
+trigger1 = fvar(14) >= fvar(15)
+trigger1 =vel x < 7
+trigger1 =vel x > -7
+x = ifelse(helper(1850),rootdist x > 0,-0.5,0.5)
+
+[State vely]
+type = veladd
+trigger1 = fvar(14) < fvar(15)
+trigger1 =vel y < 7
+trigger1 =vel y > -7
+y = ifelse(helper(1850),rootdist y > 20,-0.5,0.5) 
+[State vel]
+type = veladd
+trigger1 = fvar(14) >= fvar(15)
+trigger1 =vel y < (7 * abs(fvar(17)))
+trigger1 =vel y > (-7 * abs(fvar(17)))
+y = ifelse(helper(1850),rootdist y > 20,-0.5,0.5) * abs(fvar(17)) ; * fvar(17);fvar(15) / fvar(17)
+;------ここまで。
+
+;------ここまで。
+
+[state 1400,x2];YY位置が本体より後ろ=本体も後ろに移動
+type = veladd
+;triggerall = numhelper(0)
+trigger1 =0; vel x > -6
+;trigger1 = helper(1850),rootdist x != [-40,40]  
+trigger1 = helper(1850),rootdist x >= 0  
+x = -0.3
+
+[state 1400,x3];YY位置が本体より前=本体も前に移動
+type = veladd
+;triggerall =0; numhelper(0)
+trigger1 = 0;vel x < 6 
+;trigger1 = helper(1850),rootdist x != [-40,40]
+trigger1 = helper(1850),rootdist x < 0
+x = 0.3
+
+[state 1400,];相対位置が標準  X
+type = velset
+trigger1 = 0;helper(1850),rootdist x = [-10,10]
+;trigger1= helper(1850),rootdist y != [20,70]
+x = 0
+
+;-----------------------------vel　Y設定 目標固定ならvelでいい。ハグ移動は動くのでposaddのほうがいいかも
+[state 1400,];YY位置が本体より上=本体も上に移動　
+type = veladd
+triggerall = 0;vel y > -6 
+trigger1= helper(1850),rootdist y != [20,70]
+trigger1 = helper(1850),rootdist y > 50  
+y = -0.3
+
+[state 1400,];相対位置が標準より上　たぶん地・空
+type = veladd
+triggerall = 0;vel y < 6 
+trigger1= helper(1850),rootdist y != [20,70]
+trigger1 = helper(1850),rootdist y < 50
+y = 0.3
+
+[state 1400,];YY位置が本体より上=本体も上に移動　
+type = posadd
+trigger1 = 0;helper(1850),rootdist y != [47,52] 
+y =-5
+
+[state 1400,];相対位置が標準より上　たぶん地・空
+type = posadd
+trigger1 = 0;helper(1850),rootdist y != [47,52] 
+trigger2 = 0;pos y <= -30
+y = 5
+
+[state 1400,];相対位置が標準 Y
+type = velset
+trigger1 = 0
+trigger1 = helper(0),rootdist y = [49,57]  
+y = 0
+
+[state 1400x,atc efe];きらきらエフェクト
+type = Explod
+triggerall = !numexplod(1400) < 15
+trigger1 = 1
+anim =1410 + random % 7
+ID=1400
+postype = p1
+pos = 0,-55
+random = 25,40
+sprpriority = 2
+bindtime = 1
+removetime = 15
+ownpal=1
+removeongethit = 0
+ignorehitpause=1
+accel = -0.1,0
+scale = 0.4,0.4
+;--------------------------------------------------
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+trigger1 = numhelper(1850)
+text = "posx=%f,posy=%f,hugx=%f,hugy=%f,fac=%d\n"
+params =pos x,pos y,helper(1850),parentdist x,helper(1850),parentdist y,facing
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+trigger1 = command != "holds"
+text = "velX=%f,velY=%f,RdiX= %f,RdiY=%f,v4=%d"
+params =vel x,vel y,rootdist x,rootdist y,var(4)
+
+;-----------------------------------追加、フリー状態  605でもいいかもだけど。一応ね
+[Statedef 1440];
+type = A
+movetype =A
+physics = n
+ctrl = 1
+hitcountpersist = 1
+
+[state 1410,];0にする条件は・・↑に跳んでた時？??
+type = velset
+trigger1 = time = 0
+trigger1 = vel y < 0
+y =0
+
+[state 605,]
+type = changeanim
+trigger1 = time = 0
+value = 43
+elem  = 6
+
+[State 40, 6];降下音
+type = playsnd
+trigger1 = time = 0
+value = s40,2
+channel = 2
+persistent = 0
+
+[state 600];
+type = gravity
+trigger1 = 1
+
+[State -1, ] ;6,2段ジャンプ中か 9,レバーをはなしたか
+type = ChangeState
+value = 42
+triggerall = !var(6) && !var(9) && !var(53)
+trigger1 = command = "holdup"
+
+[state 600,]
+type = changestate
+trigger1 = pos y >= -10 && vel y > 0
+value = 52
+
+;真上跳ね・フリーに移行  重なってなければ０に
+[Statedef 1445];
+type = A
+movetype =A
+physics = n
+ctrl = 1
+hitcountpersist = 1
+
+[state 1410,];墜落カウント＋
+type = varadd
+trigger1 = time = 0
+var(14) = 1
+
+[state 605,]
+type = changeanim
+trigger1 = time = 0
+value = 43
+elem  = 6
+
+[State 40, 6];降下音
+type = playsnd
+trigger1 = time = 0
+value = s40,2
+channel = 2
+persistent = 0
+
+[state 600];
+type = gravity
+trigger1 = 1
+
+[State -1, ] ;6,2段ジャンプ中か 9,レバーをはなしたか
+type = ChangeState
+value = 42
+triggerall = !var(6) && !var(9) && !var(53)
+trigger1 = command = "holdup"
+
+[state 600,]
+type = changestate
+trigger1 = pos y >= -10 && vel y > 0
+value = 52
+
+
+;---------ダストシステムテスと、カウント内ヒット時はきりもみ、２９カウント以降ヒットは通常に。usep2spr　　
+;２９以内であれば、vel継続で飛んで行く。
+[Statedef 650];test ダスト
+type    = A                      
+movetype= H                      
+physics = n
+ctrl = 0 
+;velset = -0.8,-9.0
+                        
+[state 3800,];  ふきとび
+type = changeanim
+trigger1 = time = 0
+trigger1 = selfanimexist(5052)
+trigger1 = anim != 5052 && anim != 15052
+value = ifelse(authorname = "R-R",5052 + var(0),5052)
+ignorehitpause = 1
+
+[state 3800,];  ふきとび
+type = changeanim
+triggerall = time = 0
+trigger1 = !selfanimexist(5052)
+trigger1 = selfanimexist(5051)
+trigger1 = anim != 5051 && anim != 15051
+value = ifelse(authorname = "R-R",5051 + var(0),5051)
+ignorehitpause = 1
+
+[state 3800,];  ふきとび
+type = changeanim
+triggerall = time =0
+trigger1 = !selfanimexist(5052)
+trigger1 = !selfanimexist(5051)
+trigger1 = anim != 5050 && anim != 15050
+value = ifelse(authorname = "R-R",5050 + var(0),5050)
+ignorehitpause = 1
+
+[state 650,];ほったらかした場合の保険 29カウントだから30
+type = selfstate
+trigger1 = time >= 30
+value = 5050
+
+;------------------------29カウント時、
+;----貼りつきヘルパーにしといたほうがあとあと楽だね
+;---本体var(11)と、ダスト用のvar()をリセットさせる。
+[statedef 670];----
+type    = A
+movetype= i
+physics = N
+poweradd= 0
+ctrl = 0
+velset = 0,0
+anim = 1
+
+[state 670,]
+type = nothitby
+trigger1 = 1
+time = 1
+value = sca,na,np,nt,sa,sp,st,ha,hp,ht
+ignorehitpause = 1
+
+[state 1810,]
+type  =varset
+trigger1 =time = 0
+var(4) = root,var(4)
+ignorehitpause = 1
+
+[state 670,]
+type = posset
+trigger1 = 1
+x= playerID(var(4)),pos x
+y = playerID(var(4)),pos y
+ignorehitpause = 1
+
+[state 670,]
+type  =turn
+trigger1 = root,facing != facing
+ignorehitpause = 1
+
+[state 670,]
+type = destroyself
+trigger1 = 1
+ignorehitpause = 1
+
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "posx=%f,posy=%f,rootx=%f,rooty=%f,fac=%d\n"
+params =pos x,pos y,rootdist x,rootdist y,facing
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = numhelper(1850)
+text = "posx=%f,posy=%f,hugx=%f,hugy=%f,Rf=%d\n"
+params =pos x,pos y,parentdist x,parentdist y,root,facing
+
+

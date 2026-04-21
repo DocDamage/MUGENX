@@ -1,0 +1,2174 @@
+;-| Super Motions |--------------------------------------------------------
+[Command]
+name = "extra"
+command = ~F,D,F,a+x
+time = 15
+
+[Command]
+name = "extra"
+command = ~F,D,F,x+y
+time = 15
+
+[Command]
+name = "extra"
+command = ~F,D,F,a+y
+time = 15
+
+[Command]
+name = "theworld"
+command = ~F,y,a,F,b
+time = 20
+
+[Command]
+name = "knife"
+command = ~D,F,x+y
+time = 15
+
+[Command]
+name = "knife"
+command = ~D,F,y+a
+time = 15
+
+[Command]
+name = "knife"
+command = ~D,F,a+x
+time = 15
+
+[Command]
+name = "lorry"
+command = ~D,B,x+y
+time = 15
+
+[Command]
+name = "lorry"
+command = ~D,B,y+a
+time = 15
+
+[Command]
+name = "lorry"
+command = ~D,B,a+x
+time = 15
+
+;-| Special Motions |------------------------------------------------------
+[Command]
+name = "laser"
+command = ~F,y,x,a,F
+time = 20
+
+[Command]
+name = "FDFx"
+command = ~F,D,F,a
+time = 15
+
+[Command]
+name = "FDFy"
+command = ~F,D,F,x
+time = 15
+
+[Command]
+name = "FDFz"
+command = ~F,D,F,y
+time = 15
+
+[Command]
+name = "DFx"
+command = ~D,F,a
+time = 15
+
+[Command]
+name = "DFy"
+command = ~D,F,x
+time = 15
+
+[Command]
+name = "DFz"
+command = ~D,F,y
+time = 15
+
+[Command]
+name = "DBx"
+command = ~D,B,a
+time = 15
+
+[Command]
+name = "DBy"
+command = ~D,B,x
+time = 15
+
+[Command]
+name = "DBz"
+command = ~D,B,y
+time = 15
+
+;-| Double Tap |-----------------------------------------------------------
+[Command]
+name = "FF"     ;Required (do not remove)
+command = F, F
+time = 10
+
+[Command]
+name = "BB"     ;Required (do not remove)
+command = B, B
+time = 10
+
+;-| 2/3 Button Combination |-----------------------------------------------
+[Command]
+name = "recovery";Required (do not remove)
+command = x+y+a
+time = 1
+
+;-| Dir + Button |---------------------------------------------------------
+[Command]
+name = "fwd_a"
+command = /F,a
+time = 1
+
+[Command]
+name = "fwd_b"
+command = /F,b
+time = 1
+
+[Command]
+name = "fwd_y"
+command = /F,y
+time = 1
+
+[Command]
+name = "back_a"
+command = /B,a
+time = 1
+
+[Command]
+name = "back_b"
+command = /B,b
+time = 1
+
+[Command]
+name = "back_y"
+command = /B,y
+time = 1
+
+[Command]
+name = "down_a"
+command = /$D,a
+time = 1
+
+[Command]
+name = "down_b"
+command = /$D,b
+time = 1
+
+;-| Single Button |---------------------------------------------------------
+[Command]
+name = "a"
+command = a
+time = 1
+
+[Command]
+name = "b"
+command = b
+time = 1
+
+[Command]
+name = "c"
+command = c
+time = 1
+
+[Command]
+name = "x"
+command = x
+time = 1
+
+[Command]
+name = "y"
+command = y
+time = 1
+
+[Command]
+name = "z"
+command = z
+time = 1
+
+[Command]
+name = "start"
+command = s
+time = 1
+
+;-| Hold Dir |--------------------------------------------------------------
+[Command]
+name = "holdfwd";Required (do not remove)
+command = /$F
+time = 1
+
+[Command]
+name = "holdback";Required (do not remove)
+command = /$B
+time = 1
+
+[Command]
+name = "holdup" ;Required (do not remove)
+command = /$U
+time = 1
+
+[Command]
+name = "holddown";Required (do not remove)
+command = /$D
+time = 1
+
+;---------------------------------------------------------------------------
+[Statedef -1]
+
+;---------------------------------------------------------------------------
+;The World Ending
+[State -1]
+type = ChangeState
+triggerall = Var(7) = 1
+triggerall = Ctrl
+triggerall = StateType != A
+trigger1 = Power = 0
+trigger2 = P2Life = 0
+ignorehitpause = 1
+value = 3201
+
+;---------------------------------------------------------------------------
+;The World
+[State -1]
+type = ChangeState
+triggerall = Command = "theworld"
+triggerall = Var(5) = 0
+triggerall = Var(7) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Power >= 3000
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 3200
+
+;The World --AI
+[State -1]
+type = ChangeState
+triggerall = RoundState = 2
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = Var(7) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Power >= 3000
+triggerall = Exp(0.5*ln(P2BodyDist X*P2BodyDist X+P2Dist Y*P2Dist Y)) >= 200
+triggerall = P2MoveType = H
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 3200
+
+;---------------------------------------------------------------------------
+;Extra
+[State -1]
+type = ChangeState
+trigger1 = Var(59) = 0
+trigger1 = Command = "extra"
+trigger1 = NumHelper(1000) = 0
+trigger1 = Var(5) = 0
+trigger1 = Var(7) = 0
+trigger1 = Power >= 1000
+trigger1 = Ctrl
+trigger1 = StateType != A
+value = 3900
+ctrl = 0
+
+;---------------------------------------------------------------------------
+;Knife
+[State -1]
+type = ChangeState
+triggerall = !Var(59)
+triggerall = Command = "knife"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = NumHelper <= 15
+triggerall = Power >= 1000
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 3000
+
+;Knife --AI
+[State -1]
+type = ChangeState
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = NumHelper <= 15
+triggerall = Power >= 1000
+triggerall = Var(7) = 1
+triggerall = Power > 2000
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 3000
+
+;Knife --AI2
+[State -1]
+type = ChangeState
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = NumHelper <= 13
+triggerall = Power >= 1000
+triggerall = P2MoveType = A
+triggerall = P2BodyDist X >= 200
+triggerall = P2StateType != A
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 3000
+
+;---------------------------------------------------------------------------
+;Lorry
+[State -1]
+type = ChangeState
+triggerall = !Var(59)
+triggerall = Command = "lorry"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Power >= 1000
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+trigger8 = StateNo = 600
+trigger9 = StateNo = 610
+trigger10 = StateNo = 620
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 3100
+
+;Lorry --AI
+[State -1]
+type = ChangeState
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Power >= 1000
+triggerall = Var(7) = 1
+triggerall = Power <= 2000
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+trigger8 = StateNo = 600
+trigger9 = StateNo = 610
+trigger10 = StateNo = 620
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 3100
+
+;Lorry --AI2
+[State -1]
+type = ChangeState
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Power >= 1000
+triggerall = Pos Y <= -100
+triggerall = P2MoveType = A
+triggerall = P2StateType = A
+triggerall = P2StateNo >= 1000
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+trigger8 = StateNo = 600
+trigger9 = StateNo = 610
+trigger10 = StateNo = 620
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 3100
+
+;---------------------------------------------------------------------------
+;Throw
+[State -1]
+type = ChangeState
+triggerall = StateType = S
+triggerall = Ctrl
+triggerall = P2BodyDist X <= 10
+triggerall = (P2StateType = S)||(P2StateType = C)
+triggerall = P2MoveType != H
+triggerall = NumHelper(1000) = 0
+triggerall = Var(5) = 0
+triggerall = Var(7) = 0
+triggerall = StateNo != 100
+trigger1 = Command = "fwd_y"
+trigger2 = Command = "back_y"
+trigger3 = Var(59)
+trigger3 = Random <= Var(17)
+trigger3 = RoundState = 2
+trigger3 = ((P2MoveType != A)||(PrevStateNo=140))
+trigger4 = Var(59)
+trigger4 = Random <= Var(17)
+trigger4 = RoundState = 2
+trigger4 = ((P2MoveType != A)||(PrevStateNo=110))
+value = 700
+
+;---------------------------------------------------------------------------
+;Laser
+[State -1]
+type = ChangeState
+triggerall = Command = "laser"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1300
+
+;Laser --AI
+[State -1]
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = RoundState = 2
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger1 = Random = [0,100]
+trigger1 = P2BodyDist X >= 250
+ignorehitpause = 1
+value = 1300
+
+;---------------------------------------------------------------------------
+;Disappear Z
+[State -1]
+type = ChangeState
+triggerall = Command = "FDFz"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1220
+
+;Disappear X
+[State -1]
+type = ChangeState
+triggerall = Command = "FDFx"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1200
+
+;Disappear X --AI
+[State -1]
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Facing = -1
+triggerall = BackEdgeDist + P2Dist X <= 200
+triggerall = P2MoveType != I
+triggerall = Random = [0,333]
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1200
+
+;Disappear Y
+[State -1]
+type = ChangeState
+triggerall = Command = "FDFy"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1210
+
+;Disappear Y --AI
+[State -1]
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = P2MoveType = A
+triggerall = P2BodyDist X = [0,50]
+triggerall = Random = [0,100]
+triggerall = RoundState = 2
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = StateNo != [120,152]
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1210
+
+;Disappear Y --AI2
+[State -1]
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = RoundState = 2
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger1 = P2BodyDist X >= 200
+trigger1 = Random = [0,100]
+ignorehitpause = 1
+value = 1210
+
+
+;Disappear Z --AI
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Facing = 1
+triggerall = BackEdgeDist + P2Dist X <= 200
+triggerall = P2MoveType != I
+triggerall = Random = [0,333]
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1220
+
+;---------------------------------------------------------------------------
+;î X
+[State -1]
+type = ChangeState
+triggerall = Command = "DFx"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1000
+
+;î X --AI
+[State -1]
+type = ChangeState
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = P2StateType = A
+triggerall = P2BodyDist X = [80,120]
+triggerall = RoundState = 2
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1000
+
+;---------------------------------------------------------------------------
+;î Y
+[State -1]
+type = ChangeState
+triggerall = Command = "DFy"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1010
+
+;---------------------------------------------------------------------------
+;î Z
+[State -1]
+type = ChangeState
+triggerall = Command = "DFz"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1020
+
+;î Z --AI
+[State -1]
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = RoundState = 2
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger1 = P2MoveType = H
+trigger1 = P2BodyDist X = [0,100]
+trigger1 = P2Dist Y = [-80,-30]
+trigger2 = StateNo = 200
+trigger2 = MoveHit
+trigger2 = FrontEdgeDist <= 150
+trigger3 = StateNo = 210
+trigger3 = MoveHit
+trigger3 = FrontEdgeDist <= 150
+trigger4 = StateNo = 220
+trigger4 = MoveHit
+trigger4 = FrontEdgeDist <= 150
+trigger5 = StateNo = 300
+trigger5 = MoveHit
+trigger5 = FrontEdgeDist <= 150
+trigger6 = StateNo = 310
+trigger6 = MoveHit
+trigger6 = FrontEdgeDist <= 150
+;trigger7 = StateNo = 320
+;trigger7 = MoveHit
+;trigger7 = FrontEdgeDist <= 150
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1020
+
+;---------------------------------------------------------------------------
+;Dash Attack X
+[State -1]
+type = ChangeState
+triggerall = Command = "DBx"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1100
+
+;---------------------------------------------------------------------------
+;Dash Attack Y
+[State -1]
+type = ChangeState
+triggerall = Command = "DBy"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1110
+
+;---------------------------------------------------------------------------
+;Dash Attack Z
+[State -1]
+type = ChangeState
+triggerall = Command = "DBz"
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 200
+trigger3 = StateNo = 210
+trigger4 = StateNo = 220
+trigger5 = StateNo = 300
+trigger6 = StateNo = 310
+trigger7 = StateNo = 320
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1120
+
+;Dash Attack Z --AI
+[State -1]
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = RoundState = 2
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger1 = P2MoveType != A
+trigger1 = P2StateType != A
+trigger1 = P2BodyDist X = [60,150]
+trigger1 = Random = [0,200]
+trigger1 = P2StateNo != 40
+ trigger2 = StateNo = 200
+trigger2 = MoveHit
+trigger3 = StateNo = 210
+trigger3 = MoveHit
+trigger4 = StateNo = 220
+trigger4 = MoveContact
+trigger5 = StateNo = 300
+trigger5 = MoveHit
+trigger6 = StateNo = 310
+trigger6 = MoveHit
+trigger7 = StateNo = 320
+trigger7 = MoveContact
+;trigger8 = StateNo = 100
+ignorehitpause = 1
+value = 1120
+
+;---------------------------------------------------------------------------
+;Run Fwd
+[State -1]
+type = ChangeState
+triggerall = StateType = S
+triggerall = Ctrl
+triggerall = StateNo != 100
+trigger1 = Command = "FF"
+trigger2 = RoundState = 2
+trigger2 = Var(59)
+trigger2 = Random <= Var(17)
+trigger2 = P2BodyDist X >= 200
+trigger3 = RoundState = 2
+trigger3 = Var(59)
+trigger3 = Random <= Var(17)
+trigger3 = P2BodyDist X >= 50
+trigger3 = (Helper(1000), StateNo = 1101)||(Helper(1000), StateNo = 1111)||(Helper(1000), StateNo = 1121)
+trigger4 = RoundState = 2
+trigger4 = Var(59)
+trigger4 = Random <= Var(17)
+trigger4 = Helper(1000), StateNo = 1002
+trigger4 = Helper(1000), MoveContact
+trigger4 = P2BodyDist X >= 50
+value = 100
+ctrl = 1
+
+;Run Jump
+[State -1]
+type = Null ;ChangeState
+triggerall = StateNo = 100
+triggerall = Ctrl
+trigger1 = Command = "holdup"
+value = 40
+
+;---------------------------------------------------------------------------
+;Run Back
+[State -1]
+type = ChangeState
+triggerall = StateType = S
+triggerall = Ctrl
+trigger1 = !Var(59)
+trigger1 = Command = "BB"
+trigger2 = Var(59)
+trigger2 = Random <= Var(17)
+trigger2 = Command = "BB"
+trigger2 = NumHelper(1000) = 0
+trigger3 = Var(59)
+trigger3 = RoundState = 2
+trigger3 = Random <= Var(17)
+trigger3 = (NumHelper(1000) = 0) || (Var(5) = 1)
+trigger3 = P2StateType = L
+trigger3 = P2Dist X <= 100
+trigger3 = BackEdgeDist >= 120
+value = 105
+
+;---------------------------------------------------------------------------
+;Roll Fwd
+[State -1]
+type = ChangeState
+triggerall = StateType = S
+triggerall = Ctrl
+triggerall = Var(5) = 0
+;trigger2 = StateNo = 100
+trigger1 = Command = "recovery"
+trigger2 = Var(59)
+trigger2 = Random <= Var(17)
+trigger2 = Var(7) = 0
+trigger2 = P2BodyDist X = [0,100]
+trigger2 = P2MoveType = A
+trigger2 = PrevStateNo != 12
+trigger2 = StateNo != [120,152]
+value = 110
+
+;Guard Cancel
+[State -1]
+type = Helper
+triggerall = StateNo = [150,152]
+triggerall = NumHelper(153) = 0
+trigger1 = Command = "recovery"
+trigger2 = Var(59)
+trigger2 = Random <= Var(17)
+trigger2 = Random = [0,100]
+ignorehitpause = 1
+name = "invisible wall"
+stateno = 20001
+keyctrl = 0
+id = 153
+
+;AutoGuard
+[State -1]
+type = ChangeState
+triggerall = Ctrl
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000)=0
+triggerall = P2BodyDist X = [0,100]
+triggerall = StateNo != 120
+trigger1 = P2MoveType = A
+value = 120
+
+;Auto Jump
+[State -1]
+type = ChangeState
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Ctrl
+triggerall = StateType != A
+triggerall = StateNo != 40
+trigger1 = Var(5) = 0
+trigger1 = P2BodyDist X = [0,30]
+trigger1 = P2StateType = C
+trigger1 = Helper(1000), StateNo = 1002
+trigger1 = Helper(1000), MoveGuarded
+value = 40
+
+
+;---------------------------------------------------------------------------
+;Stand Light Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 0
+triggerall = Command = "a"
+trigger1 = StateType = S
+trigger1 = Ctrl
+;trigger2 = StateNo = 100
+trigger1 = Command != "holddown"
+trigger2 = StateNo = 200
+trigger2 = AnimElem = 3,>4
+value = 200
+
+;Stand Light Punch --AI
+[State -1]
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = Var(5) = 0
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = P2BodyDist X = [0,30]
+triggerall = ((P2MoveType != A)||(PrevStateNo=140))
+triggerall = P2Dist Y = [-80,0]
+triggerall = P2StateType != C
+triggerall = RoundState = 2
+triggerall = (Helper(1000), StateNo != 1002)
+trigger1 = StateType = S
+trigger1 = Ctrl
+;trigger2 = StateNo = 100
+trigger2 = StateNo = 200
+trigger2 = AnimElem = 3,>4
+trigger2 = MoveContact
+value = 200
+
+;---------------------------------------------------------------------------
+;Stand Medium Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 0
+triggerall = Command = "x"
+trigger1 = StateType = S
+trigger1 = Ctrl
+;trigger2 = StateNo = 100
+trigger1 = Command != "holddown"
+value = 210
+
+;---------------------------------------------------------------------------
+;Stand Heavy Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 0
+triggerall = Command = "y"
+trigger1 = StateType = S
+trigger1 = Ctrl
+;trigger2 = StateNo = 100
+trigger1 = Command != "holddown"
+value = 220
+
+;Stand Heavy Punch --AI
+[State -1]
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = Var(5) = 0
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = StateType = S
+triggerall = Ctrl
+triggerall = RoundState = 2
+;trigger2 = StateNo = 100
+trigger1 = Random = [0,200]
+trigger1 = P2BodyDist X = [50,80]
+trigger1 = P2Dist Y = [-60,0]
+trigger1 = P2MoveType != A
+trigger2 = Helper(1000), StateNo = 1002
+trigger2 = Helper(1000), MoveHit
+trigger2 = P2BodyDist X = [0,70]
+trigger3 = PrevStateNo = 200
+trigger3 = P2MoveType = H
+value = 220
+
+;---------------------------------------------------------------------------
+;Crouch Light Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 0
+triggerall = Command = "a"
+trigger1 = StateType = C
+trigger1 = Ctrl
+;trigger2 = StateNo = 100
+trigger1 = Command = "holddown"
+trigger2 = StateNo = 300
+;trigger2 = PrevStateNo != 300
+trigger2 = AnimElem = 3,>4
+value = 300
+
+;Crouch Light Punch --AI
+[State -1]
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = Var(5) = 0
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = P2BodyDist X = [0,30]
+triggerall = ((P2MoveType != A)||(PrevStateNo=140))
+triggerall = P2StateType != A
+triggerall = RoundState = 2
+trigger1 = StateType != A
+trigger1 = Ctrl
+;trigger2 = StateNo = 100
+trigger2 = StateNo = 300
+;trigger2 = PrevStateNo != 300
+trigger2 = AnimElem = 3,>4
+trigger2 = MoveContact
+value = 300
+
+;---------------------------------------------------------------------------
+;Crouch Medium Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 0
+triggerall = Command = "x"
+trigger1 = StateType = C
+trigger1 = Ctrl
+;trigger2 = StateNo = 100
+trigger1 = Command = "holddown"
+value = 310
+
+;---------------------------------------------------------------------------
+;Crouch Heavy Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 0
+triggerall = Command = "y"
+trigger1 = StateType = C
+trigger1 = Ctrl
+;trigger2 = StateNo = 100
+trigger1 = Command = "holddown"
+value = 320
+
+;Crouch Heavy Punch --AI
+[State -1]
+type = ChangeState
+triggerall = ((Var(7)!=1)||((Var(7)=1)&&(Power>0)))
+triggerall = Var(5) = 0
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+trigger1 = StateType != A
+trigger1 = Ctrl
+;trigger2 = StateNo = 100
+trigger1 = P2BodyDist X = [40,60]
+trigger1 = P2StateType = S
+trigger1 = P2MoveType != A
+value = 320
+
+;---------------------------------------------------------------------------
+;Air Light Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 0
+triggerall = Ctrl
+triggerall = StateType = A
+trigger1 = Command = "a"
+trigger2 = Var(59)
+trigger2 = Random <= Var(17)
+trigger2 = P2BodyDist X = [0,30]
+value = 600
+
+;---------------------------------------------------------------------------
+;Air Medium Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 0
+triggerall = Ctrl
+triggerall = StateType = A
+trigger1 = Command = "x"
+value = 610
+
+;---------------------------------------------------------------------------
+;Air Heavy Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 0
+triggerall = Ctrl
+triggerall = StateType = A
+trigger1 = Command = "y"
+trigger2 = Var(59)
+trigger2 = Random <= Var(17)
+trigger2 = P2BodyDist X = [60,80]
+trigger2 = P2Dist Y = [-50,-20]
+value = 620
+
+;------------------------------------Stand Super Attack---------------------------------------
+;---------------------------------------------------------------------------
+;The World
+[State -1]
+type = ChangeState
+triggerall = Command = "theworld"
+triggerall = Var(5) = 1
+triggerall = Var(7) = 0
+triggerall = Power >= 3000
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 70200
+trigger3 = StateNo = 70210
+trigger4 = StateNo = 70220
+trigger4 = PrevStateNo != 70210
+trigger5 = StateNo = 70300
+trigger6 = StateNo = 70310
+trigger7 = StateNo = 70320
+trigger7 = PrevStateNo != 70210
+trigger7 = PrevStateNo != 70310
+ignorehitpause = 1
+value = 3200
+
+;The World --AI
+[State -1]
+type = ChangeState
+triggerall = Var(59) = 1
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = Var(5) = 1
+triggerall = Var(7) = 0
+triggerall = Power >= 3000
+triggerall = Exp(0.5*ln(P2BodyDist X*P2BodyDist X+P2Dist Y*P2Dist Y)) >= 200
+triggerall = P2MoveType = H
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 70200
+trigger3 = StateNo = 70210
+trigger4 = StateNo = 70220
+trigger4 = PrevStateNo != 70210
+trigger5 = StateNo = 70300
+trigger6 = StateNo = 70310
+trigger7 = StateNo = 70320
+trigger7 = PrevStateNo != 70210
+trigger7 = PrevStateNo != 70310
+ignorehitpause = 1
+value = 3200
+
+;---------------------------------------------------------------------------
+;Knife Ground
+[State -1]
+type = ChangeState
+triggerall = !Var(59)
+triggerall = Command = "knife"
+triggerall = Var(5) = 1
+triggerall = NumHelper <= 15
+triggerall = Power >= 1000
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 70200
+trigger3 = StateNo = 70210
+trigger4 = StateNo = 70220
+trigger4 = PrevStateNo != 70200
+trigger4 = PrevStateNo != 70210
+trigger5 = StateNo = 70300
+trigger6 = StateNo = 70310
+trigger7 = StateNo = 70320
+trigger7 = PrevStateNo != 70210
+trigger7 = PrevStateNo != 70310
+ignorehitpause = 1
+value = 73000
+
+;Knife Ground --AI
+[State -1]
+type = ChangeState
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = P2BodyDist X >= 200
+triggerall = P2MoveType = A
+triggerall = P2StateType != A
+triggerall = Var(5) = 1
+triggerall = NumHelper <= 15
+triggerall = Power >= 1000
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 70200
+trigger3 = StateNo = 70210
+trigger4 = StateNo = 70220
+trigger4 = PrevStateNo != 70200
+trigger4 = PrevStateNo != 70210
+trigger5 = StateNo = 70300
+trigger6 = StateNo = 70310
+trigger7 = StateNo = 70320
+trigger7 = PrevStateNo != 70210
+trigger7 = PrevStateNo != 70310
+ignorehitpause = 1
+value = 73000
+
+;Knife Ground --AI2
+[State -1]
+type = ChangeState
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = Var(7) = 1
+triggerall = P2Dist Y > -80
+triggerall = Var(5) = 1
+triggerall = NumHelper <= 15
+triggerall = Power > 2000
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 70200
+trigger3 = StateNo = 70210
+trigger4 = StateNo = 70220
+trigger4 = PrevStateNo != 70200
+trigger4 = PrevStateNo != 70210
+trigger5 = StateNo = 70300
+trigger6 = StateNo = 70310
+trigger7 = StateNo = 70320
+trigger7 = PrevStateNo != 70210
+trigger7 = PrevStateNo != 70310
+ignorehitpause = 1
+value = 73000
+
+;Knife Air
+[State -1]
+type = ChangeState
+triggerall = !Var(59)
+triggerall = Command = "knife"
+triggerall = Var(5) = 1
+triggerall = NumHelper <= 15
+triggerall = Power >= 1000
+trigger1 = StateType = A
+trigger1 = Ctrl
+ignorehitpause = 1
+value = 73010
+
+;Knife Air --AI
+[State -1]
+type = ChangeState
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = Atan(P2Dist X/P2Dist Y)*180/Pi = [40,60]
+triggerall = P2StateType != A
+triggerall = P2MoveType = A
+triggerall = Var(5) = 1
+triggerall = NumHelper <= 15
+triggerall = Power >= 1000
+trigger1 = StateType = A
+trigger1 = Ctrl
+ignorehitpause = 1
+value = 73010
+
+;------------------------------------Stand Special Attack---------------------------------------
+;---------------------------------------------------------------------------
+;Throw
+[State -1]
+type = ChangeState
+triggerall = StateType = S
+triggerall = Ctrl
+triggerall = P2BodyDist X <= 10
+triggerall = (P2StateType = S)||(P2StateType = C)
+triggerall = P2MoveType != H
+triggerall = Var(5) = 1
+triggerall = Var(7) = 0
+triggerall = StateNo != 100
+trigger1 = Command = "fwd_y"
+trigger2 = Command = "back_y"
+value = 70700
+
+;Throw --AI
+[State -1]
+type = ChangeState
+triggerall = RoundState = 2
+triggerall = StateType = S
+triggerall = Ctrl
+triggerall = P2BodyDist X <= 10
+triggerall = (P2StateType = S)||(P2StateType = C)
+triggerall = P2MoveType != H
+triggerall = Var(5) = 1
+triggerall = Var(7) = 0
+triggerall = StateNo != 100
+triggerall = Var(59) = 1
+triggerall = Random <= Var(17)
+trigger1 = ((P2MoveType != A)||(PrevStateNo=140))
+trigger2 = ((P2MoveType != A)||(PrevStateNo=110))
+value = 70700
+
+;---------------------------------------------------------------------------
+;Go to dead
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = (Command = "FDFx")||(Command = "FDFy")||(Command = "FDFz")
+triggerall = ((Var(59)=0)||(P2BodyDist X>=150))
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 70200
+trigger3 = StateNo = 70210
+trigger4 = StateNo = 70220
+trigger4 = PrevStateNo != 70200
+trigger4 = PrevStateNo != 70210
+trigger5 = StateNo = 70300
+trigger6 = StateNo = 70310
+trigger7 = StateNo = 70320
+trigger7 = PrevStateNo != 70210
+trigger7 = PrevStateNo != 70310
+value = 71200
+ctrl = 0
+
+;---------------------------------------------------------------------------
+;Mud a Ma da Ground
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = (Command = "DFx")||(Command = "DFy")||(Command = "DFz")
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 70200
+trigger3 = StateNo = 70210
+trigger4 = StateNo = 70220
+trigger4 = PrevStateNo != 70200
+trigger4 = PrevStateNo != 70210
+trigger5 = StateNo = 70300
+trigger6 = StateNo = 70310
+trigger7 = StateNo = 70320
+trigger7 = PrevStateNo != 70210
+trigger7 = PrevStateNo != 70310
+value = 71000
+ctrl = 0
+
+;Mud a Ma da Ground --AI
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59) = 1
+triggerall = Random <= Var(17)
+triggerall = FrontEdgeDist <= 100
+triggerall = RoundState = 2
+triggerall = StateType != A
+triggerall = Ctrl
+trigger1 = P2MoveType = H
+trigger1 = P2BodyDist X = [0,100]
+trigger1 = P2Dist Y = [-80,-30]
+trigger2 = Random = [0,200]
+trigger2 = P2BodyDist X = [120,180]
+trigger2 = P2Dist Y >= -60
+value = 71000
+ctrl = 0
+
+;Mud a Ma da Ground --AI2
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59) = 1
+triggerall = Random <= Var(17)
+triggerall = MoveHit
+triggerall = FrontEdgeDist <= 100
+triggerall = RoundState = 2
+trigger1 = StateNo = 70210
+trigger2 = StateNo = 70220
+trigger2= PrevStateNo != 70200
+trigger2 = PrevStateNo != 70210
+trigger3 = StateNo = 70310
+trigger4 = StateNo = 70320
+trigger4 = PrevStateNo != 70210
+trigger4 = PrevStateNo != 70310
+value = 71000
+ctrl = 0
+
+;Mud a Ma da Ground --AI3
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = P2StateType = A
+triggerall = P2BodyDist X = [80,120]
+triggerall = RoundState = 2
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 70200
+trigger3 = StateNo = 70210
+trigger4 = StateNo = 70220
+trigger4 = PrevStateNo != 70200
+trigger4 = PrevStateNo != 70210
+trigger5 = StateNo = 70300
+trigger6 = StateNo = 70310
+trigger7 = StateNo = 70320
+trigger7 = PrevStateNo != 70210
+trigger7 = PrevStateNo != 70310
+value = 71000
+ctrl = 0
+
+;Mud a Ma da Air
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = (Command = "DFx")||(Command = "DFy")||(Command = "DFz")
+trigger1 = StateType = A
+trigger1 = Ctrl
+value = 71010
+ctrl = 0
+
+;Mud a Ma da Air --AI
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = P2BodyDist X = [50,100]
+triggerall = P2Dist Y = [-50,0]
+triggerall = P2MoveType != A
+trigger1 = StateType = A
+trigger1 = Ctrl
+value = 71010
+ctrl = 0
+
+;-----------------------------------------------------------------------
+;Dash Attack
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = (Command = "DBx")||(Command = "DBy")||(Command = "DBz")
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger2 = StateNo = 70200
+trigger3 = StateNo = 70210
+trigger4 = StateNo = 70220
+trigger4 = PrevStateNo != 70200
+trigger4 = PrevStateNo != 70210
+trigger5 = StateNo = 70300
+trigger6 = StateNo = 70310
+trigger7 = StateNo = 70320
+trigger7 = PrevStateNo != 70210
+trigger7 = PrevStateNo != 70310
+value = 71100
+ctrl = 0
+
+;Dash Attack --AI
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+trigger1 = StateType != A
+trigger1 = Ctrl
+trigger1 = P2MoveType != A
+trigger1 = P2StateType != A
+trigger1 = P2BodyDist X = [60,150]
+trigger1 = P2StateNo != [5000,5999]
+trigger1 = P2StateNo != 40
+value = 71100
+ctrl = 0
+
+;Dash Attack --AI2
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = (MoveHit||(Random<=99))
+trigger1 = StateNo = 70210
+trigger2 = StateNo = 70220
+trigger2 = PrevStateNo != 70200
+trigger2 = PrevStateNo != 70210
+trigger2 = AnimElem = 3, >0
+trigger3 = StateNo = 70300
+trigger4 = StateNo = 70310
+trigger5 = StateNo = 70320
+trigger5 = PrevStateNo != 70210
+trigger5 = PrevStateNo != 70310
+value = 71100
+ctrl = 0
+
+;Dash Attack Continue
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = (Command = "DBx")||(Command = "DBy")||(Command = "DBz")
+trigger1 = StateNo = 71101
+trigger1 = AnimElem = 2,>0
+value = 71110
+ctrl = 0
+
+;Dash Attack Continue --AI
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = P2StateNo != 131
+triggerall = P2StateNo != 141
+triggerall = P2StateNo != 151
+triggerall = (MoveHit||(Random<=20)||((P2StateType=S)&&(Random<=99)))
+trigger1 = StateNo = 71101
+trigger1 = AnimElem = 2,>0
+value = 71110
+ctrl = 0
+
+;------------------------------------Stand Normal Attack---------------------------------------
+;AutoGuard
+[State -1]
+type = ChangeState
+triggerall = Ctrl
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = ((NumHelper(1000)=0)||(Var(5)=1))
+triggerall = P2BodyDist X = [0,100]
+triggerall = StateNo != 120
+trigger1 = P2MoveType = A
+value = 120
+
+[State -1]
+type = ChangeState
+triggerall = Ctrl
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = ((NumHelper(1000)=0)||(Var(5)=1))
+triggerall = P2BodyDist X = [0,60]
+triggerall = StateNo = 130
+triggerall = P2StateType = C
+trigger1 = P2MoveType = A
+value = 10
+
+[State -1]
+type = ChangeState
+triggerall = Ctrl
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = ((NumHelper(1000)=0)||(Var(5)=1))
+triggerall = P2BodyDist X = [0,60]
+triggerall = StateNo = 131
+triggerall = P2StateType = A
+trigger1 = P2MoveType = A
+value = 12
+
+;Stand-- Stand Light Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "a"
+trigger1 = Ctrl
+trigger1 = StateType = S
+trigger2 = StateNo = 70200
+trigger2 = PrevStateNo != 70200
+trigger2 = PrevStateNo != 100
+trigger2 = AnimElem = 3,>0
+trigger2 = Command != "holddown"
+value = 70200
+ctrl = 0
+
+;Stand-- Stand Light Punch --AI
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+trigger1 = Ctrl
+trigger1 = StateType = S
+trigger1 = P2BodyDist X = (15,50]
+trigger1 = Random = [0,333]
+trigger1 = ((P2MoveType != A)||(PrevStateNo=140)||(PrevStateNo=[1200,1220]))
+trigger1 = P2StateType != A
+trigger2 = StateNo = 70200
+trigger2 = PrevStateNo != 70200
+trigger2 = PrevStateNo != 100
+trigger2 = AnimElem = 3,>0
+trigger2 = Command != "holddown"
+trigger2 = MoveHit
+value = 70200
+ctrl = 0
+
+;Stand-- Stand Medium Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "x"
+triggerall = StateNo != 100
+trigger1 = Ctrl
+trigger1 = StateType = S
+trigger2 = StateNo = 70200
+trigger2 = PrevStateNo != 100
+trigger2 = AnimElem = 3,>0
+trigger2 = Command != "holddown"
+trigger3 = StateNo = 70300
+trigger3 = PrevStateNo != 100
+trigger3 = AnimElem = 3,>0
+trigger3 = Command != "holddown"
+value = 70210
+ctrl = 0
+
+;Stand-- Stand Medium Punch --AI
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = StateNo != 100
+triggerall = (MoveHit||(Random<=99))
+trigger1 = StateNo = 70200
+trigger1 = PrevStateNo != 100
+trigger1 = PrevStateNo = 70200
+trigger1 = AnimElem = 3,>0
+trigger1 = ((P2StateType=C)||(MoveHit))
+trigger2 = StateNo = 70300
+trigger2 = PrevStateNo != 100
+trigger2 = AnimElem = 3,>0
+trigger2 = P2StateType = C
+value = 70210
+ctrl = 0
+
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "x"
+triggerall = StateNo = 100
+trigger1 = Ctrl
+trigger1 = StateType = S
+value = 70200
+ctrl = 0
+
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "x"
+trigger1 = StateNo = 70210
+trigger1 = PrevStateNo != 100
+trigger1 = PrevStateNo = 70200
+trigger1 = Var(14) = 70200
+trigger1 = AnimElem = 3,>4
+trigger1 = Command != "holddown"
+value = 70212
+ctrl = 0
+
+;Stand-- Stand Heavy Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "y"
+trigger1 = Ctrl
+trigger1 = StateType = S
+trigger2 = StateNo = 70210
+trigger2 = AnimElem = 3,>0
+trigger2 = PrevStateNo != 100
+trigger2 = ((PrevStateNo = 70200)||(PrevStateNo = 70300))
+trigger2 = Command != "holddown"
+trigger3 = StateNo = 70310
+trigger3 = ((PrevStateNo = 70200)||(PrevStateNo = 70300))
+trigger3 = AnimElem = 3,>4
+trigger3 = PrevStateNo != 100
+trigger3 = Command != "holddown"
+value = 70220
+ctrl = 0
+
+;Stand-- Stand Heavy Punch --AI
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = (MoveHit||(Random<=99))
+trigger1 = Ctrl
+trigger1 = StateType = S
+trigger1 = P2StateType = A
+trigger1 = P2BodyDist X = [90,130]
+trigger1 = P2Dist Y <= -80
+trigger2 = StateNo = 70210
+trigger2 = AnimElem = 3,>0
+trigger2 = PrevStateNo != 100
+trigger2 = ((PrevStateNo = 70200)||(PrevStateNo = 70300))
+trigger2 = Command != "holddown"
+trigger3 = StateNo = 70310
+trigger3 = ((PrevStateNo = 70200)||(PrevStateNo = 70300))
+trigger3 = AnimElem = 3,>4
+trigger3 = PrevStateNo != 100
+trigger3 = Command != "holddown"
+value = 70220
+ctrl = 0
+
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "a"
+trigger1 = StateNo = 70200
+trigger1 = PrevStateNo = 70200
+trigger1 = AnimElem = 3,>0
+trigger1 = Command != "holddown"
+value = 70220
+ctrl = 0
+
+;---------------------------------------------------------------------------
+;Stand-- Crouch Light Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "a"
+trigger1 = Ctrl
+trigger1 = StateType = C
+trigger2 = StateNo = 70200
+trigger2 = PrevStateNo != 70200
+trigger2 = PrevStateNo != 100
+trigger2 = AnimElem = 3,>0
+trigger2 = Command = "holddown"
+value = 70300
+ctrl = 0
+
+;Stand-- Crouch Light Punch --AI
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = P2BodyDist X = [15,30]
+trigger1 = ((P2MoveType != A)||(PrevStateNo=140)||(PrevStateNo=[1200,1220]))
+triggerall = P2Statetype = S
+triggerall = P2StateNo != [5110,5120]
+trigger1 = Ctrl
+trigger1 = StateType != A
+trigger2 = StateNo = 70200
+trigger2 = PrevStateNo != 70200
+trigger2 = PrevStateNo != 100
+trigger2 = AnimElem = 3,>0
+trigger2 = P2StateType = S
+value = 70300
+ctrl = 0
+
+;Stand-- Crouch Medium Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "x"
+trigger1 = Ctrl
+trigger1 = StateType = C
+trigger2 = StateNo = 70200
+trigger2 = PrevStateNo != 100
+trigger2 = AnimElem = 3,>0
+trigger2 = Command = "holddown"
+trigger3 = StateNo = 70300
+trigger3 = PrevStateNo != 100
+trigger3 = AnimElem = 3,>0
+trigger3 = Command = "holddown"
+value = 70310
+ctrl = 0
+
+;Stand-- Crouch Medium Punch --AI
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+triggerall = (MoveHit||(Random<=99))
+trigger1 = StateNo = 70200
+trigger1 = PrevStateNo != 100
+trigger1 = PrevStateNo = 70200
+trigger1 = AnimElem = 3,>0
+trigger1 = ((P2StateType = S)||MoveHit)
+trigger2 = StateNo = 70300
+trigger2 = PrevStateNo != 100
+trigger2 = AnimElem = 3,>0
+trigger2 = ((P2StateType = S)||MoveHit)
+value = 70310
+ctrl = 0
+
+;Stand-- Crouch Heavy Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "y"
+trigger1 = Ctrl
+trigger1 = StateType = C
+trigger2 = StateNo = 70210
+trigger2 = AnimElem = 3,>0
+trigger2 = ((PrevStateNo = 70200)||(PrevStateNo = 70300))
+trigger2 = PrevStateNo != 100
+trigger2 = Command = "holddown"
+trigger3 = StateNo = 70310
+trigger3 = AnimElem = 3,>4
+trigger3 = ((PrevStateNo = 70200)||(PrevStateNo = 70300))
+trigger3 = PrevStateNo != 100
+trigger3 = Command = "holddown"
+value = 70320
+ctrl = 0
+
+;Stand-- Crouch Heavy Punch --AI
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+triggerall = RoundState = 2
+trigger1 = P2StateType = S
+trigger1 = P2MoveType != A
+trigger1 = P2BodyDist X = [50,90]
+trigger1 = Ctrl
+trigger1 = StateType != A
+value = 70320
+ctrl = 0
+
+;---------------------------------------------------------------------------
+;Air Jump
+[State -1]
+type = ChangeState
+trigger1 = Command = "holdup"
+trigger1 = Ctrl
+trigger1 = StateNo = 50
+trigger1 = Time >= 15
+trigger1 = Var(5) = 1
+trigger1 = Var(31) = 0
+value = 40
+
+[State -1]
+type = VarSet
+trigger1 = StateNo = 40
+trigger1 = PrevStateNo = 50
+var(31) = 1
+
+[State -1]
+type = VarSet
+trigger1 = Pos Y = 0
+trigger1 = Var(31) != 0
+var(31) = 0
+
+;---------------------------------------------------------------------------
+;Stand-- Air Light Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Ctrl
+triggerall = StateType = A
+trigger1 = Command = "a"
+trigger2 = Var(59)
+trigger2 = Random <= Var(17)
+trigger2 = RoundState = 2
+trigger2 = P2BodyDist X = [0,50]
+trigger2 = P2Dist Y = [-50,0]
+trigger2 = P2MoveType != A
+value = 70600
+ctrl = 0
+
+;Stand-- Air Medium Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "x"
+trigger1 = Ctrl
+trigger1 = StateType = A
+value = 70610
+ctrl = 0
+
+;Stand-- Air Heavy Punch
+[State -1]
+type = ChangeState
+triggerall = Var(5) = 1
+triggerall = Command = "y"
+trigger1 = Ctrl
+trigger1 = StateType = A
+value = 70620
+ctrl = 0
+
+;---------------------------------------------------------------------------
+;Stand On
+[State -1]
+type = Null;VarSet
+triggerall = StateType != S
+triggerall = Ctrl
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = Command = "b"
+var(5) = 1
+
+[State 40000]
+type = PlaySnd
+triggerall = Ctrl
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = Command = "b"
+value = 10000,0
+channel = 1
+
+[State 40000]
+type = PlaySnd
+triggerall = Ctrl
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = Command = "b"
+value = 10000,1
+channel = 2
+
+[State 40000]
+type = Explod
+triggerall = StateType != A
+triggerall = Ctrl
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = Command = "b"
+pausemovetime = 2147483647
+anim = 40001
+pos = 10,0
+sprpriority = 5
+ownpal = 1
+
+[State -1]
+type = ChangeState
+triggerall = StateType = S
+triggerall = Ctrl
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+trigger1 = Command = "b"
+value = 40000
+ctrl = 0
+
+[State -1]
+type = Helper
+trigger1 = Var(5) = 1
+trigger1 = NumHelper(1000) = 0
+ignorehitpause = 1
+pausemovetime = 2147483647214748364799999999
+name = "The World"
+stateno = 60000
+keyctrl = 0
+id = 1000
+
+;StandNo --AI
+[State -1]
+type = VarSet
+trigger1 = Ctrl
+var(15) = IfElse(P2MoveType != A,Random,1000)
+
+[State 40000]
+type = PlaySnd
+triggerall = Ctrl
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Var(15) <= 20
+trigger1 = Var(59)
+trigger1 = Random <= Var(17)
+trigger1 = Var(7) = 0
+trigger1 = RoundState = 2
+trigger1 = Var(10) = 500
+value = 10000,0
+channel = 1
+
+[State 40000]
+type = PlaySnd
+triggerall = Ctrl
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Var(15) <= 20
+trigger1 = Var(59)
+trigger1 = Random <= Var(17)
+trigger1 = Var(7) = 0
+trigger1 = RoundState = 2
+trigger1 = Var(10) = 500
+value = 10000,1
+channel = 2
+
+[State 40000]
+type = Explod
+triggerall = StateType != A
+triggerall = Ctrl
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Var(15) <= 20
+trigger1 = Var(59)
+trigger1 = Random <= Var(17)
+trigger1 = Var(7) = 0
+trigger1 = RoundState = 2
+trigger1 = Var(10) = 500
+pausemovetime = 2147483647
+anim = 40001
+pos = 10,0
+sprpriority = 5
+ownpal = 1
+
+[State -1]
+type = ChangeState
+triggerall = StateType = S
+triggerall = Ctrl
+triggerall = Var(5) = 0
+triggerall = NumHelper(1000) = 0
+triggerall = Var(15) <= 20
+trigger1 = Var(59)
+trigger1 = Random <= Var(17)
+trigger1 = Var(7) = 0
+trigger1 = RoundState = 2
+trigger1 = Var(10) = 500
+value = 40000
+ctrl = 0
+
+;Stand On AI2
+[State -1]
+type = VarSet
+trigger1 = ((NumHelper(1000) = 0)||(Var(5)=1))
+trigger1 = Var(5) = 0
+trigger1 = Ctrl
+trigger1 = Var(59)
+trigger1 = Random <= Var(17)
+trigger1 = Var(7) = 0
+trigger1 = RoundState = 2
+trigger1 = Var(10) = 500
+triggerall = Var(15) <= 20
+var(5) = 1
+
+;Stand Off/On
+[State -1]
+type = VarSet
+trigger1 = ((NumHelper(1000) = 0)||(Var(5)=1))
+trigger1 = Ctrl
+trigger1 = Command = "b"
+var(5) = IfElse(Var(5)=0,1,0)
+
+;Stand Off --AI
+[State -1]
+type = VarSet
+triggerall = ((NumHelper(1000) = 0)||(Var(5)=1))
+triggerall = Ctrl
+triggerall = Var(5) = 1
+triggerall = Var(59)
+triggerall = Random <= Var(17)
+trigger1 = Var(10) <= 100
+trigger2 = Var(7) = 1
+trigger2 = NumHelper > 10
+trigger2 = Power <= 2000
+trigger3 = P2MoveType = A
+trigger3 = Random = [0,500]
+trigger3 = P2BodyDist X <= 100
+trigger3 = Random <= 333
+var(5) = 0
+
+[State -1]
+type = VarSet
+triggerall = Var(5) = 1
+trigger1 = Life = 0
+trigger2 = Var(10) <= 0
+trigger3 = !AnimExist(Anim)
+ignorehitpause = 1
+var(5) = 0
+
+[State -1]
+type = VarSet
+trigger1 = GameTime%2 = 1
+ignorehitpause = 1
+var(11) = Life
+
+[State -1]
+type = VarSet
+trigger1 = GameTime%2 = 0
+ignorehitpause = 1
+var(12) = Life
+
+[State -1]
+type = VarAdd
+trigger1 = Var(5) = 1
+trigger1 = (IfElse(GameTime%2=0,Var(11),Var(12))-Life)*2 > 0
+ignorehitpause = 1
+var(10) = -(IfElse(GameTime%2=0,Var(11),Var(12))-Life)*1.8
+
+[State -1]
+type = VarSet
+trigger1 = Var(10) != [0,500]
+var(10) = IfElse(Var(10)<0,0,500)
+
+[State -1]
+type = ChangeState
+trigger1 = Var(5) = 1
+trigger1 = Var(10) <= 0 
+value = 40001
+ctrl = 0
+
+;---------------------------------------------------------------------------
+;Taunt
+[State -1]
+type = ChangeState
+triggerall = StateType = S
+triggerall = Ctrl
+trigger1 = !Var(59)
+trigger1 = Command = "start"
+value = 195
+
+;---------------------------------------------------------------------------
+;AI
+[State -1]
+type = Helper
+trigger1 = NumHelper(99999) = 0
+name = "AI"
+pos = 999,999
+stateno = 99999
+keyctrl = 1
+pausemovetime = 214748364721474836479999999
+id = 99999
+
+;---------------------------------------------------------------------------
+;Stand Bar
+[State -1]
+type = Helper
+trigger1 = NumHelper(6000) = 0
+name = "Stand Bar"
+pos = 0,0
+stateno = 6000
+keyctrl = 0
+pausemovetime = 214748364721474836479999999
+id = 6000
+ownpal = 1
+
+;---------------------------------------------------------------------------
+;A.I Level
+[State -1]
+type = VarSet
+trigger1 = RoundState < 2
+var(17) = 1000
+

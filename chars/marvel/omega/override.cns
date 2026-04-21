@@ -1,0 +1,349 @@
+;|===========================|
+;|Omega Red's override states|
+;|===========================|
+
+;Jump Land
+[Statedef 52]
+type = S
+physics = S
+ctrl = 0
+anim = 47
+
+[State 52, 1]
+type = velset
+trigger1 = time = 0
+y = 0
+
+[State 52, 2]
+type = posset
+trigger1 = time = 0
+y = 0
+
+[State 52, 3]
+type = turn
+trigger1 = p2dist x < 0
+;trigger1 = animelem = 4
+persistent = 0
+
+[State 52, 4]
+type = ctrlset
+trigger1 = time = 3
+value = 1
+
+[State 52, 5]
+type = playsnd
+trigger1 = time = 0
+value = 47, 0
+
+[State 52, 6]
+type = changestate
+trigger1 = animtime = 0
+value = 0
+ctrl = 1
+
+;Run forwards
+[Statedef 100]
+type = S
+physics = S
+anim = 100
+sprpriority = 1
+
+[State 100, 1]
+type = velset
+trigger1 = 1
+x = const(velocity.run.fwd.x)
+
+[State 100, 2]
+type = assertspecial
+trigger1 = 1
+flag = nowalk
+flag2 = noautoturn
+
+[State 100, 3]
+type = changestate
+trigger1 = animtime = 0
+value = 101
+
+;Run forwards end
+[Statedef 101]
+type = S
+physics = S
+anim = 101
+sprpriority = 1
+velset = 0,0
+facep2 = 0
+
+[State 101, 1]
+type = changestate
+trigger1 = animtime = 0
+value = 0
+
+;---------------------------------------------------------------------------
+;Hop backwards
+[Statedef 105]
+type = A
+physics = A
+ctrl = 0
+anim = 105
+
+[State 105, 1]
+type = velset
+trigger1 = time = 0
+x = const(velocity.run.back.x)
+y = const(velocity.run.back.y)
+
+[State 105, 2]
+type = ctrlset
+trigger1 = time = 2
+value = 1
+
+[State 105, 3]
+type = changestate
+trigger1 = vel y > 0
+trigger1 = pos y >= 0
+value = 106
+
+;Hop backwards (land)
+[Statedef 106]
+type = S
+physics = S
+ctrl = 0
+velset = 0,0
+anim = 106
+
+[State 106, 1]
+type = velset
+trigger1 = time = 0
+y = 0
+
+[State 106, 2]
+type = posset
+trigger1 = time = 0
+y = 0
+
+[State 106, 3]
+type = makedust
+trigger1 = time = 2
+pos = -5,-2
+spacing = 1
+
+[State 106, 4]
+type = changestate
+trigger1 = time = 7
+value = 0
+ctrl = 1
+
+;HITA_RECOV (recovering in air, not falling)
+[Statedef 5040]
+type = A
+movetype= H
+physics = N
+
+[State 5040, 1]
+type = changestate
+trigger1 = !alive
+value = 5050
+
+[State 5040, 2]
+type = changeanim
+trigger1 = animtime = 0
+trigger1 = anim != 5040
+trigger2 = time = 0
+trigger2 = anim != 5035
+value = 5040
+persistent = 0
+
+[State 5040, 3]
+type = ctrlset
+trigger1 = hitover
+value = 1
+
+[State 5040, 4]
+type = statetypeset
+trigger1 = hitover
+movetype = I
+
+[State 5040, 5]
+type = veladd
+trigger1 = 1
+y = gethitvar(yaccel)
+
+[State 5040, 6]
+type = changestate
+trigger1 = vel y > 0
+trigger1 = pos y >= 0
+value = 52
+
+;HIT_GETUP
+[Statedef 5120]
+type = L
+movetype= I
+physics = N
+
+[State 5120, 1a];Get up anim (normal)
+type = changeanim
+triggerall = time = 0
+trigger1 = anim != [5111,5119]
+trigger2 = !selfanimexist(5120 + (anim % 10))
+value = 5120
+
+[State 5120, 1b];Get up anim (for hit up/diag-up)
+type = changeanim
+triggerall = time = 0
+trigger1 = anim = [5111,5119]
+trigger1 = selfanimexist(5120 + (anim % 10))
+value = 5120 + (anim % 10)
+
+[State 5120, 2]
+type = velset
+trigger1 = time = 0
+x = 0
+
+[State 5120, 3]
+type = nothitby
+trigger1 = 1
+value = SCA
+time = 1
+
+[State 5120, 4]
+type = hitfallset
+trigger1 = animtime = 0
+value = 1
+
+[State 5120, 5];Can't be thrown right after getting up
+type = nothitby
+trigger1 = animtime = 0
+value = , NT,ST,HT
+time = 12
+
+[State 5120, 6];Can't be hit right after getting up (short time)
+type = nothitby
+trigger1 = animtime = 0
+value2 = SCA
+time = 3
+
+[State 5120, 7]
+type = changeanim
+trigger1 = var(0) >= 2400
+value = 5040
+persistent = 0
+
+[State 5120, 8]
+type = changestate
+trigger1 = animtime = 0
+trigger1 = var(0) < 2400
+value = 0
+ctrl = 1
+
+[State 5120, 9]
+type = changestate
+trigger1 = animtime = 0
+trigger1 = var(0) >= 2400
+value = 5300
+ctrl = 0
+
+;HIT_AIRFALLRECOVER
+[Statedef 5210]
+type = A
+movetype= I
+physics = N
+anim = 5210
+ctrl = 0
+
+[State 5210, 1];Blink white
+type = palfx
+trigger1 = time = 0
+time = 3
+add = 128,128,128 ;256,256,256
+
+[State 5210, 1]
+type = posfreeze
+trigger1 = time = 0
+value = 4
+
+[State 5210, 2];Turn if not facing opponent
+type = turn
+trigger1 = Time = 0
+trigger1 = p2dist X < -20
+
+[State 5210, 1] 
+type = velmul
+trigger1 = time = 4
+x = .8
+y = .8
+
+[State 5210, 1]
+type = veladd
+trigger1 = time = 4
+y = -4.5
+
+[State 5210, 1] 
+type = velmul
+trigger1 = time = 4
+trigger1 = vel y > 0
+y = .5
+
+[State 5210, 1]
+type = veladd
+trigger1 = time = 4
+trigger1 = vel y > -3
+y = -2
+
+[State 5210, 1]
+type = veladd
+trigger1 = time = 4
+trigger1 = vel y > -2
+y = -1
+
+[State 5210, 2];Go up
+type = veladd
+trigger1 = time = 4
+trigger1 = (command = "holdup")
+y = -2
+
+[State 5210, 2];Go down
+type = veladd
+trigger1 = time = 4
+trigger1 = (command = "holddown")
+y = 1.5
+
+[State 5210, 2];Go fwd
+type = velmul
+trigger1 = time = 4
+trigger1 = (command = "holdfwd")
+x = 1
+
+[State 5210, 2];Go back
+type = veladd
+trigger1 = time = 4
+trigger1 = (command = "holdback")
+x = -1
+
+[State 5210, 3]
+type = nothitby
+trigger1 = time = 0
+value = SCA
+time = 15
+
+[State 5210, 4]
+type = ctrlset
+trigger1 = time = 20
+value = 1
+
+[State 5210, 5]
+type = veladd;Gravity
+trigger1 = time >= 4
+y = .35
+
+[State 5210, 6];Land on ground
+type = changestate
+trigger1 = vel y > 0
+trigger1 = pos y >= 0
+value = 52
+ctrl = 1
+
+[State 5210, 6]
+type = changestate
+trigger1 = animtime = 0
+value = 50
+ctrl = 1

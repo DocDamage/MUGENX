@@ -1,0 +1,619 @@
+; Oda Nobunaga - made by Nobun (Mugenation team)
+;----------------------------------------------------------------------
+
+;programmazione degli eventi della spada infuocata
+
+;ID = 10 -> Explod se in tasca (solo standing) Helper negli altri casi
+
+;var(10): stati spada -> 0 = in tasca
+;                        1 = in mano
+;                        2 = in lancio
+;                        3 = recupero fallito
+;                        4 = pietrificata
+;                        5 = a terra (attiva)
+
+;fvar(14): posizione X iniziale. 
+;         Se negativa (player=1) sprpriority char = 0 (normal)
+;         Se positiva (player=2) sprpriority char = -1 (all priors = x-1)
+;         invertiti in Helper (0 , -1)
+; questa var(14) serve perchè la spada non spunti in primo piano 
+; quando il char è in secondo piano, e, nello stesso tempo, mantiene
+; la spada in modo tale che risulti impugnata e non dietro la mano.
+
+;var(15) (Helper): stato x rotazione
+
+;----------------
+
+;altre var: var(4) -> per le mosse particolari FWD pugno debole
+;           var(30) -> AI status
+;           var(3) -> esecuzione grey addon 2
+;           var(5) -> controllo colpi (per grey tornado)
+;           var(8) -> usata in charge power
+
+;--------------------------------------------------------------------------------------
+;--------------------------------------------------------------------------------------
+;--------------------------------------------------------------------------------------
+
+;Impugnazione spada (standing)
+[StateDef 810]
+type = S
+movetype = A 
+  ;non è un attacco, ma definito come tale per rimuovere
+  ;la spada-Helper (impugnata)
+physics = S
+anim = 810
+velset = 0,0
+ctrl = 0
+
+[State 810, 0]
+type = PlaySnd
+trigger1 = AnimElem = 1
+value = 1, 6
+
+[State 810,1]
+type = VarSet
+trigger1 = AnimElem = 3
+v = 10
+value = 1
+
+[State 810,2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;Ripongo spada (standing)
+[StateDef 811]
+type = S
+movetype = A 
+  ;non è un attacco, ma definito come tale per rimuovere
+  ;la spada-Helper (impugnata)
+physics = S
+anim = 811
+velset = 0,0
+ctrl = 0
+
+[State 811, 0]
+type = PlaySnd
+trigger1 = AnimElem = 1
+value = 1, 7
+
+[State 811,1]
+type = VarSet
+trigger1 = AnimElem = 16
+v = 10
+value = 0
+
+[State 811,2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;Impugnazione spada (crouching)
+[StateDef 812]
+type = C
+movetype = A 
+  ;non è un attacco, ma definito come tale per rimuovere
+  ;la spada-Helper (impugnata)
+physics = C
+anim = 812
+velset = 0,0
+ctrl = 0
+
+[State 812, 0]
+type = PlaySnd
+trigger1 = AnimElem = 1
+value = 1, 6
+
+[State 812,1]
+type = VarSet
+trigger1 = AnimElem = 3
+v = 10
+value = 1
+
+[State 812,2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 11
+ctrl = 1
+
+;Ripongo spada (crouching)
+[StateDef 813]
+type = C
+movetype = A 
+  ;non è un attacco, ma definito come tale per rimuovere
+  ;la spada-Helper (impugnata)
+physics = C
+anim = 813
+velset = 0,0
+ctrl = 0
+
+[State 813, 0]
+type = PlaySnd
+trigger1 = AnimElem = 1
+value = 1, 7
+
+[State 813,1]
+type = VarSet
+trigger1 = AnimElem = 16
+v = 10
+value = 0
+
+[State 813,2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 11
+ctrl = 1
+
+;riprendo la spada che si trovava a terra
+[StateDef 814]
+type = C
+movetype = A 
+  ;non è un attacco, ma definito come tale per rimuovere
+  ;la spada-Helper (impugnata)
+physics = C
+anim = 814
+velset = 0,0
+ctrl = 0
+
+[State 814, 0]
+type = PlaySnd
+trigger1 = time = 0
+value = 1, 7
+
+[State 814,1]
+type = VarSet
+trigger1 = time = 0
+v = 10
+value = 1
+
+[State 814,2]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 11
+ctrl = 1
+
+;programmazione spada impugnata
+[StateDef 6100]
+type = S
+anim = 6100
+
+[State 6100, 2]
+type = VarSet
+trigger1 = parent, fvar(14) < 0
+v = 14
+value = 0
+persistent = 0
+
+[State 6100, 3]
+type = VarSet
+trigger1 = parent, fvar(14) > 0
+v = 14
+value = -1
+persistent = 0
+
+[State 6100, 4]
+;angolo helper=0 quando spada non va ruotata. Ecco le condizioni:
+type = VarSet
+trigger1 = parent, stateno = 0
+trigger2 = parent, stateno = 11
+v = 15
+value = 0
+
+[State 6100, priority 0 ]
+type = SprPriority
+trigger1 = parent, anim = 11
+trigger2 = parent, anim = 20 && parent, animelem = 3
+trigger3 = parent, anim = 21 && parent, animelem = 3
+trigger4 = parent, anim = 40 && parent, animelem = 2
+;agginugere qui altri trigger
+value = 0 + var(14)
+
+[State 6100, priority 1 ]
+type = SprPriority
+trigger1 = parent, anim = 0
+trigger2 = parent, anim = 20 && parent, animelem = 5
+trigger3 = parent, anim = 21 && parent, animelem = 5
+trigger4 = parent, anim = 40 || parent, anim = 41
+trigger4 = parent, animelem = 1 || parent, animtime = 0
+;aggiungere qui altri trigger
+value = 1 + var(14)
+
+[State 6100, rotazioni]
+type = AngleDraw
+trigger1 = 1
+value = var(15)
+
+[State 6100, standing(var(15)=0)]
+type = VarSet
+trigger1 = parent, stateno = 0
+v = 15
+value = 0
+
+[State 6100, standing(1 e 5)]
+type = BindToParent
+triggerall = parent, anim = 0
+trigger1 = parent, animelem = 1 || parent, animtime = 0
+trigger2 = parent, animelem = 5
+trigger3 = parent, animelem = 6
+facing = 1
+pos = 20,-51
+
+[State 6100, standing(2-4)]
+type = BindToParent
+triggerall = parent, anim = 0
+trigger1 = parent, animelem = 2 
+trigger2 = parent, animelem = 3
+trigger3 = parent, animelem = 4
+facing = 1
+pos = 20,-52
+
+[State 6100, walk(1 e 6)]
+type = BindToParent
+trigger1 = parent, anim = 20
+trigger1 = parent, animelem = 1 || parent, animtime = 0
+trigger2 = parent, anim = 20
+trigger2 = parent, animelem = 6
+trigger3 = parent, anim = 21
+trigger3 = parent, animelem = 6
+trigger4 = parent, anim = 21
+trigger4 = parent, animelem = 1 || parent, animtime = 0
+facing = 1
+;pos = 20, -52
+pos = 15, -52
+time = -1
+
+[State 6100, walk(1 e 6) ( x rotaz)]
+type = VarSet
+trigger1 = parent, anim = 20
+trigger1 = parent, animelem = 1 || parent, animtime = 0
+trigger2 = parent, anim = 20
+trigger2 = parent, animelem = 6
+trigger3 = parent, anim = 21
+trigger3 = parent, animelem = 6
+trigger4 = parent, anim = 21
+trigger4 = parent, animelem = 1 || parent, animtime = 0
+v = 15
+value = 45
+
+[State 6100, walk(2)]
+type = BindToParent
+trigger1 = parent, anim = 20
+trigger1 = parent, animelem = 2
+trigger2 = parent, anim = 21
+trigger2 = parent, animelem = 5
+pos = 15, -52
+time = -1
+
+[State 6100, walk(2) (x rotaz)]
+type = VarSet
+trigger1 = parent, anim = 20
+trigger1 = parent, animelem = 2
+trigger2 = parent, anim = 21
+trigger2 = parent, animelem = 5
+v = 15
+value = 35
+
+[State 6100, walk(3)]
+type = BindToParent
+trigger1 = parent, anim = 20
+trigger1 = parent, animelem = 3
+trigger2 = parent, anim = 21
+trigger2 = parent, animelem = 4
+pos = 10, -46
+time = -1
+
+[State 6100, walk(3) (x rotaz)]
+type = VarSet
+trigger1 = parent, anim = 20
+trigger1 = parent, animelem = 3
+trigger2 = parent, anim = 21
+trigger2 = parent, animelem = 4
+v = 15
+value = 15
+
+[State 6100, walk(4)]
+type = BindToParent
+trigger1 = parent, anim = 20
+trigger1 = parent, animelem = 4
+trigger2 = parent, anim = 21
+trigger2 = parent, animelem = 3
+pos = 6, -46
+time = -1
+
+[State 6100, walk(4) (x rotaz)]
+type = VarSet
+trigger1 = parent, anim = 20
+trigger1 = parent, animelem = 4
+trigger2 = parent, anim = 21
+trigger2 = parent, animelem = 3
+v = 15
+value = 10
+
+[State 6100, walk(5)]
+type = BindToParent
+trigger1 = parent, anim = 20
+trigger1 = parent, animelem = 5
+trigger2 = parent, anim = 21
+trigger2 = parent, animelem = 2
+pos = 13, -52
+time = -1
+
+[State 6100, walk(5) (x rotaz)]
+type = VarSet
+trigger1 = parent, anim = 20
+trigger1 = parent, animelem = 5
+trigger2 = parent, anim = 21
+trigger2 = parent, animelem = 2
+v = 15
+value = 35
+persistent = 0
+
+[State 6100, salto(1-1)]
+;ma anche stand to crouch + crouch to stand
+type = BindToParent
+trigger1 = parent, anim = 40
+trigger1 = parent, animelem = 1 || parent, animtime = 0
+trigger2 = parent, anim = 10
+trigger2 = parent, animelem = 1 || parent, animtime = 0
+trigger3 = parent, anim = 12 && parent, animelem = 3
+trigger4 = parent, anim = 47 && parent, animelem = 1
+trigger5 = parent, anim = 47 && parent, animelem = 3
+pos = 21, -44
+time = -1
+
+[State 6100, salto(1-1) (x rotaz)]
+;ma anche stand to crouch + crouch to stand
+type = VarSet
+trigger1 = parent, anim = 40
+trigger1 = parent, animelem = 1 || parent, animtime = 0
+trigger2 = parent, anim = 10
+trigger2 = parent, animelem = 1 || parent, animtime = 0
+trigger3 = parent, anim = 12 && parent, animelem = 3
+trigger4 = parent, anim = 47 && parent, animelem = 1
+trigger5 = parent, anim = 47 && parent, animelem = 3
+v = 15
+value = 20
+
+[State 6100, salto(1-2)]
+;ma anche stand to crouch + crouch to stand
+type = BindToParent
+trigger1 = parent, anim = 40 && parent, animelem = 2
+trigger2 = parent, anim = 12
+trigger2 = parent, animelem = 1 || parent, animtime = 0
+trigger3 = parent, anim = 10 && parent, animelem = 3
+trigger4 = parent, anim = 47 && parent, animelem = 2
+pos = 21, -35
+time = -1
+
+[State 6100, salto (1-2) (x rotaz)]
+;ma anche stand to crouch + crouch to stand
+type = VarSet
+trigger1 = parent, anim = 40 && parent, animelem = 2
+trigger2 = parent, anim = 12
+trigger2 = parent, animelem = 1 || parent, animtime = 0
+trigger3 = parent, anim = 10 && parent, animelem = 3
+trigger4 = parent, anim = 47 && parent, animelem = 2
+v = 15
+value = 20
+
+[State 6100, crouching animation]
+type = BindToParent
+trigger1 = parent, stateno = 11
+pos = 20, -27
+time = -1
+
+[State 6100, salto (2-1 e 2-8)]
+type = BindToParent
+triggerall = parent, anim = 41 || parent, anim = 42 || parent, anim = 43
+trigger1 = parent, animelem = 1 || parent, animtime = 0
+trigger2 = parent, animelem = 8
+pos = 26, -72
+time = -1
+
+[State 6100, salto (2-1 e 2-8) (x rotaz)]
+type = VarSet
+triggerall = parent, anim = 41 || parent, anim = 42 || parent, anim = 43
+trigger1 = parent, animelem = 1 || parent, animtime = 0
+trigger2 = parent, animelem = 8
+v = 15
+value = 35
+
+[State 6100, salto (2-2 e 2-7)]
+type = BindToParent
+triggerall = parent, anim = 41 || parent, anim = 42 || parent, anim = 43
+trigger1 = parent, animelem = 2
+trigger2 = parent, animelem = 7
+pos = 27, -82
+time = -1
+
+[State 6100, salto (2-2 e 2-7) (x rotaz)]
+type = VarSet
+triggerall = parent, anim = 41 || parent, anim = 42 || parent, anim = 43
+trigger1 = parent, animelem = 2
+trigger2 = parent, animelem = 7
+v = 15
+value = 70
+
+[State 6100, salto (da 2-3 a 2-5)]
+type = BindToParent
+triggerall = parent, anim = 41 || parent, anim = 42 || parent, anim = 43
+trigger1 = parent, animelem = 3
+trigger2 = parent, animelem = 4
+trigger3 = parent, animelem = 5
+pos = 31, -88
+time = -1
+
+[State 6100, salto (da 2-3 a 2-5) (x rotaz)]
+type = VarSet
+triggerall = parent, anim = 41 || parent, anim = 42 || parent, anim = 43
+trigger1 = parent, animelem = 3
+trigger2 = parent, animelem = 4
+trigger3 = parent, animelem = 5
+v = 15
+value = 77
+
+[State 6100, salto (2-6)]
+type = BindToParent
+triggerall = parent, anim = 41 || parent, anim = 42 || parent, anim = 43
+trigger1 = parent, animelem = 6
+pos = 29, -86
+time = -1
+
+[State 6100, salto (2-6) (x rotaz)]
+type = VarSet
+triggerall = parent, anim = 41 || parent, anim = 42 || parent, anim = 43
+trigger1 = parent, animelem = 6
+v = 15
+value = 70
+
+;aggiungere qui altre eventuali condizioni x rappresentare la spada
+;negli state comuni
+
+[State 6100, perdita spada se sei "dizzy" e la avevi impugnata]
+type = ChangeState
+value = 3820
+trigger1 = parent, anim = 5300
+
+[State 6100, distruzione finale]
+type = DestroySelf
+trigger1 = parent, movetype = A || parent, movetype = H
+trigger2 = parent, stateno = 120
+trigger3 = parent, stateno = 121
+trigger4 = parent, stateno = 122
+trigger5 = parent, stateno = 130
+trigger6 = parent, stateno = 131
+trigger7 = parent, stateno = 132
+trigger8 = parent, stateno = 140
+trigger9 = parent, stateno = 141
+trigger10 = parent, stateno = 142
+trigger11 = parent, stateno = 170 || parent, stateno = 182
+
+;--------------------------------------------
+;--------------------------------------------
+
+[StateDef -3]
+
+; Riproduzione suoni gruppo 10 (1)
+[State -3, colpito leggermente]
+type = playsnd
+triggerall = time = 1
+triggerall = alive = 1
+trigger1 = stateno = 5000 && anim = 5000 ; stand high
+trigger2 = stateno = 5000 && anim = 5010 ; stand low
+trigger3 = stateno = 5010 && anim = 5020 ; crouch
+trigger4 = stateno = 5020 && anim = 5000 ; air high
+trigger5 = stateno = 5020 && anim = 5010 
+value = 10,ifelse(random>500,1,2)
+volume = 75
+channel = 0
+
+; Riproduzione suoni gruppo 10 (2)
+[State -3, colpito medio]
+type = playsnd
+triggerall = time = 1
+triggerall = alive = 1
+trigger1 = stateno = 5001 && anim = 5001 ; stand high
+trigger2 = stateno = 5001 && anim = 5011 ; stand low
+trigger3 = stateno = 5011 && anim = 5021 ; crouch
+trigger4 = stateno = 5021 && anim = 5001 ; air high
+trigger5 = stateno = 5021 && anim = 5011 
+value = 10,ifelse(random>500,2,3)
+volume = 75
+channel = 0
+
+; Riproduzione suoni gruppo 10 (3)
+[State -3, colpito forte]
+type = playsnd
+triggerall = time = 1
+triggerall = alive = 1
+trigger1 = stateno = 5002 && anim = 5002 ; stand high
+trigger2 = stateno = 5002 && anim = 5012 ; stand low
+trigger3 = stateno = 5012 && anim = 5022 ; crouch
+trigger4 = stateno = 5022 && anim = 5002 ; air high
+trigger5 = stateno = 5022 && anim = 5012 
+value = 10,ifelse(random>900,3,2)
+volume = 75
+channel = 0
+
+[State -3, Setfvar(14) ]
+type = VarSet
+trigger1 = roundstate = 1
+fv = 14
+value = Pos X
+
+[State -3, Degree priority if playernum = 2 (standing)]
+type = SprPriority
+triggerall = fvar(14) > 0
+trigger1 = statetype = S || statetype = C
+trigger1 = movetype != A
+trigger1 = movetype != H
+value = -1
+
+[State -3, Degree priority if playernum = 2 (air)]
+type = SprPriority
+triggerall = fvar(14) > 0
+triggerall = statetype = A
+trigger1 = movetype !=A
+trigger1 = movetype !=H
+value = 0
+
+[State -3, var(13)=0]
+type = VarSet
+triggerall = var(13) = 1
+trigger1 = NumHelper(10) = 0
+;trigger2 = var(10) != 1
+v = 13
+value = 0
+
+[State -3, var(4)=0]
+type = VarSet
+v = 4
+value = 0
+triggerall = var(4)!= 0
+trigger1 = roundstate = 1
+trigger2 = ctrl
+trigger2 = time = 3
+
+[State -3, Spada in tasca (solo in standing)]
+type = Explod
+triggerall = var(10) = 0
+triggerall = NumExplod(10) < 1
+trigger1 = stateno = 0
+anim = 6000
+id = 10
+bindtime = -1
+sprpriority = 1
+
+[State -3, Spada in tasca (crouching)]
+type = Explod
+triggerall = var(10) = 0
+triggerall = NumExplod(10) < 1
+trigger1 = stateno = 11
+anim = 6000
+id = 10
+bindtime = -1
+sprpriority = 1
+pos = -2,29
+
+[State -3, Rimozione Explod spada in tasca (solo in standing o crouch)]
+type = RemoveExplod
+triggerall = NumExplod(10) > 0
+trigger1 = var(10) != 0
+trigger2 = stateno != 0 && stateno !=11
+trigger2 = roundstate = 2
+id = 10
+
+[State -3, Spada impugnata negli state comuni]
+type = Helper
+triggerall = var(10) = 1
+triggerall = NumHelper(10) < 1
+trigger1 = movetype != A
+trigger1 = movetype != H
+trigger1 = stateno != 140 && stateno !=141 && stateno !=142
+trigger1 = anim != 5120
+trigger2 = (stateno = 620) && animelem = 9
+id = 10
+stateno = 6100
+pos = 20,-51

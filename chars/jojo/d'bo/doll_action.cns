@@ -1,0 +1,426 @@
+;--------------------------------------------------------------------------
+;RunFwd
+[StateDef 6100]
+type = S
+physics = N
+movetype = I
+anim = 6100
+velset = 8,0
+
+[State NoWalk]
+type = AssertSpecial
+trigger1 = 1
+flag = NoWalk
+
+[State End]
+type = ChangeState
+trigger1 = Facing = Parent,Facing
+trigger1 = Parent,Command != "holdfwd"
+trigger2 = Facing != Parent,Facing
+trigger2 = Parent,Command != "holdback"
+trigger3 = Time >= 60
+value = 0
+ctrl = 1
+
+;--------------------------------------------------------------------------
+;RunBack
+[StateDef 6105]
+type = S
+physics = N
+movetype = I
+anim = 6105
+velset = -8,0
+
+[State NoWalk]
+type = AssertSpecial
+trigger1 = 1
+flag = NoWalk
+
+[State End]
+type = ChangeState
+trigger1 = Facing != Parent,Facing
+trigger1 = Parent,Command != "holdfwd"
+trigger2 = Facing = Parent,Facing
+trigger2 = Parent,Command != "holdback"
+trigger3 = Time >= 60
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+;Win
+[StateDef 6180]
+type = S
+physics = S
+movetype = I
+anim = 6000
+ctrl = 0
+
+[State Null]
+type = ChangeAnim
+trigger1 = Parent,StateNo = [181,182]
+trigger1 = Anim = 6000
+value = IfElse(Random%2=0,6180,3103)
+
+;---------------------------------------------------------------------------
+; HITG_SHAKE
+[Statedef 9000]
+type    = S
+movetype= H
+physics = N
+velset = 0,0
+
+[State Parent Not Go To Hit State]
+type = VarSet
+trigger1 = Time = 0
+ignorehitpause = 1
+var(0) = 1
+
+[State 5000, 1] ;Anim for HIT_LIGHT to HIT_HARD
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) != [3,5]
+value = 9000 + GetHitVar(animtype)
+
+[State 5000, 2] ;Anim for HIT_BACK
+type = ChangeAnim
+trigger1 = Time = 0
+trigger1 = GetHitVar(animtype) = [3,5]
+value = 9010
+
+[State 5000, 3] ;Anim for HIT_UP/HIT_DIAGUP (only if it exists)
+type = Null;ChangeAnim
+trigger1 = Time = 0
+trigger1 = (GetHitVar(animtype) = [4,5]) && (SelfAnimExist(5047 + GetHitVar(animtype)))
+value = 5047 + GetHitVar(animtype) ;5051 - 4 + type
+
+[State 5000, 4] ;Freeze anim
+type = ChangeAnim
+trigger1 = Time > 0
+trigger1 = Anim != 9002
+trigger1 = Anim != 9010
+value = anim
+
+[State 5000, 5] ;State type gets set to aerial if getting hit up
+type = StateTypeSet
+trigger1 = Time = 0
+trigger1 = GetHitVar(yvel) != 0 && GetHitVar(fall)
+trigger2 = Pos Y != 0
+type = a
+
+[State 5000, 6]
+type = ChangeState
+trigger1 = HitShakeOver
+trigger1 = GetHitVar(yvel) = 0
+value = 9001 ;HITG_SLIDE
+
+[State 5000, 7]
+type = ChangeState
+trigger1 = HitShakeOver
+value = 9030
+
+[State 5000, FFB Light]
+type = ForceFeedback
+trigger1 = anim = 9000
+persistent = 0
+time = 6
+waveform = square
+
+[State 5000, FFB Medium]
+type = ForceFeedback
+trigger1 = anim = 9001
+persistent = 0
+time = 8
+waveform = sinesquare
+ampl = 110,-1,-.3
+
+[State 5000, FFB Hard]
+type = ForceFeedback
+trigger1 = anim = 9002
+trigger2 = anim = 9010
+persistent = 0
+time = 15
+waveform = sinesquare
+ampl = 140
+
+;---------------------------------------------------------------------------
+; HITG_SLIDE
+[Statedef 9001]
+type    = S
+movetype= H
+physics = S
+
+[State 5001, 1]
+type = HitVelSet
+trigger1 = Time = 0
+x = 1
+
+[State 5001, 2]
+type = ChangeAnim
+trigger1 = AnimTime = 0
+value = 9005 + GetHitVar(animtype)
+
+[State 5001, 3] ;Stop sliding back
+type = VelMul
+trigger1 = Time >= GetHitVar(slidetime)
+x = .6
+
+[State 5001, 4]
+type = VelSet
+trigger1 = HitOver
+x = 0
+
+[State 5001, 5]
+type = DefenceMulSet
+trigger1 = HitOver
+value = 1
+
+[State 5001, 6]
+type = ChangeState
+trigger1 = HitOver
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+; HITA_SHAKE
+[Statedef 9020]
+type    = A
+movetype= H
+physics = N
+velset = 0,0
+
+[State Parent Not Go To Hit State]
+type = VarSet
+trigger1 = Time = 0
+ignorehitpause = 1
+var(0) = 1
+
+[State 5020, 1] ;Anim for HIT_LIGHT to HIT_HARD
+type = ChangeAnim
+trigger1 = Time = 0
+value = 9010
+
+[State 5020, 5]
+type = ChangeState
+trigger1 = HitShakeOver
+value = 9030
+
+[State 5020, FFB Light]
+type = ForceFeedback
+trigger1 = anim = 9010
+persistent = 0
+time = 6
+waveform = square
+
+;---------------------------------------------------------------------------
+; HITA_UP (initial going up)
+[Statedef 9030]
+type    = A
+movetype= H
+physics = N
+ctrl = 0
+
+[State 5030, 1]
+type = VelAdd;Gravity
+trigger1 = 1
+y = GetHitVar(yaccel)
+
+[State 5030, 2]
+type = HitVelSet
+trigger1 = Time = 0
+x = 1
+y = 1
+
+[State 5030, 3]
+type = ChangeState
+trigger1 = HitOver
+trigger2 = Vel Y > 0    ;Hit ground
+trigger2 = Pos Y >= 10  ;.
+value = 9040 ;HITA_RECOV
+
+[State 5030, 5]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 9035 ;HITA_UP (transition)
+
+;---------------------------------------------------------------------------
+; HITA_UP_T (transition)
+[Statedef 9035]
+type    = A
+movetype= H
+physics = N
+
+[State 5035, 2]
+type = VelAdd
+trigger1 = 1
+y = GetHitVar(yaccel)
+
+[State 5035, 3]
+type = ChangeState
+trigger1 = HitOver  ;Hit is over
+trigger2 = AnimTime = 0 ;Animation over
+trigger3 = Vel Y > 0    ;Hit ground
+trigger3 = Pos Y >= 10  ;.
+trigger4 = Time = 0     ;No transition anim
+trigger4 = Anim != 5035 ;.
+value = 9040+HitFall*10 ;HITA_RECOV
+
+;---------------------------------------------------------------------------
+; HITA_RECOV (recovering in air, not falling)
+[Statedef 9040]
+type    = A
+movetype= H
+physics = N
+
+[State 5040, 2]
+type = ChangeAnim
+trigger1 = Time = 0
+value = 9040
+
+[State 5040,2]
+type = ChangeAnim
+trigger1 = Anim = 9040
+trigger1 = AnimTime = 0
+value = 6041
+
+[State 5040, 3]
+type = CtrlSet
+trigger1 = HitOver
+value = 1
+
+[State 5040, 4]
+type = StateTypeSet
+trigger1 = HitOver
+movetype = I
+
+[State 5040, 5]
+type = VelAdd
+trigger1 = 1
+y = GetHitVar(yaccel)
+
+[State 5040, 6]
+type = ChangeState
+trigger1 = Vel Y > 0
+trigger1 = Pos Y >= 0
+value = 52 ;JUMPLAND
+
+;---------------------------------------------------------------------------
+; HITA_FALL (knocked up, falling)
+[Statedef 9050]
+type    = A
+movetype= H
+physics = N
+
+[State 5050, 1] ;Change anim when done with transition
+type = ChangeAnim
+trigger1 = Time = 0
+value = 9040
+
+[State 5040,2]
+type = ChangeAnim
+trigger1 = Anim = 9040
+trigger1 = AnimTime = 0
+value = 6041
+
+[State 5050, 3] ;Gravity
+type = VelAdd
+trigger1 = 1
+y = Helper(1000),GetHitVar(yaccel)
+
+[State 5050, 4] ;Recover near ground
+type = ChangeState
+triggerall = Vel Y > 0
+triggerall = Pos Y >= -20
+triggerall = alive
+triggerall = Helper(1000),CanRecover
+trigger1 = Command = "recovery"
+value = 5200 ;HITFALL_RECOVER
+
+[State 5050, 5]; Recover in mid air
+type = ChangeState
+triggerall = Vel Y > -1
+triggerall = alive
+triggerall = Helper(1000),CanRecover
+trigger1 = Command = "recovery"
+value = 5210 ;HITFALL_AIRRECOVER
+
+[State 5050, 6]
+type = ChangeState
+trigger1 = Vel Y > 0
+trigger1 = Pos Y >= ifelse((anim = [5051,5059]) || (anim = [5061,5069]), 0, 25)
+value = 52 ;HIT_BOUNCE
+
+;---------------------------------------------------------------------------
+; HIT_LIEDOWN
+[Statedef 9110]
+type    = L
+movetype= H
+physics = N
+anim = IfElse((Anim=1002)||(Anim=1005)||(Anim=3001)||(Anim=3104)|(Anim=3106),1007,9100+(Anim!=9050)*10)
+ctrl = 0
+
+[State HitGround Then Lie]
+type = ChangeAnim
+trigger1 = Anim = 1007
+trigger1 = AnimTime = 0
+value = 9110
+
+[State HitGround Then Lie]
+type = ChangeAnim
+trigger1 = Anim = 9100
+trigger1 = AnimTime = 0
+value = 9140
+
+[State 5110, 5]
+type = PosSet
+trigger1 = Time = 0
+y = 0
+
+[State 5110, 8]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 5110, 13] ;Friction
+type = VelMul
+trigger1 = 1
+x = 0.85
+
+;---------------------------------------------------------------------------
+;Spark
+[StateDef 30000]
+type = A
+physics = N
+movetype = I
+anim = 10000
+velset = 0,0
+ctrl = 0
+
+[State PalFX]
+type = PalFX
+trigger1 = 1
+time = 1
+mul = 256*(19-Time)/9.0,256*(19-Time)/9.0,256*(19-Time)/9.0
+
+[State Explod]
+type = Explod
+trigger1 = 1
+removetime = 1
+pausemovetime = 999
+anim = 4016
+ownpal = 0
+ontop = 1
+scale = exp(0.5*ln(Time))/4.24,exp(0.5*ln(Time))/4.24
+
+[State Explod]
+type = Explod
+trigger1 = Time >= 8
+removetime = 1
+pausemovetime = 999
+anim = 4017
+ownpal = 0
+ontop = 1
+scale = Time*Time/324.0,Time*Time/324.0
+
+[State End]
+type = DestroySelf
+trigger1 = Time >= 18

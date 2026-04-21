@@ -1,0 +1,1024 @@
+;YY
+;----rootdist yは正ならー５０の位置を目標、負なら＋５０しないとおかしくなります0なら・・？？
+;----長い方を基準にして何フレームで本体に着くか、フレーム数を決定。ex.75なら約10F、としてもう片方を10で割った数字に設定？
+;ex x>y(通常横配置に多い）vel x=-7.5,vel y = rootdist y / 10->rootdist y / rootdist x / 7.5
+;--本体が一定幅以上動いたと判断したら再設定して戻る
+;----------------
+[Statedef 8400];初期設定一回のみ
+type = A
+movetype =A
+physics = n
+ctrl = 0
+hitcountpersist = 1
+
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "px=%f,py=%f,rtx=%f,rty=%f,";ABY=%f\n"
+params =pos x,pos y,rootdist x,rootdist y,;ABS(rootdist y - 50)
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+text = "dx/=%f,dy/=%f,vx=%f,vy=%f,22=%d"
+params =rootdist x / 8,rootdist y / 7.5,vel x,vel y, var(22)
+
+[state 7000,test];
+type = Explod
+triggerall = !Numexplod(1500) 
+trigger1 = 1
+anim = 1575
+ID=1500 
+postype = p1
+pos = 0,10
+sprpriority = 2
+bindtime = -1
+removetime = -2
+ownpal=1
+scale = 1.0,1.0
+ignorehitpause =1
+persistent = 1
+
+[state 8000,];なんで消えない！？
+type = RemoveExplod
+trigger1 = anim = 1555
+trigger2 = rootdist y = [25,55];[40,50]  
+trigger2 = rootdist x = [-20,20]
+trigger3 = root,var(30) = 0
+ID=1500
+ignorehitpause = 1
+persistent = 1
+
+;---------------------------------------
+[state 8110,varset];手ぶらフラグ reset
+type = parentvarset
+trigger1 = rootdist y = [-10,10]  
+trigger1 = rootdist x = [-25,25]
+var(30) = 0
+ignorehitpause = 0
+
+[state 8110,vel]
+type = destroyself
+trigger1 = rootdist y = [-10,10]  
+trigger1 = rootdist x = [-25,25]
+ignorehitpause = 0
+
+;-----基本
+[state 8000x,nohit];無敵設定
+type = NotHitBy
+trigger1 = 1
+value = SCA, NA, SA, HA, NT, ST, HT ,NP, SP, HP
+time = 1
+ignorehitpause = 1
+
+[State 8000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1 
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =8090
+time = 1
+ignorehitpause = 1
+
+[State 8000x, 1];バグ用　本体が来ちゃったとき０に（有効かどうか不明
+type = Changestate
+trigger1 = !ishelper(0)
+value = 0
+ctrl = 1
+ignorehitpause = 1
+
+[state 8000,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+[State 8000x,noturn]
+type = AssertSpecial
+trigger1 =1
+flag = noautoturn
+flag2 = nowalk
+flag3 = noshadow
+ignorehitpause = 1
+
+;-------------------------移動新式：本体がある程度ずれたらVEL再設定へ、
+[state 8150,1]
+type = varset
+trigger1 = time = 0
+fvar(20) = root,pos x
+ignorehitpause = 1
+
+[state 8150,2]
+type = varset
+trigger1 = time = 0
+fvar(21) = root,pos y
+ignorehitpause = 1
+
+;----------------------基本移動量＝8
+[state 8150,5];-217,90 横が多い、通常横配置など
+type = velset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+triggerall = ABS(rootdist y - 45) != 0
+trigger1 = time = 0
+trigger1 = ABS(rootdist x) > ABS(rootdist y - 50) 
+x = ifelse(rootdist x < 0,-8.0,8.0) 
+y = (ABS(rootdist y - 45) / ABS(rootdist x / 8)) * ifelse(root,pos y - 50 < pos y,-1,1)
+ignorehitpause = 1
+
+[state 8150,6];上に配置など、縦が多い 100 150
+type = velset
+triggerall = rootdist x != 0
+triggerall = rootdist y != 0
+triggerall = ABS(rootdist y - 45) != 0
+trigger1 = time = 0
+trigger1 = ABS(rootdist x) < ABS(rootdist y - 50)
+x = (ABS(rootdist x) / ABS(rootdist y / 8)) * ifelse(rootdist x < 0,-1,1)
+y = ifelse(root,pos y - 50 < pos y,-8,8)
+ignorehitpause = 1
+
+[state 8150,5];0除算対策3
+type = velset
+triggerall = rootdist x = 0
+trigger1 = time = 0
+x = 0
+y = ifelse(root,pos y - 50 < pos y,-7,7)
+ignorehitpause = 1
+
+[state 8150,5];0除算対策3
+type = velset
+triggerall = rootdist y = 0
+trigger1 = time = 0
+x = ifelse(rootdist x < 0,-8,8)
+y = 0
+ignorehitpause = 1
+
+[state 8150,5];0除算対策3
+type = velset
+triggerall = ABS(rootdist y - 45) = 0
+trigger1 = time = 0
+x = ifelse(rootdist x < 0,-8,8)
+y = 0
+ignorehitpause = 1
+
+[state 8150,5];不動対策
+type = velset
+triggerall = root,pos y = 0 && pos y = 0
+trigger1 = time = 0
+y = -7
+ignorehitpause = 1
+
+;意味不明バグ対策as地面配置でXが20前後、ワープ状態になる→たぶん上の式でとんでもない数字になる？？？
+;yは45引くので、もし+５であれば-40、で内部的に位置がずれる符号逆転のせい？
+[state 8150,5];
+type = velset
+triggerall = time = 0
+trigger1 = rootdist y > 0 && rootdist y - 45 <= 0
+x = ifelse(rootdist x < 0,-7,7)
+ignorehitpause = 1
+
+[state 8510,];移動開始
+type = changestate
+trigger1 = time = 0
+value = 8410
+
+;-----------------------------------------------------
+[Statedef 8410];実際に動くところ＆攻撃など
+type = A
+movetype =A
+physics = n
+ctrl = 0
+hitcountpersist = 1
+
+[state 7000,test];
+type = Explod
+triggerall = !Numexplod(1500) 
+trigger1 = 1
+anim = 1575
+ID=1500 
+postype = p1
+pos = 0,10
+sprpriority = 2
+bindtime = -1
+removetime = -2
+ownpal=1
+scale = 1.0,1.0
+ignorehitpause =1
+persistent = 1
+
+[state 8000,];なんで消えない！？
+type = RemoveExplod
+trigger1 = anim = 1555
+trigger2 = rootdist y = [25,55];[40,50]  
+trigger2 = rootdist x = [-20,20]
+trigger3 = root,var(30) = 0
+ID=1500
+ignorehitpause = 1
+persistent = 1
+
+[State 1800, 1]
+type = HitDef
+triggera = anim = 1570
+trigger1 = time = 0
+attr = A, SA                     ;立ち状態で、通常の攻撃(ｓは立ち、ｎは通常、aは攻撃を表す)
+damage = floor(20 * fvar(0)),1                   ;ダメージ量（左が当たった時、右はガードした時）
+animtype = hard                 ;当てた時の相手のポーズ（light/midium/hard/back）から選択
+guardflag = MA                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitflag = MAF                    ;当てる事のできる条件
+priority = 3             ;攻撃の優先権（0弱い　4通常　7強い
+pausetime = 5, ifelse(root,var(25) = 0,17,25)                    
+sparkno = -1;2000;s6300   
+guard.sparkno = -1;752;S6150
+sparkxy = 0, -20               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound   = s205, 7
+guardsound = s150, 1
+ground.type = High               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime =25             ;相手が後にすべる時間
+ground.hittime  = 20             ;コンボが繋がる時間（高くしすぎない事）
+ground.velocity = -9             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可）
+air.type = High                  ;空中で相手がくらった場所（上と同じ）
+air.velocity = root,fvar(5), root,fvar(2) / 4 + root,fvar(6);-2.5, -6.5  
+air.hittime = 20                 ;空中でコンボが繋がる時間
+getpower = 30,15
+
+;----------------汎用大ヒットS部
+[state 200x,atc efe];hit guardエフェクト  大（必殺以上）絵揃ったらヘルパーに?がーどとひっと分ける
+type = Explod
+triggerall = numtarget
+trigger1 = movecontact
+anim =ifelse(target,gethitvar(guarded) = 0,6300+ random % 4,6152)
+ID=200
+pos = 0,-5
+postype = p1
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+;-----基本
+[state 8000x,nohit];無敵設定
+type = NotHitBy
+trigger1 = 1
+value = SCA, NA, SA, HA, NT, ST, HT ,NP, SP, HP
+time = 1
+ignorehitpause = 1
+
+[State 8000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1 
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =8090
+time = 1
+ignorehitpause = 1
+
+[State 8000x, 1];バグ用　本体が来ちゃったとき０に（有効かどうか不明
+type = Changestate
+trigger1 = !ishelper(0)
+value = 0
+ctrl = 1
+ignorehitpause = 1
+
+[state 8000,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+[State 8000x,noturn]
+type = AssertSpecial
+trigger1 =1
+flag = noautoturn
+flag2 = nowalk
+flag3 = noshadow
+ignorehitpause = 1
+
+[state 8110,];本体被攻撃で（ガードも？）攻撃判定消失アニメを変えて見る
+type = changeanim
+value = 1555
+triggerall = anim = 1570
+trigger1 = root,movetype = h
+ignorehitpause = 1
+
+[state 8110,];本体被攻撃で（ガードも？）攻撃判定消失アニメを変えて見る
+type = changeanim
+value = 1555
+triggerall = anim = 1570
+trigger1 = movecontact
+ignorehitpause = 0
+
+;---------------------------------------
+[state 8110,varset];手ぶらフラグ reset
+type = parentvarset
+trigger1 = rootdist y = [30,60];[40,50]  
+trigger1 = rootdist x = [-12,12]
+var(30) = 0
+ignorehitpause = 0
+
+[state 8110,vel]
+type = destroyself
+trigger1 = rootdist y = [30,60];[40,50]  
+trigger1 = rootdist x = [-12,12]
+ignorehitpause = 0
+
+[state 8510,];ある程度位置がずれたら再設定に8420
+type = changestate
+triggerall = time != 0; && time % 5 =0
+trigger1 = root,pos x + 40 > fvar(20)
+trigger2 = root,pos x - 40 > fvar(20)
+trigger3 = root,pos y + 40 > fvar(21)
+trigger4 = root,pos y - 40 > fvar(21)
+trigger5 = vel x = 0 && vel y = 0
+value = 8420
+
+;-------------------------------------00実験
+[Statedef 8420];初期設定一回のみ
+type = A
+movetype =A
+physics = n
+ctrl = 0
+hitcountpersist = 1
+
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "px=%f,py=%f,rdx=%f,rdy=%f,\n"
+params =pos x,pos y,rootdist x,rootdist y
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+text = "rpx20=%f,rpy=%f,ratio=%f,vx=%f,vy=%f"
+params =fvar(20),fvar(21),fvar(22),vel x, vel y
+
+[state 8000,];なんで消えない！？
+type = RemoveExplod
+trigger1 = anim = 1555
+trigger2 = rootdist y = [25,55];[40,50]  
+trigger2 = rootdist x = [-20,20]
+trigger3 = root,var(30) = 0
+ID=1500
+ignorehitpause = 1
+persistent = 1
+
+;---------------------------------------
+[state 8110,varset];手ぶらフラグ reset
+type = parentvarset
+trigger1 = rootdist y = [-15,15]  
+trigger1 = rootdist x = [-30,30]
+var(30) = 0
+ignorehitpause = 0
+
+[state 8110,vel]
+type = destroyself
+trigger1 = rootdist y = [-15,15]  
+trigger1 = rootdist x = [-30,30]
+ignorehitpause = 0
+
+;-----基本
+[state 8000x,nohit];無敵設定
+type = NotHitBy
+trigger1 = 1
+value = SCA, NA, SA, HA, NT, ST, HT ,NP, SP, HP
+time = 1
+ignorehitpause = 1
+
+[State 8000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1 
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =8090
+time = 1
+ignorehitpause = 1
+
+[State 8000x, 1];バグ用　本体が来ちゃったとき０に（有効かどうか不明
+type = Changestate
+trigger1 = !ishelper(0)
+value = 0
+ctrl = 1
+ignorehitpause = 1
+
+[state 8000,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+[State 8000x,noturn]
+type = AssertSpecial
+trigger1 =1
+flag = noautoturn
+flag2 = nowalk
+flag3 = noshadow
+ignorehitpause = 1
+
+;fvar(20),root,pos x: fvar(21),rooto,pos y: fvar(22),縦横比
+;-------------------------移動新式：本体がある程度ずれたらVEL再設定へ、
+[state 8150,1];本体現在地X
+type = varset
+trigger1 = time = 0
+fvar(20) = root,pos x
+ignorehitpause = 1
+
+[state 8150,2];本体現在地Y
+type = varset
+trigger1 = time = 0
+fvar(21) = root,pos y
+ignorehitpause = 1
+
+;符号無視：大きい方が何Fでつくか計算、代入　基本量（スピード）=7、EX：X77y50>77/7で11f,移動量X=7(11F),Y移動量7/11f(11F)
+;distが０以外のとき、０除算注意のため
+[state 8150,2]
+type = varset
+triggerall = ABS(rootdist y) != 0
+triggerall = ABS(rootdist x) != 0
+trigger1 = time = 0
+fvar(22) = ifelse(ABS(rootdist x) > ABS(rootdist y),rootdist x / 7,rootdist y / 7)
+ignorehitpause = 1
+
+;distが０、もしくはdist x=dist y
+[state 8150,2]
+type = varset
+triggerall = time = 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+trigger3 = rootdist x = rootdist y
+fvar(22) = 0
+ignorehitpause = 1
+
+;----------------------基本移動量＝7
+[state 8150,5];-217,90 
+type = velset
+triggerall = fvar(22);0でないなら比計算されてるはず
+trigger1 = time = 0
+;trigger1 = ABS(rootdist x) > ABS(rootdist y - 50) 
+x = ABS(rootdist x / fvar(22)) * ifelse(rootdist x < 0,-1,1)
+y = ABS(rootdist y / fvar(22)) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time = 0
+trigger1 = rootdist y = 0
+trigger2 = rootdist x = 0
+x = ifelse(rootdist x = 0,0,7) * ifelse(rootdist x < 0,-1,1)
+y = ifelse(rootdist y = 0,0,7) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];同じ値で90.90　ともに0じゃない時（0除算　
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time = 0
+trigger1 = rootdist x = rootdist y
+trigger1 = rootdist x != 0 && rootdist y != 0
+x = ABS(rootdist x / 7) * ifelse(rootdist x < 0,-1,1);
+y = ABS(rootdist y / 7) * ifelse(rootdist y < 0,-1,1)
+ignorehitpause = 1
+
+[state 8150,5];
+type = velset
+triggerall = !fvar(22);0の時は特殊
+triggerall = time = 0
+trigger1 = rootdist x = rootdist y
+trigger1 = rootdist x = 0 && rootdist y = 0
+x = 0
+y = 0
+ignorehitpause = 1
+
+[state 8510,];移動開始
+type = changestate
+trigger1 = time = 0
+value = 8430
+
+;-----------------------------------------------------
+[Statedef 8430];実際に動くところ＆攻撃など
+type = A
+movetype =A
+physics = n
+ctrl = 0
+hitcountpersist = 1
+
+[state -2, displayb]
+type = displaytoclipboard
+trigger1 = 1
+text = "px=%f,py=%f,rdx=%f,rdy=%f,\n"
+params =pos x,pos y,rootdist x,rootdist y
+
+[state -2, displayb]
+type = appendtoclipboard
+trigger1 = 1
+text = "rpx20=%f,rpy=%f,ratio=%f,vx=%f,vy=%f"
+params =fvar(20),fvar(21),fvar(22),vel x, vel y
+
+[state 7000,test];
+type = Explod
+triggerall = !Numexplod(1500) 
+trigger1 = 1
+anim = 1575
+ID=1500 
+postype = p1
+pos = 0,-35
+sprpriority = 2
+bindtime = -1
+removetime = -2
+ownpal=1
+scale = 1.0,1.0
+ignorehitpause =1
+persistent = 1
+
+[state 8000,];なんで消えない！？
+type = RemoveExplod
+trigger1 = anim = 1555
+trigger2 = rootdist y = [25,55];[40,50]  
+trigger2 = rootdist x = [-20,20]
+trigger3 = root,var(30) = 0
+ID=1500
+ignorehitpause = 1
+persistent = 1
+
+[State 1800, 1]
+type = HitDef
+triggera = anim = 1570
+trigger1 = time = 0
+attr = A, SA                     ;立ち状態で、通常の攻撃(ｓは立ち、ｎは通常、aは攻撃を表す)
+damage = floor(20 * fvar(0)),1                   ;ダメージ量（左が当たった時、右はガードした時）
+animtype = hard                 ;当てた時の相手のポーズ（light/midium/hard/back）から選択
+guardflag = MA                   ;ガードできる状態（ｍaは全ての状態でガード可能）
+hitflag = MAF                    ;当てる事のできる条件
+priority = 3             ;攻撃の優先権（0弱い　4通常　7強い
+pausetime = 5, ifelse(root,var(25) = 0,17,25)                    
+sparkno = -1;2000;s6300   
+guard.sparkno = -1;752;S6150
+sparkxy = 0, -20               ;ヒットエフェクトを表示する場所（相手の座標で）
+hitsound   = s205, 7
+guardsound = s150, 1
+ground.type = High               ;相手のくらった場所（High：頭、体, Low：足, Trip：足払い）
+ground.slidetime =25             ;相手が後にすべる時間
+ground.hittime  = 20             ;コンボが繋がる時間（高くしすぎない事）
+ground.velocity = -9             ;地上で攻撃をくらった場合の相手の移動状況（ｘとｙで小数点可）
+air.type = High                  ;空中で相手がくらった場所（上と同じ）
+air.velocity = root,fvar(5), root,fvar(2) / 4 + root,fvar(6);-2.5, -6.5  
+air.hittime = 20                 ;空中でコンボが繋がる時間
+getpower = 30,15
+
+;----------------汎用大ヒットS部
+[state 200x,atc efe];hit guardエフェクト  大（必殺以上）絵揃ったらヘルパーに?がーどとひっと分ける
+type = Explod
+triggerall = numtarget
+trigger1 = movecontact
+anim =ifelse(target,gethitvar(guarded) = 0,6300+ random % 4,6152)
+ID=200
+pos = 0, -90 / 2
+postype = p1
+sprpriority = 3
+bindtime = 1
+removetime = -2
+ownpal=1
+scale = 0.5,0.5
+persistent = 0
+ignorehitpause = 1
+facing = -1
+
+;-----基本
+[state 8000x,nohit];無敵設定
+type = NotHitBy
+trigger1 = 1
+value = SCA, NA, SA, HA, NT, ST, HT ,NP, SP, HP
+time = 1
+ignorehitpause = 1
+
+[State 8000x, ride];テスト結果:P2stateno無効？すりぬける
+type = HitOverride
+trigger1 =1 
+attr = sca,na,sa,ha,np,sp,hp,nt,st,ht
+slot = 0
+stateno =8090
+time = 1
+ignorehitpause = 1
+
+[State 8000x, 1];バグ用　本体が来ちゃったとき０に（有効かどうか不明
+type = Changestate
+trigger1 = !ishelper(0)
+value = 0
+ctrl = 1
+ignorehitpause = 1
+
+[state 8000,]
+type = playerpush
+trigger1 = 1
+time = 1
+value = 0
+ignorehitpause = 1
+
+[State 8000x,noturn]
+type = AssertSpecial
+trigger1 =1
+flag = noautoturn
+flag2 = nowalk
+flag3 = noshadow
+ignorehitpause = 1
+
+[state 8110,];本体被攻撃で（ガードも？）攻撃判定消失アニメを変えて見る
+type = changeanim
+value = 1555
+triggerall = anim = 1570
+trigger1 = root,movetype = h
+ignorehitpause = 1
+
+[state 8110,];本体被攻撃で（ガードも？）攻撃判定消失アニメを変えて見る
+type = changeanim
+value = 1555
+triggerall = anim = 1570
+trigger1 = movecontact
+ignorehitpause = 0
+
+;---------------------------------------
+[state 8110,varset];手ぶらフラグ reset
+type = parentvarset
+trigger1 = rootdist y = [-10,-10];[40,50]  
+trigger1 = rootdist x = [-12,12]
+var(30) = 0
+ignorehitpause = 0
+
+[state 8110,vel]
+type = destroyself
+trigger1 = rootdist y = [-10,10];[40,50]  
+trigger1 = rootdist x = [-12,12]
+ignorehitpause = 0
+
+[state 8510,];ある程度位置がずれたら再設定に8420
+type = changestate
+triggerall = time != 0; && time % 5 =0
+trigger1 = root,pos x + 40 > fvar(20)
+trigger2 = root,pos x - 40 > fvar(20)
+trigger3 = root,pos y + 40 > fvar(21)
+trigger4 = root,pos y - 40 > fvar(21)
+trigger5 = vel x = 0 && vel y = 0
+value = 8420
+
+;----------------------------はぐ移動００実験
+[Statedef 8460];ここから敵はりつきへるぱにむかってveladd
+type = A
+movetype =A
+physics = N
+ctrl = 0
+hitcountpersist = 1
+
+;-----------------------------------------共通基本
+[state 1410,];墜落カウント＋
+type = varadd
+trigger1 = time = 0
+var(14) = 0
+
+[state 1410,];もしアニメが違えば、変える
+type  =changeanim
+trigger1 = anim !=1400
+trigger1 = time = 0
+persstent = 0
+value = 1400
+
+[State 1100, sound];ぐるぐるこうかおん
+type = PlaySnd
+trigger1 = time = 0
+value = s1400,0
+persistent = 0
+channel = 2
+
+;----------ーーーーーーーーーーーーーーーーーーーーーーーーーー状態変化
+;分岐は、墜落、着地、R移動、空中行動、攻撃系（いくつかはcmdで？
+[state 1410,];ハグの時間切れで、強制フリーに移行
+type = changestate
+trigger1 =!numhelper(1850)
+trigger2 = var(30) != 1830
+value = 1440
+
+[state 1400,];着地。
+type = changestate
+trigger1 =1 
+trigger1 = vel y > 0 && pos y >= -10
+value = 52
+ctrl = 0
+
+[state 1400,];たまに目を回して落下->墜落  3回以上はランダムで10回いくと確実に墜落
+type = changestate
+triggerall =1
+trigger1 = var(14) >= 10
+trigger2 = random % var(14) >= 4 
+value = 1450
+ctrl = 0
+
+[state 1410,];わけて考えよう、真上跳ね・フリーに移行  YYが低いか　かさなった時 time=0で
+type = changestate
+triggerall = 0;numhelper(1850)
+triggerall = time = 0
+trigger1 = helper(1850),rootdist x = [-35,35]
+trigger1= helper(1850),rootdist y = [-30,100]
+trigger2 = helper(1850),rootdist x = [-35,35]
+value = 1445
+
+[state 1410,];動いてから（規定点達してから）フリーに移行 敵は接触判定ありなので範囲を広めにしておく
+type = changestate
+triggerall = numhelper(1850)
+triggerall = time > 0
+trigger1 = helper(1850),rootdist x = [-60,60]
+trigger1= helper(1850),rootdist y = [-60,60]
+trigger2 = helper(1850),rootdist x = [-60,60]
+trigger3= time >= 70
+value = 1440
+
+;-----------------------------vel　X設定
+[state 1410,];真上に跳ねない時のみ０に初期化？ ↑で先にちぇんすて移行だからこれだけでかくのいいかな
+type = velset
+triggerall = numhelper(1850)
+trigger1 = time = 0
+x = 0
+y = 0
+
+[state 8150,1];はりつきへるぱの現在地X
+type = varset
+triggerall = numhelper(1850)
+trigger1 = time = 0
+fvar(20) = helper(1850),pos x
+ignorehitpause = 1
+
+[state 8150,2];はりつきへるぱ現在地Y
+type = varset
+triggerall = numhelper(1850)
+trigger1 = time = 0
+fvar(21) = helper(1850),pos y
+ignorehitpause = 1
+
+;----------------------- 
+;--距離によって加速がかわってしまう・・・？つねに一定値をaddしないといけないので・・
+;---最大値は既定、増加値も一定・・？
+;原作、一定時間ごとに微妙に角度かわってる（再決定？してるように見えるけど・・・
+;--ハグ中は、敵動くから・・・どうしよ？とりあえずてすってみて
+[state 1400,x2];0除算に注意
+type = varset
+triggerall = numhelper(1850)
+trigger1 =  time =0
+fvar(14) = helper(1850),rootdist x + ifelse(helper(1850),rootdist x = 0,0.1,0)
+
+;---絵的に目標Ｙ点を下にずらす。そうすればーかさなるようになるはずだよ
+;なんだけど、YYが上の時おかしいけど・・使う時absしちゃうから?
+[state 1400,x2];ヨーヨーを原点0とするとより↑が負、下が正なのでたせばよい？ーらしい
+type = varset
+triggerall = numhelper(1850)
+trigger1 =  time = 0
+fvar(15) = helper(1850),rootdist y;新、0,0基準
+
+[state 1400,x2];距離大きい方を基準？
+type = varset
+triggerall = numhelper(1850)
+triggerall = helper(1850),rootdist y != 0; (helper(0),rootdist y - 25) != 0
+;triggerall = (helper(1850),rootdist y - 50) != 0
+trigger1 = time = 0
+fvar(16) = helper(1850),rootdist x  / helper(1850),rootdist y; ００基準
+
+[state 1400,x2];
+type = varset
+triggerall = numhelper(1850)
+triggerall = (helper(1850),rootdist x) != 0
+trigger1 = time = 0
+fvar(17) = helper(1850),rootdist y / (helper(1850),rootdist x)  ;00
+
+;----------最大値があるように見えるけど・・・？
+;一定値をたさないと、いけない。distだと近いと小さいし遠いとハヤすぎになる・・
+;pos参照して、vel-addするのはどうか。またはフリー移行直前にdistによって速度を足す・・？いや、攻撃いった時困る・・？
+;初期距離による係数を設定して、増加値を調節？・・・
+;ここでは数値だけfvarに設定して、実際に動くステートに戻す(再設定
+[State velx1];
+type = varset;add
+triggerall = numhelper(1850)
+triggerall = time = 0
+trigger1 = abs(fvar(14)) < abs(fvar(15))
+trigger1 =vel x < (6 * abs(fvar(16)))
+trigger1 =vel x > (-6 * abs(fvar(16)))
+fvar(24) = ifelse(helper(1850),rootdist x > 0,-0.3,0.3) * abs(fvar(16)); / fvar(16)
+;x = ifelse(helper(0),rootdist x > 0,-0.3,0.3) * abs(fvar(16)); / fvar(16)
+
+[State velx2];
+type = varset;veladd
+triggerall = numhelper(1850)
+triggerall = time = 0
+trigger1 = abs(fvar(14)) >= abs(fvar(15))
+trigger1 =vel x < 6
+trigger1 =vel x > -6
+fvar(24) = ifelse(helper(1850),rootdist x > 0,-0.3,0.3)
+;x = ifelse(helper(0),rootdist x > 0,-0.3,0.3)
+
+[State vely]
+type = varset;veladd
+triggerall = numhelper(1850)
+triggerall = time = 0
+trigger1 = abs(fvar(14)) < abs(fvar(15))
+trigger1 =vel y < 6
+trigger1 =vel y > -6
+fvar(25) = ifelse((fvar(15)) > 0,-0.3,0.3)
+;y = ifelse((fvar(15)) > 0,-0.3,0.3)
+
+;----------------------------------check! point  fvar(17)を探れ！
+[State vel]
+type = veladd
+triggerall =numhelper(1850)
+triggerall = time = 0
+trigger1 = abs(fvar(14)) >= abs(fvar(15))
+trigger1 =vel y < (6 * abs(fvar(17)))
+trigger1 =vel y > (-6 * abs(fvar(17)))
+fvar(25) = ifelse((fvar(15)) > 0,-0.3,0.3) * abs(fvar(17)) ; 
+;y = ifelse((fvar(15)) > 0,-0.3,0.3) * abs(fvar(17)) ; 
+
+[state 1410,];
+type = changestate
+trigger1 =numhelper(1850)
+trigger1 = time = 0
+value = 8465
+
+;------------------------------------------------------------実際に動く
+;--------------------------------------------------------------
+[Statedef 8465];8460で決めた数値でVELADD、ある程度ずれたと判断したら再設定へ
+type = A
+movetype =A
+physics = N
+ctrl = 0
+hitcountpersist = 1
+
+;----------ーーーーーーーーーーーーーーーーーーーーーーーーーー状態変化
+;分岐は、墜落、着地、R移動、空中行動、攻撃系（いくつかはcmdで？
+[state 1410,];ハグの時間切れで、強制フリーに移行
+type = changestate
+trigger1 =!numhelper(1850)
+trigger2 = var(30) != 1830
+value = 1440
+
+[state 1400,];着地。
+type = changestate
+trigger1 =1 
+trigger1 = vel y > 0 && pos y >= -10
+value = 52
+ctrl = 0
+
+[state 1410,]
+type = veladd
+trigger1 = abs(fvar(14)) < abs(fvar(15))
+trigger1 =vel x < (6 * abs(fvar(16)))
+trigger1 =vel x > (-6 * abs(fvar(16)))
+x = fvar(24)
+
+[state 1410,]
+type = veladd
+trigger1 = abs(fvar(14)) >= abs(fvar(15))
+trigger1 =vel x < 6
+trigger1 =vel x > -6
+x = fvar(24)
+
+[state 1410,]
+type = veladd
+trigger1 = abs(fvar(14)) < abs(fvar(15))
+trigger1 =vel y < 6
+trigger1 =vel y > -6
+y = fvar(25)
+
+[state 1410,]
+type = veladd
+trigger1 = abs(fvar(14)) >= abs(fvar(15))
+trigger1 =vel y < (6 * abs(fvar(17)))
+trigger1 =vel y > (-6 * abs(fvar(17)))
+y = fvar(25)
+
+[state 1410,];動いてから（規定点達してから）フリーに移行 敵は接触判定ありなので範囲を広めにしておく
+type = changestate
+triggerall = numhelper(1850)
+triggerall = time > 0
+trigger1 = helper(1850),rootdist x = [-60,60]
+trigger1= helper(1850),rootdist y = [-60,60]
+trigger2 = helper(1850),rootdist x = [-60,60]
+trigger3= time >= 70
+value = 1440
+
+[state 8510,];ある程度位置がずれたら再設定に8470
+type = changestate
+triggerall = numhelper(1850)
+triggerall = time != 0
+trigger1 = helper(1850),pos x + 40 > fvar(20)
+trigger2 = helper(1850),pos x - 40 > fvar(20)
+trigger3 = helper(1850),pos y + 40 > fvar(21)
+trigger4 = helper(1850),pos y - 40 > fvar(21)
+trigger5 = vel x = 0 && vel y = 0
+value = 8470
+
+[Statedef 8470];再設定専用、→一度きりしか行わないのがあるため
+type = A
+movetype =A
+physics = N
+ctrl = 0
+hitcountpersist = 1
+
+[state 8150,1];はりつきへるぱの現在地X
+type = varset
+triggerall = numhelper(1850)
+trigger1 = time = 0
+fvar(20) = helper(1850),pos x
+ignorehitpause = 1
+
+[state 8150,2];はりつきへるぱ現在地Y
+type = varset
+triggerall = numhelper(1850)
+trigger1 = time = 0
+fvar(21) = helper(1850),pos y
+ignorehitpause = 1
+
+;----------------------- 
+;--距離によって加速がかわってしまう・・・？つねに一定値をaddしないといけないので・・
+;---最大値は既定、増加値も一定・・？
+;原作、一定時間ごとに微妙に角度かわってる（再決定？してるように見えるけど・・・
+;--ハグ中は、敵動くから・・・どうしよ？とりあえずてすってみて
+[state 1400,x2];0除算に注意
+type = varset
+triggerall = numhelper(1850)
+trigger1 =  time =0
+fvar(14) = helper(1850),rootdist x + ifelse(helper(1850),rootdist x = 0,0.1,0)
+
+;---絵的に目標Ｙ点を下にずらす。そうすればーかさなるようになるはずだよ
+;なんだけど、YYが上の時おかしいけど・・使う時absしちゃうから?
+[state 1400,x2];ヨーヨーを原点0とするとより↑が負、下が正なのでたせばよい？ーらしい
+type = varset
+triggerall = numhelper(1850)
+trigger1 =  time = 0
+fvar(15) = helper(1850),rootdist y;新、0,0基準
+
+[state 1400,x2];距離大きい方を基準？
+type = varset
+triggerall = numhelper(1850)
+triggerall = helper(1850),rootdist y != 0; (helper(0),rootdist y - 25) != 0
+;triggerall = (helper(1850),rootdist y - 50) != 0
+trigger1 = time = 0
+fvar(16) = helper(1850),rootdist x  / helper(1850),rootdist y; ００基準
+
+[state 1400,x2];
+type = varset
+triggerall = numhelper(1850)
+triggerall = (helper(1850),rootdist x) != 0
+trigger1 = time = 0
+fvar(17) = helper(1850),rootdist y / (helper(1850),rootdist x)  ;00
+
+;----------最大値があるように見えるけど・・・？
+;一定値をたさないと、いけない。distだと近いと小さいし遠いとハヤすぎになる・・
+;pos参照して、vel-addするのはどうか。またはフリー移行直前にdistによって速度を足す・・？いや、攻撃いった時困る・・？
+;初期距離による係数を設定して、増加値を調節？・・・
+;ここでは数値だけfvarに設定して、実際に動くステートに戻す(再設定
+[State velx1];
+type = varset;add
+triggerall = numhelper(1850)
+triggerall = time = 0
+trigger1 = abs(fvar(14)) < abs(fvar(15))
+trigger1 =vel x < (6 * abs(fvar(16)))
+trigger1 =vel x > (-6 * abs(fvar(16)))
+fvar(24) = ifelse(helper(1850),rootdist x > 0,-0.3,0.3) * abs(fvar(16)); / fvar(16)
+;x = ifelse(helper(0),rootdist x > 0,-0.3,0.3) * abs(fvar(16)); / fvar(16)
+
+[State velx2];
+type = varset;veladd
+triggerall = numhelper(1850)
+triggerall = time = 0
+trigger1 = abs(fvar(14)) >= abs(fvar(15))
+trigger1 =vel x < 6
+trigger1 =vel x > -6
+fvar(24) = ifelse(helper(1850),rootdist x > 0,-0.3,0.3)
+;x = ifelse(helper(0),rootdist x > 0,-0.3,0.3)
+
+[State vely]
+type = varset;veladd
+triggerall = numhelper(1850)
+triggerall = time = 0
+trigger1 = abs(fvar(14)) < abs(fvar(15))
+trigger1 =vel y < 6
+trigger1 =vel y > -6
+fvar(25) = ifelse((fvar(15)) > 0,-0.3,0.3)
+;y = ifelse((fvar(15)) > 0,-0.3,0.3)
+
+;----------------------------------check! point  fvar(17)を探れ！
+[State vel]
+type = veladd
+triggerall =numhelper(1850)
+triggerall = time = 0
+trigger1 = abs(fvar(14)) >= abs(fvar(15))
+trigger1 =vel y < (6 * abs(fvar(17)))
+trigger1 =vel y > (-6 * abs(fvar(17)))
+fvar(25) = ifelse((fvar(15)) > 0,-0.3,0.3) * abs(fvar(17)) ; 
+;y = ifelse((fvar(15)) > 0,-0.3,0.3) * abs(fvar(17)) ; 
+
+[state 1410,];
+type = changestate
+trigger1 =numhelper(1850)
+trigger1 = time = 0
+value = 8465
