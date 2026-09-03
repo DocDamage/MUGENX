@@ -8,6 +8,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from common.content_lint import run_lint
 from common.def_references import active_roster_def_paths, missing_def_references
 from common.paths import PROJECT_ROOT, repo_path
 
@@ -69,7 +70,6 @@ def resolve_system_script(system_def_path: Path) -> CheckResult:
 
     in_module_section = False
     script_value = None
-
     for raw_line in system_def_path.read_text(encoding="utf-8", errors="ignore").splitlines():
         line = raw_line.strip()
         if not line or line.startswith(";"):
@@ -105,9 +105,29 @@ def resolve_system_script(system_def_path: Path) -> CheckResult:
         status="missing",
         detail="Configured script path does not exist",
     )
+
+
+def check_common_lua(relative_path: str) -> CheckResult:
+    path = repo_path(*relative_path.split("/"))
+    if not path.is_file():
+        return CheckResult("MUGEN X CommonLua", relative_path, "missing", "Config file is missing")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return CheckResult("MUGEN X CommonLua", relative_path, "invalid", f"Invalid JSON: {exc}")
+    common_lua = data.get("CommonLua")
+    if common_lua == ["mugen_x_loop()"]:
+        return CheckResult("MUGEN X CommonLua", relative_path, "ok", "Deferred lifecycle entrypoint configured")
+    return CheckResult(
+        "MUGEN X CommonLua",
+        relative_path,
+        "invalid",
+        f"Expected ['mugen_x_loop()'], found {common_lua!r}",
+    )
+
+
 def roster_reference_failures(select_def_path: Path) -> list[dict[str, str]]:
     failures: list[dict[str, str]] = []
-
     for relative_def in active_roster_def_paths(select_def_path):
         def_path = repo_path("chars", *relative_def.split("/"))
         for failure in missing_def_references(def_path):
@@ -119,7 +139,6 @@ def roster_reference_failures(select_def_path: Path) -> list[dict[str, str]]:
                     "detail": failure["detail"],
                 }
             )
-
     return failures
 
 
@@ -169,9 +188,14 @@ def build_report(log_from_offset: int = 0) -> dict:
         make_file_check("data/fight.def", "Fight Configuration"),
         make_file_check("external/script/main.lua", "Main Lua Entry"),
         make_file_check("modules/init_all.lua", "Module Bootstrap"),
+        make_file_check("modules/module_registry.lua", "Module Registry"),
+        make_file_check("modules/runtime.lua", "Runtime Adapter"),
         make_file_check("stages/training.def", "Training Stage"),
+        make_file_check("tools/content_lint.py", "Content Lint CLI"),
     ]
     file_checks.append(resolve_system_script(repo_path("data", "system.def")))
+    file_checks.append(check_common_lua("save/config.json"))
+    file_checks.append(check_common_lua("engine/save/config.json"))
 
     dir_checks = [
         make_dir_check("chars", "Characters Directory"),
@@ -184,10 +208,14 @@ def build_report(log_from_offset: int = 0) -> dict:
     stage_defs = sum(1 for _ in repo_path("stages").rglob("*.def")) if repo_path("stages").is_dir() else 0
     module_files = sum(1 for _ in repo_path("modules").glob("*.lua")) if repo_path("modules").is_dir() else 0
 
-    critical_failures = [
-        result for result in (*file_checks, *dir_checks) if result.status != "ok"
-    ]
+    critical_failures = [result for result in (*file_checks, *dir_checks) if result.status != "ok"]
     reference_failures = roster_reference_failures(repo_path("data", "select.def"))
+    content_lint = run_lint(fix_overflow=False, write_reports=False)
+    content_error_count = int(content_lint.get("error_count", 0))
+
+    status = "ok"
+    if critical_failures or reference_failures or content_error_count:
+        status = "failed"
 
     return {
         "project_root": str(PROJECT_ROOT),
@@ -204,11 +232,13 @@ def build_report(log_from_offset: int = 0) -> dict:
             "count": len(reference_failures),
             "matches": reference_failures[:25],
         },
+        "content_lint": content_lint,
         "log_analysis": analyze_log(repo_path("Ikemen.log"), from_offset=log_from_offset),
         "summary": {
-            "status": "ok" if not critical_failures and not reference_failures else "failed",
+            "status": status,
             "critical_failure_count": len(critical_failures),
             "roster_reference_failure_count": len(reference_failures),
+            "content_lint_error_count": content_error_count,
         },
     }
 
@@ -220,7 +250,7 @@ def print_report(report: dict) -> None:
     print(f"Project root: {report['project_root']}")
     print()
 
-    print("Critical files:")
+    print("Critical files / runtime contract:")
     for result in report["checks"]["files"]:
         status = "OK" if result["status"] == "ok" else "FAIL"
         print(f"  [{status}] {result['name']}: {result['path']} ({result['detail']})")
@@ -248,10 +278,26 @@ def print_report(report: dict) -> None:
             "in active roster entries"
         )
         for match in roster_reference_failures["matches"]:
-            print(
-                "    "
-                f"{match['roster_entry']} [{match['field']}] -> {match['reference']}"
-            )
+            print(f"    {match['roster_entry']} [{match['field']}] -> {match['reference']}")
+    print()
+
+    content_lint = report["content_lint"]
+    print("Active content lint:")
+    if content_lint["error_count"] == 0:
+        print(
+            "  [OK] "
+            f"{content_lint['scanned_text_files']} active text files scanned; "
+            "no high-signal errors"
+        )
+    else:
+        print(
+            "  [FAIL] "
+            f"{content_lint['error_count']} error(s); "
+            f"{len(content_lint['quarantined_roster_entries'])} roster entry/entries quarantined"
+        )
+        for issue in content_lint["issues"][:10]:
+            location = issue["path"] + (f":{issue['line']}" if issue["line"] else "")
+            print(f"    {issue['code']} {location}: {issue['detail']}")
     print()
 
     log_analysis = report["log_analysis"]
@@ -281,6 +327,8 @@ def print_report(report: dict) -> None:
     else:
         print("VALIDATION FAILED")
         print(f"Critical failures: {report['summary']['critical_failure_count']}")
+        print(f"Roster reference failures: {report['summary']['roster_reference_failure_count']}")
+        print(f"Content lint errors: {report['summary']['content_lint_error_count']}")
     print("=" * 70)
 
 
