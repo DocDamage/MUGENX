@@ -1,8 +1,8 @@
 """Asset compilation helpers for generated MUGEN X content.
 
-The project does not vendor Elecbyte's compiler. `sprmake2` is discovered from
-MUGENX_SPRMAKE2, common repo-local locations, or PATH. Generated source PNGs
-must use `<group>-<index>.png` names so SFF IDs are deterministic.
+The project does not vendor Elecbyte's sprite compiler. `sprmake2` is discovered
+from MUGENX_SPRMAKE2, common repo-local locations, or PATH. SND v1.01 is simple
+enough to write directly, so numbered WAV sources are packed without a GUI tool.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ from pathlib import Path
 from common.paths import PROJECT_ROOT, repo_path
 
 SPRITE_RE = re.compile(r"^(?P<group>-?\d+)-(?P<index>-?\d+)\.png$", re.IGNORECASE)
+SOUND_RE = re.compile(r"^(?P<group>-?\d+)-(?P<index>-?\d+)\.wav$", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,13 @@ class SpriteSource:
     index: int
     axis_x: int
     axis_y: int
+
+
+@dataclass(frozen=True)
+class SoundSource:
+    path: Path
+    group: int
+    index: int
 
 
 def _png_size(path: Path) -> tuple[int, int]:
@@ -86,6 +94,25 @@ def collect_sprite_sources(directory: Path, *, axis_mode: str = "character") -> 
             )
         )
     return sorted(sprites, key=lambda item: (item.group, item.index, item.path.name.lower()))
+
+
+def collect_sound_sources(directory: Path) -> list[SoundSource]:
+    sounds: list[SoundSource] = []
+    for path in sorted(directory.glob("*.wav")):
+        match = SOUND_RE.match(path.name)
+        if not match:
+            continue
+        header = path.read_bytes()[:12]
+        if len(header) < 12 or header[:4] != b"RIFF" or header[8:12] != b"WAVE":
+            raise ValueError(f"Not a RIFF/WAVE source: {path}")
+        sounds.append(
+            SoundSource(
+                path=path,
+                group=int(match.group("group")),
+                index=int(match.group("index")),
+            )
+        )
+    return sorted(sounds, key=lambda item: (item.group, item.index, item.path.name.lower()))
 
 
 def write_sff_definition(directory: Path, output_name: str, *, axis_mode: str = "character") -> Path:
@@ -151,6 +178,43 @@ def compile_sff(
     return output_path
 
 
+def compile_snd(directory: Path, output_name: str) -> Path:
+    """Pack `<group>-<index>.wav` sources into Elecbyte SND v1.01."""
+    directory = directory.resolve()
+    sources = collect_sound_sources(directory)
+    if not sources:
+        raise ValueError(f"No <group>-<index>.wav sounds found in {directory}")
+
+    payloads = [(source, source.path.read_bytes()) for source in sources]
+    output_path = directory / output_name
+    first_offset = 512
+
+    with output_path.open("wb") as handle:
+        # Ikemen reads two uint16 version fields, then uint32 count/first offset.
+        handle.write(b"ElecbyteSnd\x00")
+        handle.write(struct.pack("<HHII", 1, 1, len(payloads), first_offset))
+        handle.write(b"\x00" * (512 - handle.tell()))
+
+        offset = first_offset
+        for index, (source, wav_data) in enumerate(payloads):
+            next_offset = 0
+            if index + 1 < len(payloads):
+                next_offset = offset + 16 + len(wav_data)
+            handle.write(
+                struct.pack(
+                    "<IIii",
+                    next_offset,
+                    len(wav_data),
+                    source.group,
+                    source.index,
+                )
+            )
+            handle.write(wav_data)
+            offset = next_offset
+
+    return output_path
+
+
 def compile_status(directory: Path, output_name: str, *, axis_mode: str = "character") -> dict:
     compiler = discover_sprmake2()
     sources = collect_sprite_sources(directory, axis_mode=axis_mode)
@@ -158,6 +222,7 @@ def compile_status(directory: Path, output_name: str, *, axis_mode: str = "chara
         "project_root": str(PROJECT_ROOT),
         "compiler": str(compiler) if compiler else None,
         "source_count": len(sources),
+        "sound_source_count": len(collect_sound_sources(directory)),
         "output": str(directory / output_name),
         "output_exists": (directory / output_name).is_file(),
         "axis_mode": axis_mode,
