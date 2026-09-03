@@ -60,7 +60,8 @@ def register_character(
 
     entry = def_reference.replace("\\", "/")
     if stage:
-        entry += f", {stage.replace('\\', '/')}"
+        normalized_stage = stage.replace("\\", "/")
+        entry += f", {normalized_stage}"
     lines.insert(bounds[1], entry)
     _atomic_write(select_path, "\n".join(lines) + "\n")
     return True
