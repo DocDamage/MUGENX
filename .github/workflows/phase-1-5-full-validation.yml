@@ -25,7 +25,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   full-runtime:
@@ -55,6 +55,24 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Repair targeted active-roster int32 overflows
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: |
+          python tools/content_lint.py --fix-overflow --no-write-report
+          if ($LASTEXITCODE -gt 1) { exit $LASTEXITCODE }
+
+          $changes = git status --porcelain -- chars
+          if ($changes) {
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -- chars
+            git commit -m "Clamp active roster int32 overflow literals"
+            git push origin "HEAD:${{ github.ref_name }}"
+          } else {
+            Write-Host "No int32 overflow fixes required."
+          }
 
       - name: Provision pinned Elecbyte sprmake2 toolchain
         shell: pwsh
