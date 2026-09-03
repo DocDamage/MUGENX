@@ -63,27 +63,33 @@ def discover_sprmake2() -> Path | None:
     return None
 
 
-def collect_sprite_sources(directory: Path) -> list[SpriteSource]:
+def collect_sprite_sources(directory: Path, *, axis_mode: str = "character") -> list[SpriteSource]:
+    if axis_mode not in {"character", "origin"}:
+        raise ValueError(f"Unsupported axis mode: {axis_mode}")
     sprites: list[SpriteSource] = []
     for path in sorted(directory.glob("*.png")):
         match = SPRITE_RE.match(path.name)
         if not match:
             continue
         width, height = _png_size(path)
+        if axis_mode == "origin":
+            axis_x, axis_y = 0, 0
+        else:
+            axis_x, axis_y = max(0, width // 2), max(0, height - 1)
         sprites.append(
             SpriteSource(
                 path=path,
                 group=int(match.group("group")),
                 index=int(match.group("index")),
-                axis_x=max(0, width // 2),
-                axis_y=max(0, height - 1),
+                axis_x=axis_x,
+                axis_y=axis_y,
             )
         )
     return sorted(sprites, key=lambda item: (item.group, item.index, item.path.name.lower()))
 
 
-def write_sff_definition(directory: Path, output_name: str) -> Path:
-    sprites = collect_sprite_sources(directory)
+def write_sff_definition(directory: Path, output_name: str, *, axis_mode: str = "character") -> Path:
+    sprites = collect_sprite_sources(directory, axis_mode=axis_mode)
     if not sprites:
         raise ValueError(f"No <group>-<index>.png sprites found in {directory}")
 
@@ -113,7 +119,13 @@ def write_sff_definition(directory: Path, output_name: str) -> Path:
     return definition
 
 
-def compile_sff(directory: Path, output_name: str, *, compiler: Path | None = None) -> Path:
+def compile_sff(
+    directory: Path,
+    output_name: str,
+    *,
+    compiler: Path | None = None,
+    axis_mode: str = "character",
+) -> Path:
     directory = directory.resolve()
     compiler = compiler or discover_sprmake2()
     if compiler is None:
@@ -122,7 +134,7 @@ def compile_sff(directory: Path, output_name: str, *, compiler: Path | None = No
             "under tools/ or engine/, or add it to PATH."
         )
 
-    definition = write_sff_definition(directory, output_name)
+    definition = write_sff_definition(directory, output_name, axis_mode=axis_mode)
     output_path = directory / output_name
     completed = subprocess.run(
         [str(compiler), "-o", output_name, definition.name],
@@ -139,13 +151,14 @@ def compile_sff(directory: Path, output_name: str, *, compiler: Path | None = No
     return output_path
 
 
-def compile_status(directory: Path, output_name: str) -> dict:
+def compile_status(directory: Path, output_name: str, *, axis_mode: str = "character") -> dict:
     compiler = discover_sprmake2()
-    sources = collect_sprite_sources(directory)
+    sources = collect_sprite_sources(directory, axis_mode=axis_mode)
     return {
         "project_root": str(PROJECT_ROOT),
         "compiler": str(compiler) if compiler else None,
         "source_count": len(sources),
         "output": str(directory / output_name),
         "output_exists": (directory / output_name).is_file(),
+        "axis_mode": axis_mode,
     }
