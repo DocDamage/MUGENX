@@ -22,6 +22,7 @@ dev.text = nil
 dev.small = nil
 dev.last_action = "F8 toggles dashboard"
 dev.key_latch = {}
+dev.input_latch = {}
 
 local function text_new(scale)
     if type(textImgNew) ~= "function" then return nil end
@@ -60,6 +61,16 @@ local function player_input(commands)
     if type(main) ~= "table" or type(main.f_input) ~= "function" then return false end
     local ok, value = pcall(main.f_input, {1}, commands)
     return ok and value == true
+end
+
+local function player_pressed(name, commands)
+    local pressed = player_input(commands)
+    if pressed and not dev.input_latch[name] then
+        dev.input_latch[name] = true
+        return true
+    end
+    if not pressed then dev.input_latch[name] = nil end
+    return false
 end
 
 local function count_table(value)
@@ -243,17 +254,21 @@ function dev.update()
     if key_pressed("F8") then
         dev.active = not dev.active
         dev.last_action = dev.active and "Dashboard opened" or "Dashboard closed"
+        dev.input_latch = {}
         return
     end
-    if not dev.active then return end
+    if not dev.active then
+        dev.input_latch = {}
+        return
+    end
 
-    if player_input({"$F"}) then
+    if player_pressed("next", {"$F"}) then
         dev.page = dev.page + 1
         if dev.page > #dev.pages then dev.page = 1 end
-    elseif player_input({"$B"}) then
+    elseif player_pressed("previous", {"$B"}) then
         dev.page = dev.page - 1
         if dev.page < 1 then dev.page = #dev.pages end
-    elseif player_input({"pal", "s"}) then
+    elseif player_pressed("confirm", {"pal", "s"}) then
         handle_confirm()
     end
 end
