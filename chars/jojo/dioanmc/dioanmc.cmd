@@ -2187,7 +2187,7 @@ type = Helper
 trigger1 = Var(5) = 1
 trigger1 = NumHelper(1000) = 0
 ignorehitpause = 1
-pausemovetime = 2147483647214748364799999999
+pausemovetime = 2147483647
 name = "The World"
 stateno = 60000
 keyctrl = 0
@@ -2386,7 +2386,7 @@ name = "AI"
 pos = 999,999
 stateno = 99999
 keyctrl = 1
-pausemovetime = 214748364721474836479999999
+pausemovetime = 2147483647
 id = 99999
 
 ;---------------------------------------------------------------------------
@@ -2398,7 +2398,7 @@ name = "Stand Bar"
 pos = 0,0
 stateno = 6000
 keyctrl = 0
-pausemovetime = 214748364721474836479999999
+pausemovetime = 2147483647
 id = 6000
 ownpal = 1
 

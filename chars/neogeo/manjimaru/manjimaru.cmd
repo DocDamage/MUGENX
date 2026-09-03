@@ -261,7 +261,7 @@ name = "AI"
 pos = 999,999
 stateno = 99999
 keyctrl = 1
-pausemovetime = 214748364721474836479999999
+pausemovetime = 2147483647
 id = 99999
 
 ;----------------------------------
