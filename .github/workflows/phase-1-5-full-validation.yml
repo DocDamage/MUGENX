@@ -56,22 +56,25 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Repair targeted active-roster int32 overflows
+      - name: Repair and quarantine broken active content
         if: github.event_name == 'push'
         shell: pwsh
         run: |
           python tools/content_lint.py --fix-overflow --no-write-report
           if ($LASTEXITCODE -gt 1) { exit $LASTEXITCODE }
 
-          $changes = git status --porcelain -- chars
+          python tools/apply_content_quarantine.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $changes = git status --porcelain -- chars data/select.def
           if ($changes) {
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -- chars
-            git commit -m "Clamp active roster int32 overflow literals"
+            git add -- chars data/select.def
+            git commit -m "Repair and quarantine broken active content"
             git push origin "HEAD:${{ github.ref_name }}"
           } else {
-            Write-Host "No int32 overflow fixes required."
+            Write-Host "No active-content repairs required."
           }
 
       - name: Provision pinned Elecbyte sprmake2 toolchain
