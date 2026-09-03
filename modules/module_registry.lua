@@ -1,25 +1,27 @@
 -- MUGEN X ENGINE - Canonical Module Registry
--- Classifies every first-party Lua module as active, experimental, or archive.
--- Only active modules are bootstrapped automatically.
+-- Classifies managed first-party Lua modules as active, experimental, or archive.
+-- Only active modules are bootstrapped automatically. Infrastructure modules
+-- (init_all, module_registry, runtime) are intentionally outside this list.
 
 local registry = {}
 
-registry.version = 2
+registry.version = 3
 registry.allowed_status = {active = true, experimental = true, archive = true}
 
 local specs = {
-    -- Runtime / presentation
-    {id = "settings_manager", status = "active", init = false, group = "runtime"},
-    {id = "polish_system", status = "active", init = true, group = "presentation"},
-    {id = "advanced_polish", status = "active", init = true, group = "presentation"},
-    {id = "vfx_polish", status = "active", init = true, group = "presentation"},
-    {id = "hyper_polish", status = "active", init = true, group = "presentation"},
-    {id = "visual_shaders", status = "active", init = true, group = "presentation"},
-    {id = "balance_system", status = "active", init = true, group = "combat"},
-    {id = "finishers", status = "active", init = true, group = "combat"},
-    {id = "expanded_finishers", status = "active", init = true, group = "combat"},
+    -- Legacy systems retained for development, but no longer presented as active
+    -- until their object-style/hypothetical APIs are replaced and smoke-tested.
+    {id = "settings_manager", status = "experimental", init = false, group = "runtime"},
+    {id = "polish_system", status = "experimental", init = true, group = "presentation"},
+    {id = "advanced_polish", status = "experimental", init = true, group = "presentation"},
+    {id = "vfx_polish", status = "experimental", init = true, group = "presentation"},
+    {id = "hyper_polish", status = "experimental", init = true, group = "presentation"},
+    {id = "visual_shaders", status = "experimental", init = true, group = "presentation"},
+    {id = "balance_system", status = "experimental", init = true, group = "combat"},
+    {id = "finishers", status = "experimental", init = true, group = "combat"},
+    {id = "expanded_finishers", status = "experimental", init = true, group = "combat"},
 
-    -- Phase 1-5 runtime integrations
+    -- Phase 1-5 runtime integrations. These are the default trusted runtime set.
     {id = "engine_sf2", status = "active", init = true, group = "combat"},
     {id = "engine_mvc", status = "active", init = true, group = "combat"},
     {id = "engine_ai", status = "active", init = true, group = "ai"},
@@ -37,7 +39,7 @@ local specs = {
     {id = "achievements", status = "active", init = true, group = "progression", depends = {"rpg_core"}},
     {id = "dev_menu", status = "active", init = true, group = "ui", lifecycle = {update = true, draw = true}},
 
-    -- Experimental systems: shipped, discoverable, but not auto-bootstrapped.
+    -- Experimental systems: shipped and discoverable, but never auto-bootstrapped.
     {id = "abyss_mode", status = "experimental", init = false, group = "modes"},
     {id = "ai_trainer", status = "experimental", init = false, group = "ai"},
     {id = "assist", status = "experimental", init = true, group = "combat"},
@@ -91,7 +93,7 @@ local specs = {
     {id = "wall_bounce", status = "experimental", init = true, group = "combat"},
     {id = "weather", status = "experimental", init = true, group = "presentation"},
 
-    -- Alternate/legacy orchestration entrypoints are retained for compatibility only.
+    -- Alternate/legacy orchestration entrypoints retained for compatibility only.
     {id = "engine_loader", status = "archive", init = false, group = "legacy"},
 }
 
