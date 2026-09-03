@@ -1,4 +1,4 @@
-name: Phase 1-5 Static Validation
+name: Phase 1-5 Full Validation
 
 on:
   push:
@@ -10,37 +10,57 @@ on:
     paths:
       - "modules/**"
       - "tools/**"
+      - "chars/**"
+      - "stages/**"
+      - "data/**"
+      - "external/**"
+      - "engine/**"
       - "save/config.json"
-      - "engine/save/config.json"
+      - "TEST_LAUNCH.bat"
       - ".github/workflows/phase-1-5-validation.yml"
 
 permissions:
   contents: read
 
 jobs:
-  static-validation:
+  full-validation:
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
-      - name: Checkout runtime and tooling surface
+      - name: Checkout full runtime workspace
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
           lfs: false
-          sparse-checkout: |
-            modules
-            tools
-            save
-            engine/save
-            data
-            external
-          sparse-checkout-cone-mode: true
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Run Phase 1-5 self-check
+      - name: Run full Phase 1-5 self-check
         shell: pwsh
-        run: python tools/phase_1_5_selfcheck.py --skip-content
+        run: python tools/phase_1_5_selfcheck.py
+
+      - name: Run canonical validator
+        shell: pwsh
+        run: python tools/validate_system.py
+
+      - name: Run bounded Ikemen startup smoke
+        shell: cmd
+        run: TEST_LAUNCH.bat --wait --capture-log --fail-on-log-errors --smoke-seconds 20 --no-pause
+
+      - name: Show smoke logs on failure
+        if: failure()
+        shell: pwsh
+        run: |
+          if (Test-Path logs) {
+            Get-ChildItem logs -File | ForEach-Object {
+              Write-Host "===== $($_.Name) ====="
+              Get-Content $_.FullName -Tail 200 -ErrorAction SilentlyContinue
+            }
+          }
+          if (Test-Path Ikemen.log) {
+            Write-Host "===== Ikemen.log ====="
+            Get-Content Ikemen.log -Tail 300 -ErrorAction SilentlyContinue
+          }
