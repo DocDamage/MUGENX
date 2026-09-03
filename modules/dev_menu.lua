@@ -1,245 +1,281 @@
--- ============================================================================
--- MUGEN X ENGINE - ADVANCED DASHBOARD (v7.1 - ORGANIZED)
--- ============================================================================
+-- MUGEN X ENGINE - Runtime Dashboard
+-- F8 toggles the overlay. Left/right cycle live system pages. The dashboard is
+-- read-only except for explicitly safe actions such as beginning a tournament.
+
+local runtime = require("runtime")
+local registry = require("module_registry")
+local engine_ai = require("engine_ai")
+local rpg = require("rpg_core")
+local weapons = require("weapon_system")
+local quests = require("rpg_quests")
+local achievements = require("achievements")
+local tournament = require("tournament")
+local trials = require("trials")
+local logger = require("logger")
 
 local dev = {}
-local config = require("settings_manager")
 
 dev.active = false
-dev.tab = 1 
-dev.selected = 1
-dev.log_lines = {}
-dev.ai_result = "" 
-dev.stats = {chars = 0, stages = 0, last_update = "Never"}
-dev.last_read_time = 0
+dev.page = 1
+dev.pages = {"RUNTIME", "AI", "RPG", "PROGRESS", "TOURNAMENT", "TRIALS", "TOOLS", "LOGS"}
+dev.text = nil
+dev.small = nil
+dev.last_action = "F8 toggles dashboard"
+dev.key_latch = {}
 
-local UI = {
-    x = 40, y = 40, w = 400, h = 300,
-    c_bg = {10, 10, 15, 230},
-    c_header = {60, 60, 90, 255},
-    c_text = {240, 240, 240, 255},
-    c_highlight = {255, 200, 0, 255},
-    c_dim = {100, 100, 100, 255},
-    c_value = {0, 255, 255, 255},
-    c_tooltip_bg = {0, 0, 0, 200}
+local function text_new(scale)
+    if type(textImgNew) ~= "function" then return nil end
+    local ok, image = pcall(textImgNew)
+    if not ok then return nil end
+    if scale and type(textImgSetScale) == "function" then
+        pcall(textImgSetScale, image, scale, scale)
+    end
+    return image
+end
+
+local function draw_line(image, x, y, text, r, g, b)
+    if not image then return end
+    if type(textImgSetText) == "function" then pcall(textImgSetText, image, tostring(text or "")) end
+    if type(textImgSetPos) == "function" then pcall(textImgSetPos, image, x, y) end
+    if type(textImgSetColor) == "function" then pcall(textImgSetColor, image, r or 240, g or 240, b or 240) end
+    if type(textImgDraw) == "function" then pcall(textImgDraw, image) end
+end
+
+local function key_pressed(key)
+    if type(getKey) ~= "function" then return false end
+    local ok, value = pcall(getKey, key)
+    if not ok then return false end
+    local pressed = value == true or (type(value) == "string" and value ~= "")
+    if pressed and not dev.key_latch[key] then
+        dev.key_latch[key] = true
+        if type(resetKey) == "function" then pcall(resetKey) end
+        return true
+    elseif not pressed then
+        dev.key_latch[key] = nil
+    end
+    return false
+end
+
+local function player_input(commands)
+    if type(main) ~= "table" or type(main.f_input) ~= "function" then return false end
+    local ok, value = pcall(main.f_input, {1}, commands)
+    return ok and value == true
+end
+
+local function count_table(value)
+    local count = 0
+    if type(value) == "table" then for _ in pairs(value) do count = count + 1 end end
+    return count
+end
+
+local function format_ai(slot)
+    local record = engine_ai.get_last(slot)
+    if not record then return "P" .. tostring(slot) .. ": no AI decision yet" end
+    return string.format(
+        "P%d: %s | AI %d | dist %.0f | state %s",
+        slot,
+        tostring(record.action_name),
+        tonumber(record.ai_level) or 0,
+        tonumber(record.distance) or 0,
+        tostring(record.state_no or "-")
+    )
+end
+
+local function runtime_lines()
+    local snapshot = type(mugen_x_registry_snapshot) == "function" and mugen_x_registry_snapshot() or nil
+    local counts = registry.counts()
+    local loaded = snapshot and snapshot.loaded or {}
+    local failures = snapshot and snapshot.failures or {}
+    local errors = runtime.get_errors()
+    return {
+        "Canonical module registry v" .. tostring(registry.version),
+        string.format("Active %d | Experimental %d | Archive %d", counts.active, counts.experimental, counts.archive),
+        string.format("Loaded %d | Bootstrap failures %d | Runtime errors %d", #loaded, #failures, #errors),
+        "Round state: " .. tostring(runtime.round_state()) .. " | Round: " .. tostring(runtime.round_no()),
+        "Mode: " .. tostring(runtime.game_mode()),
+        failures[1] and ("Latest bootstrap failure: " .. tostring(failures[#failures].id) .. " / " .. tostring(failures[#failures].phase)) or "Bootstrap failures: none recorded",
+        errors[1] and ("Latest runtime error: " .. tostring(errors[#errors].scope)) or "Runtime errors: none recorded",
+    }
+end
+
+local function ai_lines()
+    local p1 = runtime.snapshot(1)
+    local p2 = runtime.snapshot(2)
+    return {
+        format_ai(1),
+        format_ai(2),
+        p1 and ("P1: " .. tostring(p1.name) .. " | life " .. tostring(p1.life) .. "/" .. tostring(p1.life_max)) or "P1 unavailable",
+        p2 and ("P2: " .. tostring(p2.name) .. " | life " .. tostring(p2.life) .. "/" .. tostring(p2.life_max)) or "P2 unavailable",
+        "Generated MUGENX fighters consume _mugenx_ai_decision maps.",
+        "Legacy fighters keep their native Ikemen/MUGEN AI.",
+    }
+end
+
+local function rpg_lines()
+    local state = rpg.snapshot(1)
+    local weapon = weapons.equipped(1)
+    local inventory_count = count_table(state.inventory)
+    local next_xp = rpg.xp_for_next(state.level)
+    return {
+        "P1: " .. tostring(state.name),
+        string.format("Level %d | XP %d/%d | Gold %d", state.level, state.xp, next_xp, state.gold),
+        string.format(
+            "Bonuses: ATK %s | DEF %s | SPD %s | LIFE %s",
+            tostring(state.stats.attack_bonus or 0),
+            tostring(state.stats.defence_bonus or 0),
+            tostring(state.stats.speed_bonus or 0),
+            tostring(state.stats.max_life_bonus or 0)
+        ),
+        "Inventory item types: " .. tostring(inventory_count),
+        weapon and ("Weapon: " .. tostring(weapon.name) .. " | " .. tostring(weapon.rarity) .. " " .. tostring(weapon.element)) or "Weapon: none equipped",
+        string.format("Matches %d | Wins %d | Losses %d", state.counters.matches or 0, state.counters.wins or 0, state.counters.losses or 0),
+        "Save: save/rpg_data.json",
+    }
+end
+
+local function progress_lines()
+    local quest_status = quests.status(1)
+    local quest = quest_status.active
+    local ach = achievements.status(1)
+    local ret = {
+        "Quests completed: " .. tostring(quest_status.completed),
+        quest and ("Active: " .. tostring(quest.desc)) or "Active quest: none",
+        quest and string.format("Progress: %s/%s | Reward %s XP / %s Gold", tostring(quest.current), tostring(quest.target), tostring(quest.xp), tostring(quest.gold)) or "",
+        string.format("Achievements: %d/%d", ach.count or 0, achievements.total or 0),
+        "Trials completed: " .. tostring((rpg.ensure(1).counters or {}).trials or 0),
+    }
+    local queued = ach.queue and ach.queue[#ach.queue]
+    if queued then ret[#ret + 1] = "Latest unlock: " .. tostring(queued.title) end
+    return ret
+end
+
+local function tournament_lines()
+    local status = tournament.status()
+    local ret = {
+        "Roster entries available: " .. tostring(status.roster_count or 0),
+        status.active and string.format("Tournament active | Round %d | Match %d", status.round or 0, status.match or 0) or "Tournament inactive",
+    }
+    if status.current then
+        ret[#ret + 1] = tostring(status.current.p1.name) .. " VS " .. tostring(status.current.p2.name)
+        ret[#ret + 1] = "Load this pairing in Ikemen; real winner is recorded at match end."
+    elseif status.champion then
+        ret[#ret + 1] = "Champion: " .. tostring(status.champion.name)
+    else
+        ret[#ret + 1] = "Press confirm to build an 8-fighter bracket from select.def."
+    end
+    if status.error then ret[#ret + 1] = "Status: " .. tostring(status.error) end
+    return ret
+end
+
+local function trial_lines()
+    local status = trials.status()
+    return {
+        runtime.is_training() and "Training mode detected" or "Enter Training mode to record trial completions",
+        string.format("Trial %d/%d", status.index or 0, status.count or 0),
+        "Name: " .. tostring(status.name or "none"),
+        "Input: " .. tostring(status.input or "-"),
+        "Inputs are read from Ikemen command buffers, not simulated.",
+        status.error and ("Trial database error: " .. tostring(status.error)) or "Database: data/trials.json",
+    }
+end
+
+local function tool_lines()
+    return {
+        "Canonical maintenance commands:",
+        "python tools/validate_system.py",
+        "python tools/content_lint.py",
+        "python tools/content_lint.py --fix-overflow",
+        "python tools/ai_character_gen/generator.py NAME --style balanced",
+        "python tools/ai_stage_gen/stage_generator.py NAME",
+        "Set MUGENX_SPRMAKE2 if sprmake2 is not on PATH.",
+        "Generation registers content only after compile/reference validation.",
+    }
+end
+
+local function log_lines()
+    local errors = runtime.get_errors()
+    local ret = {
+        "Match log: " .. tostring(logger.path),
+        "Runtime error count: " .. tostring(#errors),
+        "Dashboard action: " .. tostring(dev.last_action),
+    }
+    local start = math.max(1, #errors - 3)
+    for index = start, #errors do
+        local err = errors[index]
+        if err then ret[#ret + 1] = tostring(err.scope) .. ": " .. tostring(err.error) end
+    end
+    if #errors == 0 then ret[#ret + 1] = "No runtime adapter errors recorded." end
+    return ret
+end
+
+local PAGE_RENDERERS = {
+    runtime_lines,
+    ai_lines,
+    rpg_lines,
+    progress_lines,
+    tournament_lines,
+    trial_lines,
+    tool_lines,
+    log_lines,
 }
 
-dev.tabs = {"DASH", "AI-TXT", "AI-IMG", "SETTINGS", "LAB", "ACTIONS", "LOGS"}
-
--- TEXT ACTIONS
-dev.ai_text_actions = {
-    {name = "💬 GEN TRASH TALK", type = "ai", mode = "trash_talk", desc = "Generate savage win quote"},
-    {name = "📖 GEN STORY INTRO", type = "ai", mode = "story", desc = "Generate dramatic intro"},
-    {name = "📜 GEN CHARACTER BIO", type = "ai", mode = "bio", desc = "Create backstory for P1"},
-    {name = "🎙️ GEN COMMENTARY", type = "ai", mode = "commentary", desc = "Generate hype announcer line"},
-    {name = "🎯 GEN DAILY MISSION", type = "ai", mode = "mission", desc = "Create a new challenge"}
-}
-
--- IMAGE ACTIONS
-dev.ai_img_actions = {
-    {name = "👤 GEN SPRITE (P1)", type = "img", mode = "sprite", desc = "Generate pixel art sprite for P1"},
-    {name = "🗡️ GEN WEAPON (SWORD)", type = "img", mode = "weapon", desc = "Generate a pixel art sword"},
-    {name = "🏟️ GEN STAGE (DOJO)", type = "img", mode = "stage", desc = "Generate a dojo background"},
-    {name = "🏙️ GEN STAGE (CITY)", type = "img", mode = "stage", desc = "Generate a city background"}
-}
-
-dev.settings_menu = {{section = "GAMEPLAY", items = {{id = "difficulty", name = "AI Difficulty", type = "slider", min = 1, max = 8, path = {"gameplay", "difficulty"}, desc = "How smart the CPU is"}}}}
-dev.lab_actions = {{name = "🧬 FUSE P1 + P2", type = "fuse", desc = "Create Hybrid Character"}}
-dev.maint_actions = {{name = "✨ ONE-CLICK MAINTENANCE", cmd = "maintenance", desc = "Fix Everything"}}
-
-dev.flat_settings = {}
-for _, sect in ipairs(dev.settings_menu) do
-    table.insert(dev.flat_settings, {type = "header", name = sect.section})
-    for _, item in ipairs(sect.items) do table.insert(dev.flat_settings, item) end
+local function handle_confirm()
+    if dev.page == 5 then
+        local status = tournament.status()
+        if not status.active then
+            local ok, detail = tournament.begin(8)
+            dev.last_action = ok and "Created 8-fighter tournament bracket" or ("Tournament start failed: " .. tostring(detail))
+        else
+            dev.last_action = "Tournament already active; current pairing shown on page"
+        end
+    else
+        dev.last_action = "No destructive action assigned to this page"
+    end
 end
 
 function dev.init()
-    -- UPDATED PATH: tools/dev_bridge.py
-    os.execute("start /B python tools/dev_bridge.py init")
-    print("🛠️  MUGEN X DASHBOARD v7.1 LOADED")
-end
-
-function dev.read_ai_output()
-    local f = io.open("ai_output.txt", "r")
-    if f then
-        dev.ai_result = f:read("*all")
-        f:close()
-    end
-end
-
-function dev.run_ai_text(action)
-    local p1_name = "Ryu" 
-    textImgSetText(dev.txt_status, "AI WRITING...")
-    local cmd = ""
-    -- UPDATED PATH: tools/llm_backend.py
-    if action.mode == "bio" then cmd = "python tools/llm_backend.py bio \"" .. p1_name .. "\" \"strong warrior\""
-    elseif action.mode == "commentary" then cmd = "python tools/llm_backend.py commentary \"a massive combo\""
-    else cmd = "python tools/llm_backend.py " .. action.mode .. " \"" .. p1_name .. "\" \"Ken\"" end
-    os.execute("start /B " .. cmd)
-end
-
-function dev.run_ai_img(action)
-    local p1_name = "Ryu"
-    textImgSetText(dev.txt_status, "AI PAINTING (Takes time)...")
-    local cmd = ""
-    -- UPDATED PATH: tools/image_gen_backend.py
-    if action.mode == "sprite" then cmd = "python tools/image_gen_backend.py sprite \"" .. p1_name .. "\" \"karate fighter stance\""
-    elseif action.mode == "weapon" then cmd = "python tools/image_gen_backend.py weapon \"sword\" \"fantasy sword\""
-    elseif action.mode == "stage" then 
-        local prompt = "dojo"
-        if action.desc:find("city") then prompt = "cyberpunk city" end
-        cmd = "python tools/image_gen_backend.py stage \"new_stage\" \"" .. prompt .. "\"" 
-    end
-    os.execute("start /B " .. cmd)
-end
-
-function dev.run_cmd(cmd)
-    textImgSetText(dev.txt_status, "RUNNING: " .. cmd .. "...")
-    -- UPDATED PATH: tools/dev_bridge.py
-    os.execute("start /B python tools/dev_bridge.py " .. cmd)
-end
-
--- Input Handler
-function dev.check_input()
-    local p1 = 1
-    local confirm = main.f_input(main.t_players[p1], "a") or main.f_input(main.t_players[p1], "start")
-    if main.f_input(main.t_players[p1], "F8") then return "toggle" end
-    if confirm then return "select" end
-    if main.f_input(main.t_players[p1], "$D") then return "down" end
-    if main.f_input(main.t_players[p1], "$U") then return "up" end
-    if main.f_input(main.t_players[p1], "$F") then return "right" end
-    if main.f_input(main.t_players[p1], "$B") then return "left" end
-    return nil
+    dev.text = text_new(1.0)
+    dev.small = text_new(0.82)
+    print("MUGEN X Runtime Dashboard loaded - F8 toggles overlay")
 end
 
 function dev.update()
-    local input = dev.check_input()
-    if input == "toggle" then 
+    if key_pressed("F8") then
         dev.active = not dev.active
-        sndPlay(sysSnd, 100, 0)
+        dev.last_action = dev.active and "Dashboard opened" or "Dashboard closed"
         return
     end
     if not dev.active then return end
 
-    if dev.tab == 2 and os.time() % 2 == 0 then dev.read_ai_output() end
-
-    if input == "right" then
-        dev.tab = dev.tab + 1
-        if dev.tab > 7 then dev.tab = 1 end
-        dev.selected = 1
-        sndPlay(sysSnd, 100, 0)
-    elseif input == "left" then
-        dev.tab = dev.tab - 1
-        if dev.tab < 1 then dev.tab = 7 end
-        dev.selected = 1
-        sndPlay(sysSnd, 100, 0)
-    elseif input == "down" then
-        dev.selected = dev.selected + 1
-        local max = 1
-        if dev.tab == 2 then max = #dev.ai_text_actions end
-        if dev.tab == 3 then max = #dev.ai_img_actions end
-        if dev.tab == 4 then max = #dev.flat_settings end
-        if dev.tab == 5 then max = #dev.lab_actions end
-        if dev.tab == 6 then max = #dev.maint_actions end
-        if dev.selected > max then dev.selected = 1 end
-        sndPlay(sysSnd, 100, 0)
-    elseif input == "up" then
-        dev.selected = dev.selected - 1
-        local max = 1
-        if dev.tab == 2 then max = #dev.ai_text_actions end
-        if dev.tab == 3 then max = #dev.ai_img_actions end
-        if dev.tab == 4 then max = #dev.flat_settings end
-        if dev.tab == 5 then max = #dev.lab_actions end
-        if dev.tab == 6 then max = #dev.maint_actions end
-        if dev.selected < 1 then dev.selected = max end
-        sndPlay(sysSnd, 100, 0)
-    elseif input == "select" then
-        if dev.tab == 2 then dev.run_ai_text(dev.ai_text_actions[dev.selected])
-        elseif dev.tab == 3 then dev.run_ai_img(dev.ai_img_actions[dev.selected])
-        elseif dev.tab == 6 then dev.run_cmd(dev.maint_actions[dev.selected].cmd) end
-        sndPlay(sysSnd, 100, 1)
+    if player_input({"$F"}) then
+        dev.page = dev.page + 1
+        if dev.page > #dev.pages then dev.page = 1 end
+    elseif player_input({"$B"}) then
+        dev.page = dev.page - 1
+        if dev.page < 1 then dev.page = #dev.pages end
+    elseif player_input({"pal", "s"}) then
+        handle_confirm()
     end
 end
 
 function dev.draw()
-    if not dev.active then return end
+    if not dev.active or not dev.text then return end
 
-    -- Draw Tabs
-    local tab_x = UI.x
-    for i, t in ipairs(dev.tabs) do
-        if i == dev.tab then
-            textImgSetColor(dev.txt_tab, UI.c_highlight[1], UI.c_highlight[2], UI.c_highlight[3])
-            textImgSetText(dev.txt_tab, "[" .. t .. "]")
-        else
-            textImgSetColor(dev.txt_tab, UI.c_dim[1], UI.c_dim[2], UI.c_dim[3])
-            textImgSetText(dev.txt_tab, " " .. t .. " ")
+    local title = string.format("MUGEN X | %s | %d/%d", dev.pages[dev.page], dev.page, #dev.pages)
+    draw_line(dev.text, 22, 28, title, 255, 210, 80)
+    draw_line(dev.small, 22, 48, "F8 close | Left/Right pages | Confirm action where available", 160, 190, 220)
+
+    local renderer = PAGE_RENDERERS[dev.page]
+    local lines = renderer and renderer() or {"Page unavailable"}
+    local y = 78
+    for _, line in ipairs(lines) do
+        if line ~= "" then
+            draw_line(dev.small, 30, y, line, 235, 235, 235)
+            y = y + 19
         end
-        textImgDraw(dev.txt_tab, tab_x, UI.y)
-        tab_x = tab_x + 55
     end
 
-    local content_y = UI.y + 40
-    local desc_text = ""
-    
-    if dev.tab == 1 then -- DASHBOARD
-        textImgSetColor(dev.txt_content, UI.c_text[1], UI.c_text[2], UI.c_text[3])
-        textImgSetText(dev.txt_content, "AI STATUS: " .. (io.open("models/tinyllama-1.1b-chat.Q4_K_M.gguf", "r") and "ONLINE" or "SIMULATION MODE"))
-        textImgDraw(dev.txt_content, UI.x + 10, content_y)
-
-    elseif dev.tab == 2 then -- AI TEXT
-        for i, act in ipairs(dev.ai_text_actions) do
-            if i == dev.selected then
-                textImgSetColor(dev.txt_content, UI.c_highlight[1], UI.c_highlight[2], UI.c_highlight[3])
-                textImgSetText(dev.txt_content, "> " .. act.name)
-                desc_text = act.desc
-            else
-                textImgSetColor(dev.txt_content, UI.c_text[1], UI.c_text[2], UI.c_text[3])
-                textImgSetText(dev.txt_content, "  " .. act.name)
-            end
-            textImgDraw(dev.txt_content, UI.x + 10, content_y + ((i-1)*20))
-        end
-        textImgSetColor(dev.txt_small, UI.c_value[1], UI.c_value[2], UI.c_value[3])
-        textImgSetText(dev.txt_small, "OUTPUT:\n" .. dev.ai_result)
-        textImgDraw(dev.txt_small, UI.x + 10, content_y + 150)
-
-    elseif dev.tab == 3 then -- AI IMG
-        for i, act in ipairs(dev.ai_img_actions) do
-            if i == dev.selected then
-                textImgSetColor(dev.txt_content, UI.c_highlight[1], UI.c_highlight[2], UI.c_highlight[3])
-                textImgSetText(dev.txt_content, "> " .. act.name)
-                desc_text = act.desc
-            else
-                textImgSetColor(dev.txt_content, UI.c_text[1], UI.c_text[2], UI.c_text[3])
-                textImgSetText(dev.txt_content, "  " .. act.name)
-            end
-            textImgDraw(dev.txt_content, UI.x + 10, content_y + ((i-1)*20))
-        end
-        textImgSetColor(dev.txt_small, UI.c_dim[1], UI.c_dim[2], UI.c_dim[3])
-        textImgSetText(dev.txt_small, "Images saved to /generated_assets/")
-        textImgDraw(dev.txt_small, UI.x + 10, content_y + 150)
-    end
-    
-    if desc_text ~= "" then
-        textImgSetColor(dev.txt_small, UI.c_value[1], UI.c_value[2], UI.c_value[3])
-        textImgSetText(dev.txt_small, "INFO: " .. desc_text)
-        textImgDraw(dev.txt_small, UI.x + 10, UI.y + 280)
-    end
+    draw_line(dev.small, 22, 224, dev.last_action, 120, 230, 180)
 end
 
--- Text images (fonts loaded later by engine)
-dev.txt_tab = textImgNew()
--- textImgSetFont(dev.txt_tab, 0)  -- Font loaded by engine automatically
-textImgSetScale(dev.txt_tab, 0.8, 0.8)
-
-dev.txt_content = textImgNew()
--- textImgSetFont(dev.txt_content, 0)  -- Font loaded by engine automatically
-
-dev.txt_small = textImgNew()
--- textImgSetFont(dev.txt_small, 0)  -- Font loaded by engine automatically
-textImgSetScale(dev.txt_small, 0.9, 0.9)
-
-dev.txt_status = textImgNew()
-
 return dev
-
-
