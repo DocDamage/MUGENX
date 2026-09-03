@@ -1,0 +1,116 @@
+name: Phase 1-5 Full Runtime Validation
+
+on:
+  push:
+    branches:
+      - phase-1-5-completion
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "chars/**"
+      - "data/**"
+      - "engine/**"
+      - "external/**"
+      - "modules/**"
+      - "stages/**"
+      - "tools/**"
+      - "save/**"
+      - "TEST_LAUNCH.bat"
+      - ".github/workflows/phase-1-5-full-validation.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: phase-1-5-full-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  full-runtime:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout active runtime and content
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          lfs: false
+          sparse-checkout: |
+            chars
+            data
+            engine
+            external
+            font
+            modules
+            save
+            sound
+            stages
+            tools
+          sparse-checkout-cone-mode: true
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Provision pinned Elecbyte sprmake2 toolchain
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $commit = "5ed02054fe5e80c24259b9da1f7d129b995676c9"
+          $toolRoot = Join-Path $PWD "tools\_mugen_toolchain"
+          New-Item -ItemType Directory -Force -Path $toolRoot | Out-Null
+          Push-Location $toolRoot
+          git init | Out-Host
+          git remote add origin https://github.com/Tunlan/mugen-1.1b1.git
+          git config core.sparseCheckout true
+          @(
+            "/sprmake2.exe",
+            "/Elecbyte.MUGEN.libs/",
+            "/Microsoft.VC90.CRT/"
+          ) | Set-Content -Encoding ascii .git/info/sparse-checkout
+          git fetch --depth 1 origin $commit | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "Unable to fetch pinned MUGEN toolchain commit" }
+          git checkout --detach FETCH_HEAD | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "Unable to checkout pinned MUGEN toolchain commit" }
+          Pop-Location
+
+          $compiler = (Resolve-Path (Join-Path $toolRoot "sprmake2.exe")).Path
+          "MUGENX_SPRMAKE2=$compiler" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "sprmake2 path: $compiler"
+          Get-FileHash $compiler -Algorithm SHA256 | Format-List | Out-Host
+
+      - name: Prove sprite compiler works
+        shell: pwsh
+        run: python tools/sprmake2_smoke.py
+
+      - name: Run full Phase 1-5 self-check
+        shell: pwsh
+        run: python tools/phase_1_5_selfcheck.py
+
+      - name: Run canonical preflight validator
+        shell: pwsh
+        run: python tools/validate_system.py
+
+      - name: Run launch preflight wrapper
+        shell: pwsh
+        run: cmd /c TEST_LAUNCH.bat --dry-run --no-pause
+
+      - name: Run bounded real Ikemen startup smoke
+        shell: pwsh
+        run: python tools/runtime_smoke.py --seconds 15
+
+      - name: Upload validation diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-1-5-runtime-diagnostics-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            logs/**
+            reports/**
+            Ikemen.log
