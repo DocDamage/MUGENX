@@ -15,6 +15,7 @@ import re
 import struct
 import tempfile
 import wave
+from collections import Counter
 from pathlib import Path
 
 from common.asset_compile import compile_snd, discover_sprmake2
@@ -143,14 +144,24 @@ def check_sprite_compiler() -> dict:
 
 
 def check_content() -> dict:
-    report = run_lint(fix_overflow=False, write_reports=False)
+    # Always persist diagnostics when the full content gate runs. A failed CI run
+    # should leave enough evidence to repair the corpus without reproducing it by hand.
+    report = run_lint(fix_overflow=False, write_reports=True)
     ok = report["error_count"] == 0
-    return result(
-        "Active content lint",
-        ok,
+    counts = Counter(issue["code"] for issue in report["issues"] if issue["severity"] == "error")
+    breakdown = ", ".join(f"{code}={count}" for code, count in counts.most_common()) or "none"
+    detail = (
         f"{report['scanned_text_files']} files; {report['error_count']} errors; "
-        f"{len(report['quarantined_roster_entries'])} quarantined roster entries",
+        f"{len(report['quarantined_roster_entries'])} quarantined roster entries; "
+        f"codes: {breakdown}"
     )
+    if report["issues"]:
+        examples = []
+        for issue in report["issues"][:8]:
+            location = issue["path"] + (f":{issue['line']}" if issue["line"] else "")
+            examples.append(f"{issue['code']}@{location}")
+        detail += "; first: " + ", ".join(examples)
+    return result("Active content lint", ok, detail)
 
 
 def parse_args() -> argparse.Namespace:
