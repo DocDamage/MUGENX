@@ -1,104 +1,233 @@
--- MUGEN X - RPG Core System (Master State)
-local rpg_core = {}
+-- MUGEN X - RPG Core
+-- Persistent, engine-safe progression state. Gameplay modules communicate with
+-- characters through Ikemen maps rather than mutating imaginary player fields.
 
--- Master State for Players
--- [ID] = { 
---   level=1, xp=0, xp_next=100, 
---   gold=0, 
---   stats={str=5, vit=5, dex=5, int=5, luk=5},
---   class="Novice",
---   inventory={}, -- { "Potion": 5, "Iron Sword": 1 }
---   equipment={ weapon=nil, armor=nil, accessory=nil },
---   skills={}, -- { "DoubleJump": true }
---   skill_points=0
--- }
-rpg_core.state = {
-    { 
-        level=1, xp=0, xp_next=100, gold=500, 
-        stats={str=5, vit=5, dex=5, int=5, luk=5}, 
-        class="Novice", 
-        inventory={["Potion"]=3}, 
-        equipment={weapon=nil, armor=nil, accessory=nil}, 
-        skills={}, skill_points=0 
-    },
-    { 
-        level=1, xp=0, xp_next=100, gold=500, 
-        stats={str=5, vit=5, dex=5, int=5, luk=5}, 
-        class="Novice", 
-        inventory={["Potion"]=3}, 
-        equipment={weapon=nil, armor=nil, accessory=nil}, 
-        skills={}, skill_points=0 
+local runtime = require("runtime")
+local rpg = {}
+
+rpg.VERSION = 2
+rpg.players = {}
+rpg.max_level = 99
+rpg.level_curve_base = 100
+
+local function copy_table(value)
+    if type(value) ~= "table" then return value end
+    local ret = {}
+    for key, child in pairs(value) do
+        ret[key] = copy_table(child)
+    end
+    return ret
+end
+
+local function default_player(slot)
+    local snapshot = runtime.snapshot(slot)
+    return {
+        slot = slot,
+        name = snapshot and snapshot.name or ("Player " .. tostring(slot)),
+        level = 1,
+        xp = 0,
+        gold = 0,
+        stats = {
+            attack_bonus = 0,
+            defence_bonus = 0,
+            speed_bonus = 0,
+            max_life_bonus = 0,
+        },
+        inventory = {},
+        equipment = {weapon = nil},
+        quests = {},
+        achievements = {},
+        counters = {
+            wins = 0,
+            losses = 0,
+            matches = 0,
+            trials = 0,
+            damage_dealt = 0,
+            blocks = 0,
+        },
     }
-}
-
-function rpg_core.add_item(id, item, amount)
-    amount = amount or 1
-    local inv = rpg_core.state[id].inventory
-    inv[item] = (inv[item] or 0) + amount
-    print(string.format("Player %d Gained %dx %s", id, amount, item))
 end
 
-function rpg_core.remove_item(id, item, amount)
-    amount = amount or 1
-    local inv = rpg_core.state[id].inventory
-    if (inv[item] or 0) >= amount then
-        inv[item] = inv[item] - amount
-        if inv[item] <= 0 then inv[item] = nil end
-        return true
+function rpg.ensure(slot)
+    slot = tonumber(slot) or 1
+    if not rpg.players[slot] then
+        rpg.players[slot] = default_player(slot)
     end
-    return false
+    return rpg.players[slot]
 end
 
-function rpg_core.gain_xp(id, amount)
-    local s = rpg_core.state[id]
-    s.xp = s.xp + amount
-    while s.xp >= s.xp_next do
-        s.xp = s.xp - s.xp_next
-        s.level = s.level + 1
-        s.xp_next = math.floor(s.xp_next * 1.2)
-        s.skill_points = s.skill_points + 1
-        
-        -- Auto-Stat Growth based on Class
-        if s.class == "Warrior" then s.stats.str = s.stats.str + 2; s.stats.vit = s.stats.vit + 1
-        elseif s.class == "Mage" then s.stats.int = s.stats.int + 2; s.stats.dex = s.stats.dex + 1
-        elseif s.class == "Rogue" then s.stats.dex = s.stats.dex + 2; s.stats.luk = s.stats.luk + 1
-        else s.stats.str = s.stats.str + 1; s.stats.vit = s.stats.vit + 1 end -- Novice
-        
-        local p = player(id)
-        textImgDraw(textImgNew(), p.Pos.x, p.Pos.y - 150, "LEVEL UP! (" .. s.level .. ")", 0, 0)
-        p:PalFX({time=30, add={255,255,0}, sinadd={255,255,0,10}})
+function rpg.reset(slot)
+    if slot then
+        rpg.players[slot] = default_player(slot)
+        return rpg.players[slot]
+    end
+    rpg.players = {}
+    return true
+end
+
+function rpg.xp_for_next(level)
+    level = math.max(1, tonumber(level) or 1)
+    return math.floor(rpg.level_curve_base * level * (1 + (level - 1) * 0.15))
+end
+
+function rpg.recalculate_level(slot)
+    local player_state = rpg.ensure(slot)
+    local leveled = false
+    while player_state.level < rpg.max_level do
+        local needed = rpg.xp_for_next(player_state.level)
+        if player_state.xp < needed then break end
+        player_state.xp = player_state.xp - needed
+        player_state.level = player_state.level + 1
+        player_state.stats.attack_bonus = player_state.stats.attack_bonus + 1
+        player_state.stats.defence_bonus = player_state.stats.defence_bonus + 1
+        if player_state.level % 5 == 0 then
+            player_state.stats.max_life_bonus = player_state.stats.max_life_bonus + 10
+        end
+        leveled = true
+        runtime.run_hook_safe("mugenx_rpg_level_up", slot, player_state.level)
+    end
+    return leveled, player_state.level
+end
+
+function rpg.gain_xp(slot, amount, reason)
+    local state = rpg.ensure(slot)
+    amount = math.max(0, math.floor(tonumber(amount) or 0))
+    if amount == 0 then return state.xp end
+    state.xp = state.xp + amount
+    rpg.recalculate_level(slot)
+    runtime.run_hook_safe("mugenx_rpg_xp", slot, amount, reason or "unknown")
+    return state.xp
+end
+
+function rpg.gain_gold(slot, amount, reason)
+    local state = rpg.ensure(slot)
+    amount = math.max(0, math.floor(tonumber(amount) or 0))
+    state.gold = state.gold + amount
+    runtime.run_hook_safe("mugenx_rpg_gold", slot, amount, reason or "unknown")
+    return state.gold
+end
+
+function rpg.spend_gold(slot, amount, reason)
+    local state = rpg.ensure(slot)
+    amount = math.max(0, math.floor(tonumber(amount) or 0))
+    if state.gold < amount then return false end
+    state.gold = state.gold - amount
+    runtime.run_hook_safe("mugenx_rpg_spend", slot, amount, reason or "unknown")
+    return true
+end
+
+function rpg.add_item(slot, item_id, count)
+    if type(item_id) ~= "string" or item_id == "" then return false end
+    local state = rpg.ensure(slot)
+    count = math.max(1, math.floor(tonumber(count) or 1))
+    state.inventory[item_id] = (tonumber(state.inventory[item_id]) or 0) + count
+    runtime.run_hook_safe("mugenx_rpg_item_added", slot, item_id, count)
+    return true
+end
+
+function rpg.remove_item(slot, item_id, count)
+    local state = rpg.ensure(slot)
+    count = math.max(1, math.floor(tonumber(count) or 1))
+    local current = tonumber(state.inventory[item_id]) or 0
+    if current < count then return false end
+    current = current - count
+    if current <= 0 then state.inventory[item_id] = nil else state.inventory[item_id] = current end
+    return true
+end
+
+function rpg.set_stat(slot, key, value)
+    local state = rpg.ensure(slot)
+    if state.stats[key] == nil then return false end
+    state.stats[key] = tonumber(value) or 0
+    return true
+end
+
+function rpg.add_stat(slot, key, delta)
+    local state = rpg.ensure(slot)
+    if state.stats[key] == nil then return false end
+    state.stats[key] = (tonumber(state.stats[key]) or 0) + (tonumber(delta) or 0)
+    return true
+end
+
+function rpg.record_match(slot, won)
+    local state = rpg.ensure(slot)
+    state.counters.matches = (state.counters.matches or 0) + 1
+    if won then
+        state.counters.wins = (state.counters.wins or 0) + 1
+        rpg.gain_xp(slot, 50 + state.level * 5, "match_win")
+        rpg.gain_gold(slot, 25 + state.level * 2, "match_win")
+    else
+        state.counters.losses = (state.counters.losses or 0) + 1
+        rpg.gain_xp(slot, 15, "match_loss")
     end
 end
 
-function rpg_core.init()
-    hook.add("tick", "rpg_core_tick", function()
-        for i = 1, 2 do
-            local p = player(i)
-            local s = rpg_core.state[i]
-            
-            -- Calculate Derived Stats
-            -- STR -> Attack
-            -- VIT -> Defence + HP Regen?
-            -- DEX -> Speed
-            -- INT -> Meter Gain
-            -- LUK -> Crit Chance
-            
-            local base_atk = 100 + (s.stats.str * 2)
-            local base_def = 100 + (s.stats.vit * 2)
-            
-            -- Apply Equipment Bonuses (Mock read)
-            if s.equipment.weapon == "Iron Sword" then base_atk = base_atk + 10 end
-            if s.equipment.armor == "Leather Armor" then base_def = base_def + 10 end
-            
-            p.Attack = base_atk
-            p.Defence = base_def
-            
-            -- UI Overlay
-            textImgDraw(textImgNew(), 20 + ((i-1)*280), 20, "LVL " .. s.level .. " " .. s.class, 0, 0)
-            textImgDraw(textImgNew(), 20 + ((i-1)*280), 35, "HP: " .. p.Life .. " MP: " .. p.Power, 0, 0)
+function rpg.publish(slot)
+    local state = rpg.ensure(slot)
+    runtime.set_map(slot, "_mugenx_rpg_level", state.level)
+    runtime.set_map(slot, "_mugenx_rpg_xp", state.xp)
+    runtime.set_map(slot, "_mugenx_rpg_gold", state.gold)
+    runtime.set_map(slot, "_mugenx_rpg_attack_bonus", math.floor(state.stats.attack_bonus or 0))
+    runtime.set_map(slot, "_mugenx_rpg_defence_bonus", math.floor(state.stats.defence_bonus or 0))
+    runtime.set_map(slot, "_mugenx_rpg_speed_bonus", math.floor((state.stats.speed_bonus or 0) * 1000))
+    runtime.set_map(slot, "_mugenx_rpg_life_bonus", math.floor(state.stats.max_life_bonus or 0))
+end
+
+function rpg.publish_all()
+    local max_players = type(config) == "table" and tonumber(config.Players) or 4
+    for slot = 1, math.max(1, math.min(8, max_players)) do
+        rpg.publish(slot)
+    end
+end
+
+function rpg.serialize()
+    local data = {version = rpg.VERSION, players = {}}
+    for slot, state in pairs(rpg.players) do
+        data.players[tostring(slot)] = copy_table(state)
+    end
+    return data
+end
+
+function rpg.deserialize(data)
+    if type(data) ~= "table" or type(data.players) ~= "table" then return false end
+    local restored = {}
+    for key, state in pairs(data.players) do
+        local slot = tonumber(key) or (type(state) == "table" and tonumber(state.slot))
+        if slot and type(state) == "table" then
+            local base = default_player(slot)
+            for field, value in pairs(state) do base[field] = copy_table(value) end
+            base.slot = slot
+            base.stats = base.stats or default_player(slot).stats
+            base.inventory = base.inventory or {}
+            base.equipment = base.equipment or {weapon = nil}
+            base.quests = base.quests or {}
+            base.achievements = base.achievements or {}
+            base.counters = base.counters or default_player(slot).counters
+            restored[slot] = base
+        end
+    end
+    rpg.players = restored
+    return true
+end
+
+function rpg.snapshot(slot)
+    return copy_table(rpg.ensure(slot))
+end
+
+function rpg.init()
+    rpg.ensure(1)
+    rpg.ensure(2)
+    runtime.safe_hook("tick", "mugenx_rpg_publish", rpg.publish_all)
+    runtime.safe_hook("matchend", "mugenx_rpg_match_rewards", function()
+        local winner = runtime.call("winnerteam")
+        if winner == 1 then
+            rpg.record_match(1, true)
+            rpg.record_match(2, false)
+        elseif winner == 2 then
+            rpg.record_match(1, false)
+            rpg.record_match(2, true)
         end
     end)
 end
 
-return rpg_core
-
+return rpg
