@@ -107,7 +107,11 @@ def lint_text_file(path: Path, *, fix_overflow: bool = False) -> tuple[list[Issu
 
     for index, raw in enumerate(lines, start=1):
         stripped = raw.strip()
-        if stripped.startswith("[") and not stripped.startswith("[State ") and not stripped.endswith("]"):
+        # MUGEN permits inline comments immediately after a valid section header,
+        # e.g. `[State -2, foo]; Japanese note`. Validate only the structural
+        # portion before `;`; otherwise every such legal header is a false positive.
+        structural = stripped.split(";", 1)[0].strip()
+        if structural.startswith("[") and not structural.endswith("]"):
             issues.append(Issue("error", "malformed-section", rel(path), index, "Section header is not closed"))
 
         match = ASSIGNMENT_RE.match(raw)
