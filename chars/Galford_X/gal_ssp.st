@@ -1319,7 +1319,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3204, 2_guard_main] 
 type = explod
@@ -1478,7 +1478,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3206, 3]
 type = PlaySnd
@@ -1540,7 +1540,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3207, 3]
 type = ChangeState
@@ -1591,7 +1591,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3208, 2]
 type = ChangeState
@@ -1643,7 +1643,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3209, 2]
 type = ChangeState
@@ -1705,7 +1705,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3210, 4]
 type = ChangeState
@@ -1756,7 +1756,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3211, 2]
 type = ChangeState
@@ -1823,7 +1823,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3212, 5]
 type = ChangeState
@@ -1880,7 +1880,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3213, 43]
 type = ChangeState
@@ -1942,7 +1942,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3214, 5]
 type = ChangeState
@@ -2735,7 +2735,7 @@ ground.velocity = -6
 airguard.velocity = -1.9,-.8
 air.velocity = -1.3,-3
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3500, spsnd00]
 type = PlaySnd 
@@ -2762,7 +2762,7 @@ trigger1 = 1
 flag = timerfreeze
 flag2 = noFG
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 SuperMoveTime = 999999999
 
 [State 3500, var(25)]
@@ -2895,7 +2895,7 @@ type = AssertSpecial
 trigger1 = 1
 flag = timerfreeze
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3550, 2]
 type = BGPalfx
@@ -2903,14 +2903,14 @@ trigger1 = 1
 time = 1
 add = -144,-144,-144
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3550, 5]
 type = DestroySelf
 trigger1 = root,var(25) = 3
 trigger2 = root,win = 1 || root,lose = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 
 ;===========================================================================
@@ -2948,14 +2948,14 @@ length = 30
 time = 30
 PalAdd = 40,40,0
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 4500, 2] ;Prevent run from canceling into walk
 type = AssertSpecial
 trigger1 = 1
 flag = NoWalk
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 4500, 3]
 type = HitDef
@@ -2983,28 +2983,28 @@ ground.velocity = 0             ;Velocity at which victim is pushed
 airguard.velocity = -1.9,-.8     ;Guard velocity in air (def: (air.xvel*1.5, air.yvel/2))
 air.velocity = -2,-7           ;X-velocity at which victim is pushed,
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 4505, 0]
 type = targetLifeAdd
 trigger1 = movehit = 1
 value = var(45)
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 3015, 4]
 type = targetstate
 trigger1 = movehit = 1
 value = 4510
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 4500, 6]
 type = ChangeState
 trigger1 = movehit = 1
 value = 4505
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 4500, 4]
 type = MakeDust
@@ -3012,14 +3012,14 @@ trigger1 = Time = 1
 pos = 0, 0
 spacing = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 4500, 5]
 type = MakeDust
 trigger1 = AnimElem = 3, >= 0
 pos = 0, 0
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 4500, 6]
 type = ChangeState
@@ -3027,7 +3027,7 @@ trigger1 = Time > 35
 value = 0
 ctrl = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;---------------------------------------------------------------------------
 ;Mqbg1P̓

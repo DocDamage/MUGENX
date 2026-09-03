@@ -396,7 +396,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 205, apʑS̐ԐF] 
 type = removeexplod
@@ -404,7 +404,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 
 [State 205, 2] 
@@ -418,7 +418,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 205, 2_guard_main] 
 type = explod
@@ -542,7 +542,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 215, apʑS̐ԐF] 
 type = removeexplod
@@ -550,7 +550,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 215, 2] 
 type = explod
@@ -563,7 +563,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 215, 2_guard_main] 
 type = explod
@@ -685,7 +685,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 225, 2_guard_main] 
 type = explod
@@ -753,14 +753,14 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 225, apʑS̐ԐF] 
 type = removeexplod
 trigger1 = NumExplod(1000) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 225, 3]
 type = PlaySnd
@@ -834,7 +834,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 200, apʑS̐ԐF] 
 type = removeexplod
@@ -842,7 +842,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 200, 2] 
 type = explod
@@ -855,7 +855,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 200, 2_guard_main] 
 type = explod
@@ -989,7 +989,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 210, apʑS̐ԐF] 
 type = removeexplod
@@ -997,7 +997,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 210, 2] 
 type = explod
@@ -1010,7 +1010,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 210, 2_guard_main] 
 type = explod
@@ -1156,7 +1156,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 220, 2_guard_main] 
 type = explod
@@ -1224,14 +1224,14 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 220, apʑS̐ԐF] 
 type = removeexplod
 trigger1 = NumExplod(1000) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 220, 3]
 type = PlaySnd
@@ -1420,7 +1420,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 300, apʑS̐ԐF] 
 type = removeexplod
@@ -1428,7 +1428,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 300, 2] 
 type = explod
@@ -1441,7 +1441,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 300, 2_guard_main] 
 type = explod
@@ -1571,7 +1571,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 310, apʑS̐ԐF] 
 type = removeexplod
@@ -1579,7 +1579,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 310, 2] 
 type = explod
@@ -1592,7 +1592,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 310, 2_guard_main] 
 type = explod
@@ -1728,7 +1728,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 320, apʑS̐ԐF] 
 type = removeexplod
@@ -1736,7 +1736,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 320, 2] 
 type = explod
@@ -1749,7 +1749,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 320, 2_guard_main] 
 type = explod
@@ -1817,14 +1817,14 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 320, apʑS̐ԐF] 
 type = removeexplod
 trigger1 = NumExplod(1000) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 320, 5]
 type = ChangeState
@@ -1951,7 +1951,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 400, apʑS̐ԐF] 
 type = removeexplod
@@ -1959,7 +1959,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 400, 2] 
 type = explod
@@ -1972,7 +1972,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 400, 2_guard_main] 
 type = explod
@@ -2091,7 +2091,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 410, apʑS̐ԐF] 
 type = removeexplod
@@ -2099,7 +2099,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 410, 2] 
 type = explod
@@ -2112,7 +2112,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 410, 2_guard_main] 
 type = explod
@@ -2255,7 +2255,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 420, apʑS̐ԐF] 
 type = removeexplod
@@ -2263,7 +2263,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 420, 2] 
 type = explod
@@ -2276,7 +2276,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 420, 2_guard_main] 
 type = explod
@@ -2344,14 +2344,14 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 420, apʑS̐ԐF] 
 type = removeexplod
 trigger1 = NumExplod(1000) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 420, 5]
 type = ChangeState
@@ -2518,7 +2518,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 600, apʑS̐ԐF] 
 type = removeexplod
@@ -2526,7 +2526,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 600, 2] 
 type = explod
@@ -2539,7 +2539,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 600, 2_guard_main] 
 type = explod
@@ -2655,7 +2655,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 610, apʑS̐ԐF] 
 type = removeexplod
@@ -2663,7 +2663,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 610, 2] 
 type = explod
@@ -2676,7 +2676,7 @@ facing = 1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 610, 2_guard_main] 
 type = explod
@@ -2796,7 +2796,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 620, apʑS̐ԐF] 
 type = removeexplod
@@ -2804,7 +2804,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 620, 2] 
 type = explod
@@ -2817,7 +2817,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 620, 2_guard_main] 
 type = explod
@@ -2885,14 +2885,14 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 620, apʑS̐ԐF] 
 type = removeexplod
 trigger1 = NumExplod(1000) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 620, 4]
 type = ChangeState
@@ -3275,7 +3275,7 @@ bindtime = 1
 ontop = 1
 scale = 1000,1000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 770, apʑS̐ԐF] 
 type = removeexplod
@@ -3283,7 +3283,7 @@ trigger1 = Movehit >= 2
 trigger1 = var(24) = 1
 ID = 201
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 770, 2] 
 type = explod
@@ -3296,7 +3296,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 770, 2_guard_main] 
 type = explod
@@ -3465,7 +3465,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 770, 2_guard_main] 
 type = explod
@@ -3693,7 +3693,7 @@ p1facing = 1
 p2facing = 1
 numhits = 0
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 900, 3]
 type = ChangeState
@@ -3729,7 +3729,7 @@ postype = p2
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 
 [State 905, 4]
@@ -3760,21 +3760,21 @@ type = VelSet
 trigger1 = Time = 10
 x = 4.6
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 910, 3]
 type = VelSet
 trigger1 = Time = 30
 x = -11
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 910, 4]
 type = Changeanim2
 trigger1 = Time = 0
 value = 5000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 910, 5]
 type = SelfState 
@@ -3828,7 +3828,7 @@ p2stateno = 930
 p1facing = 1
 p2facing = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 920, 4]
 type = ChangeState
@@ -3855,7 +3855,7 @@ trigger1 = animelem = 4
 trigger1 = BackEdgeBodyDist <= 20 
 x = 1.2
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 925, 3]
 type = Changestate
@@ -3877,14 +3877,14 @@ type = VelSet
 trigger1 = Time = 13 
 x = 7
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 930, 1]
 type = VelSet
 trigger1 = Time = 34
 x = 16
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 930, 2]
 type = Changeanim2 

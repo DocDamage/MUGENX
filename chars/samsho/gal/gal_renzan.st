@@ -77,7 +77,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 250, 2_guard_main] 
 type = explod
@@ -228,7 +228,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 260, 2_guard_main] 
 type = explod
@@ -460,7 +460,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 262, 2_guard_main] 
 type = explod
@@ -797,7 +797,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 268, 2_guard_main] 
 type = explod
@@ -1376,7 +1376,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 277, 2_guard_main] 
 type = explod
@@ -1509,7 +1509,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 278, 2_guard_main] 
 type = explod
@@ -1636,7 +1636,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 279, 2_guard_main] 
 type = explod
@@ -1768,7 +1768,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 280, 2_guard_main] 
 type = explod
@@ -1899,7 +1899,7 @@ facing = -1
 sprpriority = 6
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State 281, 2_guard_main] 
 type = explod

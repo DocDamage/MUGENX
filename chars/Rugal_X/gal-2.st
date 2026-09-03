@@ -653,7 +653,7 @@ add = 40,14,14
 sinadd = 40, 10, 10, 10
 time = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;===========================================================================
 ;---------------------------------------------------------------------------
@@ -670,7 +670,7 @@ trigger1 = roundstate >= 2
 trigger2 = var(25) = 2
 id = 11010
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;1P({)
 [state -2, Explod]
@@ -688,7 +688,7 @@ ontop = 1
 ownpal = 1
 bindtime = -1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State -2, Explod]
 type = RemoveExplod
@@ -700,7 +700,7 @@ trigger2 = var(25) = 1
 trigger3 = var(25) = 2
 id = 11000
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;1P(ʏԌ)
 [state -2, Explod]
@@ -718,7 +718,7 @@ ontop = 1
 ownpal = 1
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;1P(ʏԃQ[WZ_܂͏)
 [State -2, Explod]
@@ -733,7 +733,7 @@ trigger2 = var(25) = 1
 trigger3 = var(25) = 2
 id = 11005
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;1P(ʏԃQ[WZ_ɕ\)
 [state -2, Explod]
@@ -753,7 +753,7 @@ ownpal = 1
 bindtime = -1
 scale = var(27)/65.0, 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 
 ;---------------------------------------------------------------------------
@@ -768,7 +768,7 @@ trigger1 = roundstate >= 2
 trigger2 = var(25) = 2
 id = 11011
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;2P({)
 [state -2, Explod]
@@ -786,7 +786,7 @@ ontop = 1
 ownpal = 1
 bindtime = -1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 [State -2, Explod]
 type = RemoveExplod
@@ -798,7 +798,7 @@ trigger2 = var(25) = 1
 trigger3 = var(25) = 2
 id = 11001
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;2P(ʏԌ)
 [state -2, Explod]
@@ -816,7 +816,7 @@ ontop = 1
 ownpal = 1
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;2P(ʏԃQ[WZ_܂͏)
 [State -2, Explod]
@@ -831,7 +831,7 @@ trigger2 = var(25) = 1
 trigger3 = var(25) = 2
 id = 11006
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;2P(ʏԃQ[WZ_ɕ\)
 [state -2, Explod]
@@ -849,7 +849,7 @@ ontop = 1
 ownpal = 1
 bindtime = -1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 scale = var(27)/65.0, 1
 
 ;===========================================================================
@@ -872,7 +872,7 @@ trigger1 = 1
 v = 48
 value = LIFE
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;---------------------------------------------------------------------------
 ;{蔚Ԑݒ()
@@ -983,7 +983,7 @@ trigger1 = var(25) = 2
 trigger1 = numexplod(3521) >= 1
 id = 3521
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;1P({蔚Q[W_ɕ\)
 [state -2, Explod]
@@ -1002,7 +1002,7 @@ ontop = 1
 ownpal = 1
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;1P({蔚Q[W_܂͏)
 [State -2, Explod]
@@ -1012,7 +1012,7 @@ trigger1 = var(25) = 2
 trigger1 = numexplod(3520) >= 1
 id = 3520
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;1P({蔚Q[W_ɕ\)
 [state -2, Explod]
@@ -1032,7 +1032,7 @@ ownpal = 1
 bindtime = 1
 scale = var(36)/800.0, 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;---------------------------------------------------------------------------
 ;2P
@@ -1045,7 +1045,7 @@ trigger1 = var(25) = 2
 trigger1 = numexplod(3521) >= 1
 id = 3521
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;2P({蔚Q[W_ɕ\)
 [state -2, Explod]
@@ -1064,7 +1064,7 @@ ontop = 1
 ownpal = 1
 bindtime = 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;2P({蔚Q[W_܂͏)
 [State -2, Explod]
@@ -1074,7 +1074,7 @@ trigger1 = var(25) = 2
 trigger1 = numexplod(3520) >= 1
 id = 3520
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;2P({蔚Q[W_ɕ\)
 [state -2, Explod]
@@ -1094,7 +1094,7 @@ ownpal = 1
 bindtime = 1
 scale = var(36)/800.0, 1
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 ;===========================================================================
 ;M֘A
@@ -1108,7 +1108,7 @@ trigger1 = 1
 v = 45
 value =var(48) - 980
 ignorehitpause = 1
-PauseMoveTime = 21474836479
+PauseMoveTime = 2147483647
 
 
 ;===========================================================================

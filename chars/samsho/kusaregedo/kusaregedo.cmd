@@ -736,7 +736,7 @@ helpertype = normal
 keyctrl = 0
 ownpal = 1
 ignorehitpause = 1
-pausemovetime = 21474836479999
+pausemovetime = 2147483647
 
 [State 3001, Super]
 type = Helper
@@ -757,7 +757,7 @@ helpertype = normal
 keyctrl = 0
 ownpal = 1
 ignorehitpause = 1
-pausemovetime = 21474836479999
+pausemovetime = 2147483647
 
 ;---------------------------------------------------------------------------
 ; M
